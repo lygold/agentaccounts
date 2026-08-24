@@ -1,0 +1,130 @@
+{
+  "Metadata": {
+    "title": "Agent Ledger",
+    "description": "Internal agent income, expense, and payment tracking — RE/MAX Jerusalem"
+  },
+  "Nav": {
+    "dashboard": "Dashboard",
+    "deals": "Deals",
+    "signOut": "Sign out"
+  },
+  "Enums": {
+    "role": {
+      "admin": "admin",
+      "manager": "manager",
+      "team_leader": "team leader",
+      "agent": "agent"
+    },
+    "stage": {
+      "potential": "potential",
+      "signed": "signed",
+      "cancelled": "cancelled"
+    },
+    "paymentStatus": {
+      "due": "due",
+      "partial_payment": "partial payment",
+      "paid": "paid",
+      "overdue": "overdue",
+      "dead_debt": "dead debt"
+    },
+    "dealType": {
+      "sale": "Sale",
+      "rental": "Rental"
+    },
+    "side": {
+      "seller": "Seller",
+      "buyer": "Buyer",
+      "landlord": "Landlord",
+      "renter": "Renter"
+    },
+    "ledgerType": {
+      "expense": "expense",
+      "payment_to_agent": "payment to agent",
+      "commission": "commission"
+    }
+  },
+  "Dashboard": {
+    "title": "Agent balances",
+    "empty": "No ledger entries yet. Start by creating a deal."
+  },
+  "Deals": {
+    "title": "Deals",
+    "newDeal": "New deal",
+    "empty": "No deals yet.",
+    "noAddress": "—"
+  },
+  "NewDeal": {
+    "title": "New deal",
+    "agentName": "Agent name",
+    "dealType": "Deal type",
+    "side": "Side represented",
+    "clientName": "Client name",
+    "propertyAddress": "Property address",
+    "salePrice": "Sale price (₪)",
+    "commissionPercent": "Commission (%)",
+    "hasReferral": "There's a referral on this deal",
+    "referralPercent": "Referral % of commission",
+    "sikkumDate": "Sikkum date",
+    "signingDate": "Signing date",
+    "submit": "Create deal"
+  },
+  "DealDetail": {
+    "errorBanner": "Something failed — check the server logs (e.g. Green Invoice credentials may not be set yet in .env.local).",
+    "figuresTitle": "Figures",
+    "salePrice": "Sale price",
+    "commission": "Commission",
+    "referralSuffix": " (referral: {percent}% of commission)",
+    "billed": "Billed (gross, incl. VAT)",
+    "receivedSoFar": "Received so far",
+    "outstanding": "Outstanding",
+    "dealValue": "Deal value (pre-VAT, referral-subtracted)",
+    "greenInvoiceTitle": "Green Invoice",
+    "giMultipleMatch": "Multiple Green Invoice clients match \"{clientName}\" — pick the right one:",
+    "giCreateNew": "None of these — create a new client",
+    "giConfirm": "Confirm",
+    "giNoneLinked": "No Green Invoice client linked yet.",
+    "giFindOrCreate": "Find or create Green Invoice client",
+    "giReadyFor300": "Client linked. Ready to create the חשבון עסקה.",
+    "giCreate300": "Create חשבון עסקה (300)",
+    "giCreated300": "חשבון עסקה created (ref {ref}). Create a receipt document per payment below.",
+    "incomeTitle": "Income received",
+    "receiptCreated": "Receipt created (ref {ref})",
+    "createReceipt": "Create receipt",
+    "amount": "Amount (₪)",
+    "dateReceived": "Date received",
+    "logPayment": "Log payment received",
+    "postCommissionTitle": "Post commission to agent ledger",
+    "postCommissionDescription": "Credits {agentName} their share of what's been received so far.",
+    "agentRate": "Agent rate (0–1)",
+    "postCommission": "Post commission",
+    "billingCreatedOn": "Billing record created {date}."
+  },
+  "AgentPage": {
+    "addEntryTitle": "Add entry",
+    "type": "Type",
+    "typeExpense": "Expense (office fee, subscription, etc.)",
+    "typePaymentToAgent": "Payment to agent",
+    "typeCommission": "Commission (manual adjustment)",
+    "amount": "Amount (₪)",
+    "date": "Date",
+    "description": "Description",
+    "submit": "Add entry",
+    "empty": "No entries yet."
+  },
+  "Login": {
+    "title": "Agent Ledger",
+    "contactLabel": "Phone or email",
+    "deliveryLabel": "Send code via",
+    "whatsapp": "WhatsApp",
+    "email": "Email",
+    "submit": "Send code",
+    "submitting": "Sending..."
+  },
+  "Otp": {
+    "title": "Enter your code",
+    "codeLabel": "6-digit code",
+    "submit": "Verify",
+    "verifying": "Verifying...",
+    "resend": "Resend code"
+  }
+}

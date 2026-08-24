@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { requireSession } from "@/lib/auth/session-cookie";
 import { getDeal } from "@/lib/store/deals";
 import { listBillingForDeal } from "@/lib/store/billing";
@@ -33,10 +34,12 @@ export default async function DealDetailPage({
   const deal = await getDeal(id);
   if (!deal) notFound();
 
-  const [billingRows, incomeRows, received] = await Promise.all([
+  const [billingRows, incomeRows, received, t, tSide] = await Promise.all([
     listBillingForDeal(id),
     listIncomeForDeal(id),
     totalReceivedForDeal(id),
+    getTranslations("DealDetail"),
+    getTranslations("Enums.side"),
   ]);
   const billing = billingRows[0];
 
@@ -60,49 +63,46 @@ export default async function DealDetailPage({
         <div>
           <h1 className="text-2xl font-bold">{deal.clientName}</h1>
           <p className="text-muted-foreground">
-            {deal.agentName} · {deal.propertyAddress ?? "—"} · {deal.side}
+            {deal.agentName} · {deal.propertyAddress ?? "—"} · {tSide(deal.side)}
           </p>
         </div>
 
         {error && (
           <Alert variant="destructive">
-            <AlertDescription>
-              Something failed — check the server logs (e.g. Green Invoice credentials may not
-              be set yet in .env.local).
-            </AlertDescription>
+            <AlertDescription>{t("errorBanner")}</AlertDescription>
           </Alert>
         )}
 
         <section className="rounded-lg border p-4">
-          <h2 className="mb-2 font-semibold">Figures</h2>
+          <h2 className="mb-2 font-semibold">{t("figuresTitle")}</h2>
           <dl className="grid grid-cols-2 gap-y-1 text-sm">
-            <dt className="text-muted-foreground">Sale price</dt>
+            <dt className="text-muted-foreground">{t("salePrice")}</dt>
             <dd>₪{deal.salePrice.toLocaleString(undefined, { maximumFractionDigits: 0 })}</dd>
-            <dt className="text-muted-foreground">Commission</dt>
+            <dt className="text-muted-foreground">{t("commission")}</dt>
             <dd>
               {deal.commissionPercent}%
               {deal.hasReferral && deal.referralPercent
-                ? ` (referral: ${deal.referralPercent}% of commission)`
+                ? t("referralSuffix", { percent: deal.referralPercent })
                 : ""}
             </dd>
-            <dt className="text-muted-foreground">Billed (gross, incl. VAT)</dt>
+            <dt className="text-muted-foreground">{t("billed")}</dt>
             <dd>₪{billed.toLocaleString(undefined, { maximumFractionDigits: 0 })}</dd>
-            <dt className="text-muted-foreground">Received so far</dt>
+            <dt className="text-muted-foreground">{t("receivedSoFar")}</dt>
             <dd>₪{received.toLocaleString(undefined, { maximumFractionDigits: 0 })}</dd>
-            <dt className="text-muted-foreground">Outstanding</dt>
+            <dt className="text-muted-foreground">{t("outstanding")}</dt>
             <dd>₪{outstanding.toLocaleString(undefined, { maximumFractionDigits: 0 })}</dd>
-            <dt className="text-muted-foreground">Deal value (pre-VAT, referral-subtracted)</dt>
+            <dt className="text-muted-foreground">{t("dealValue")}</dt>
             <dd>₪{dealValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</dd>
           </dl>
         </section>
 
         <section className="rounded-lg border p-4">
-          <h2 className="mb-2 font-semibold">Green Invoice</h2>
+          <h2 className="mb-2 font-semibold">{t("greenInvoiceTitle")}</h2>
           {!deal.greenInvoiceClientId ? (
             candidates.length > 0 ? (
               <form action={confirmGreenInvoiceClient.bind(null, deal.id)} className="flex flex-col gap-2">
                 <p className="text-sm text-muted-foreground">
-                  Multiple Green Invoice clients match &quot;{deal.clientName}&quot; — pick the right one:
+                  {t("giMultipleMatch", { clientName: deal.clientName })}
                 </p>
                 {candidates.map((c) => (
                   <label
@@ -117,37 +117,32 @@ export default async function DealDetailPage({
                 ))}
                 <label className="flex cursor-pointer items-center gap-2 rounded-md border p-2 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary/5">
                   <input type="radio" name="clientChoice" value="new" className="h-4 w-4" required />
-                  <span>None of these — create a new client</span>
+                  <span>{t("giCreateNew")}</span>
                 </label>
                 <Button type="submit" className="mt-2">
-                  Confirm
+                  {t("giConfirm")}
                 </Button>
               </form>
             ) : (
               <form action={searchGreenInvoiceClientForDeal.bind(null, deal.id)}>
-                <p className="mb-3 text-sm text-muted-foreground">
-                  No Green Invoice client linked yet.
-                </p>
-                <Button type="submit">Find or create Green Invoice client</Button>
+                <p className="mb-3 text-sm text-muted-foreground">{t("giNoneLinked")}</p>
+                <Button type="submit">{t("giFindOrCreate")}</Button>
               </form>
             )
           ) : !billing?.greenInvoiceRef ? (
             <form action={createTransactionAccountForDeal.bind(null, deal.id)}>
-              <p className="mb-3 text-sm text-muted-foreground">
-                Client linked. Ready to create the חשבון עסקה.
-              </p>
-              <Button type="submit">Create חשבון עסקה (300)</Button>
+              <p className="mb-3 text-sm text-muted-foreground">{t("giReadyFor300")}</p>
+              <Button type="submit">{t("giCreate300")}</Button>
             </form>
           ) : (
             <p className="text-sm text-muted-foreground">
-              חשבון עסקה created (ref {billing.greenInvoiceRef}). Create a receipt document per
-              payment below.
+              {t("giCreated300", { ref: billing.greenInvoiceRef })}
             </p>
           )}
         </section>
 
         <section className="rounded-lg border p-4">
-          <h2 className="mb-2 font-semibold">Income received</h2>
+          <h2 className="mb-2 font-semibold">{t("incomeTitle")}</h2>
           {incomeRows.length > 0 && (
             <ul className="mb-3 space-y-2 text-sm">
               {incomeRows.map((r) => (
@@ -158,7 +153,7 @@ export default async function DealDetailPage({
                   </div>
                   {r.greenInvoiceReceiptRef ? (
                     <span className="text-xs text-muted-foreground">
-                      Receipt created (ref {r.greenInvoiceReceiptRef})
+                      {t("receiptCreated", { ref: r.greenInvoiceReceiptRef })}
                     </span>
                   ) : (
                     billing?.greenInvoiceRef && (
@@ -176,7 +171,7 @@ export default async function DealDetailPage({
                           <option value={DOCUMENT_TYPE.receipt}>קבלה</option>
                         </select>
                         <Button type="submit" size="sm">
-                          Create receipt
+                          {t("createReceipt")}
                         </Button>
                       </form>
                     )
@@ -188,35 +183,35 @@ export default async function DealDetailPage({
           <form action={submitIncome.bind(null, deal.id)} className="flex flex-col gap-3">
             <div className="flex gap-3">
               <div className="flex flex-1 flex-col gap-1.5">
-                <Label htmlFor="amount">Amount (₪)</Label>
+                <Label htmlFor="amount">{t("amount")}</Label>
                 <Input id="amount" name="amount" type="number" required />
               </div>
               <div className="flex flex-1 flex-col gap-1.5">
-                <Label htmlFor="receivedDate">Date received</Label>
+                <Label htmlFor="receivedDate">{t("dateReceived")}</Label>
                 <Input id="receivedDate" name="receivedDate" type="date" required />
               </div>
             </div>
-            <Button type="submit">Log payment received</Button>
+            <Button type="submit">{t("logPayment")}</Button>
           </form>
         </section>
 
         <section className="rounded-lg border p-4">
-          <h2 className="mb-2 font-semibold">Post commission to agent ledger</h2>
+          <h2 className="mb-2 font-semibold">{t("postCommissionTitle")}</h2>
           <p className="mb-3 text-sm text-muted-foreground">
-            Credits {deal.agentName} their share of what&apos;s been received so far.
+            {t("postCommissionDescription", { agentName: deal.agentName })}
           </p>
           <form action={postCommission.bind(null, deal.id)} className="flex items-end gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="agentRate">Agent rate (0–1)</Label>
+              <Label htmlFor="agentRate">{t("agentRate")}</Label>
               <Input id="agentRate" name="agentRate" type="number" step="0.01" defaultValue="0.5" required />
             </div>
-            <Button type="submit">Post commission</Button>
+            <Button type="submit">{t("postCommission")}</Button>
           </form>
         </section>
 
         {billingRows.length > 0 && (
           <p className="text-xs text-muted-foreground">
-            Billing record created {new Date(billingRows[0].createdAt).toLocaleDateString()}.
+            {t("billingCreatedOn", { date: new Date(billingRows[0].createdAt).toLocaleDateString() })}
           </p>
         )}
       </main>

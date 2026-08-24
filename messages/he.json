@@ -1,0 +1,130 @@
+{
+  "Metadata": {
+    "title": "יומן סוכן",
+    "description": "מעקב פנימי אחר הכנסות, הוצאות ותשלומים לסוכנים — רי/מקס ירושלים"
+  },
+  "Nav": {
+    "dashboard": "לוח בקרה",
+    "deals": "עסקאות",
+    "signOut": "התנתקות"
+  },
+  "Enums": {
+    "role": {
+      "admin": "מנהל מערכת",
+      "manager": "מנהל",
+      "team_leader": "ראש צוות",
+      "agent": "סוכן"
+    },
+    "stage": {
+      "potential": "פוטנציאלי",
+      "signed": "נחתם",
+      "cancelled": "בוטל"
+    },
+    "paymentStatus": {
+      "due": "ממתין לתשלום",
+      "partial_payment": "תשלום חלקי",
+      "paid": "שולם",
+      "overdue": "באיחור",
+      "dead_debt": "חוב אבוד"
+    },
+    "dealType": {
+      "sale": "מכירה",
+      "rental": "השכרה"
+    },
+    "side": {
+      "seller": "מוכר",
+      "buyer": "קונה",
+      "landlord": "משכיר",
+      "renter": "שוכר"
+    },
+    "ledgerType": {
+      "expense": "הוצאה",
+      "payment_to_agent": "תשלום לסוכן",
+      "commission": "עמלה"
+    }
+  },
+  "Dashboard": {
+    "title": "יתרות סוכנים",
+    "empty": "אין עדיין רשומות ביומן. התחילו ביצירת עסקה."
+  },
+  "Deals": {
+    "title": "עסקאות",
+    "newDeal": "עסקה חדשה",
+    "empty": "אין עדיין עסקאות.",
+    "noAddress": "—"
+  },
+  "NewDeal": {
+    "title": "עסקה חדשה",
+    "agentName": "שם הסוכן",
+    "dealType": "סוג עסקה",
+    "side": "צד מיוצג",
+    "clientName": "שם הלקוח",
+    "propertyAddress": "כתובת הנכס",
+    "salePrice": "מחיר מכירה (₪)",
+    "commissionPercent": "עמלה (%)",
+    "hasReferral": "קיימת הפניה בעסקה זו",
+    "referralPercent": "אחוז ההפניה מהעמלה",
+    "sikkumDate": "תאריך הסיכום",
+    "signingDate": "תאריך חתימה",
+    "submit": "צור עסקה"
+  },
+  "DealDetail": {
+    "errorBanner": "משהו נכשל — בדקו את יומני השרת (למשל, ייתכן שפרטי ההתחברות ל-Green Invoice עדיין לא הוגדרו ב-.env.local).",
+    "figuresTitle": "נתונים",
+    "salePrice": "מחיר מכירה",
+    "commission": "עמלה",
+    "referralSuffix": " (הפניה: {percent}% מהעמלה)",
+    "billed": "סכום לחיוב (ברוטו, כולל מע\"מ)",
+    "receivedSoFar": "התקבל עד כה",
+    "outstanding": "יתרה לתשלום",
+    "dealValue": "שווי העסקה (לפני מע\"מ, בניכוי הפניה)",
+    "greenInvoiceTitle": "Green Invoice",
+    "giMultipleMatch": "נמצאו מספר לקוחות ב-Green Invoice התואמים ל-\"{clientName}\" — בחרו את הלקוח הנכון:",
+    "giCreateNew": "אף אחד מאלה — צור לקוח חדש",
+    "giConfirm": "אישור",
+    "giNoneLinked": "טרם קושר לקוח ב-Green Invoice.",
+    "giFindOrCreate": "חפש או צור לקוח ב-Green Invoice",
+    "giReadyFor300": "הלקוח קושר. מוכן ליצירת חשבון עסקה.",
+    "giCreate300": "צור חשבון עסקה (300)",
+    "giCreated300": "חשבון עסקה נוצר (מס' אסמכתא {ref}). ניתן ליצור מסמך קבלה לכל תשלום למטה.",
+    "incomeTitle": "תקבולים",
+    "receiptCreated": "קבלה נוצרה (מס' אסמכתא {ref})",
+    "createReceipt": "צור קבלה",
+    "amount": "סכום (₪)",
+    "dateReceived": "תאריך קבלה",
+    "logPayment": "רשום תקבול",
+    "postCommissionTitle": "רישום עמלה ביומן הסוכן",
+    "postCommissionDescription": "יזכה את {agentName} בחלקו מתוך מה שהתקבל עד כה.",
+    "agentRate": "אחוז הסוכן (0–1)",
+    "postCommission": "רשום עמלה",
+    "billingCreatedOn": "רשומת החיוב נוצרה בתאריך {date}."
+  },
+  "AgentPage": {
+    "addEntryTitle": "הוספת רשומה",
+    "type": "סוג",
+    "typeExpense": "הוצאה (דמי משרד, מנוי וכו')",
+    "typePaymentToAgent": "תשלום לסוכן",
+    "typeCommission": "עמלה (התאמה ידנית)",
+    "amount": "סכום (₪)",
+    "date": "תאריך",
+    "description": "תיאור",
+    "submit": "הוספת רשומה",
+    "empty": "אין עדיין רשומות."
+  },
+  "Login": {
+    "title": "יומן סוכן",
+    "contactLabel": "טלפון או אימייל",
+    "deliveryLabel": "שליחת קוד באמצעות",
+    "whatsapp": "וואטסאפ",
+    "email": "אימייל",
+    "submit": "שלח קוד",
+    "submitting": "שולח..."
+  },
+  "Otp": {
+    "title": "הזינו את הקוד",
+    "codeLabel": "קוד בן 6 ספרות",
+    "submit": "אימות",
+    "verifying": "מאמת...",
+    "resend": "שליחת קוד מחדש"
+  }
+}

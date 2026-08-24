@@ -3,6 +3,7 @@
 import { Suspense, useActionState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { AlertCircle } from "lucide-react";
 import { verifyOtp, type AuthActionResult } from "@/lib/auth/actions";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ export default function OtpPage() {
 }
 
 function OtpForm() {
+  const t = useTranslations("Otp");
   const params = useSearchParams();
   const contact = params.get("c") ?? "";
 
@@ -29,12 +31,12 @@ function OtpForm() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 p-6">
-      <h1 className="text-2xl font-bold">Enter your code</h1>
+      <h1 className="text-2xl font-bold">{t("title")}</h1>
       <form action={formAction} className="flex flex-col gap-4" noValidate>
         <input type="hidden" name="contact" value={contact} />
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="code">6-digit code</Label>
+          <Label htmlFor="code">{t("codeLabel")}</Label>
           <Input
             id="code"
             name="code"
@@ -59,7 +61,7 @@ function OtpForm() {
         )}
 
         <Button type="submit" size="lg" disabled={pending}>
-          {pending ? "Verifying..." : "Verify"}
+          {pending ? t("verifying") : t("submit")}
         </Button>
       </form>
 
@@ -67,7 +69,7 @@ function OtpForm() {
         href="/login"
         className="text-sm text-muted-foreground underline-offset-4 hover:underline"
       >
-        Resend code
+        {t("resend")}
       </Link>
     </div>
   );

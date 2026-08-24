@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 import { AlertCircle } from "lucide-react";
 import { requestOtp, type AuthActionResult } from "@/lib/auth/actions";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function LoginPage() {
+  const t = useTranslations("Login");
   const [state, formAction, pending] = useActionState<
     AuthActionResult | null,
     FormData
@@ -16,10 +18,10 @@ export default function LoginPage() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 p-6">
-      <h1 className="text-2xl font-bold">Agent Ledger</h1>
+      <h1 className="text-2xl font-bold">{t("title")}</h1>
       <form action={formAction} className="flex flex-col gap-4" noValidate>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="contact">Phone or email</Label>
+          <Label htmlFor="contact">{t("contactLabel")}</Label>
           <Input
             id="contact"
             name="contact"
@@ -33,12 +35,12 @@ export default function LoginPage() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label>Send code via</Label>
+          <Label>{t("deliveryLabel")}</Label>
           <div className="grid grid-cols-2 gap-3">
             {(
               [
-                { value: "whatsapp", label: "WhatsApp" },
-                { value: "email", label: "Email" },
+                { value: "whatsapp", label: t("whatsapp") },
+                { value: "email", label: t("email") },
               ] as const
             ).map((opt) => (
               <label
@@ -66,7 +68,7 @@ export default function LoginPage() {
         )}
 
         <Button type="submit" size="lg" disabled={pending}>
-          {pending ? "Sending..." : "Send code"}
+          {pending ? t("submitting") : t("submit")}
         </Button>
       </form>
     </div>
