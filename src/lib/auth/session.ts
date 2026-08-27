@@ -11,6 +11,8 @@ export const SESSION_COOKIE = "agent_ledger_session";
 export const SESSION_TTL_SECONDS = 60 * 60 * 12; // 12 hours
 
 export interface SessionPayload {
+  /** Which office this agent belongs to — see src/lib/office.ts. */
+  officeId: string;
   /** Daf Kesher pulse/item ID — canonical identity. */
   agentId: string;
   agentName: string;
@@ -48,7 +50,9 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
     });
     const role = payload.role as AppRole;
     if (!VALID_ROLES.includes(role)) return null;
+    if (typeof payload.officeId !== "string" || !payload.officeId) return null;
     return {
+      officeId: payload.officeId,
       agentId: String(payload.agentId),
       agentName: String(payload.agentName),
       agentEmail: payload.agentEmail == null ? null : String(payload.agentEmail),

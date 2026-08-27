@@ -22,7 +22,7 @@ import { isNextJsRedirect } from "@/lib/action-utils";
 
 export async function submitNewDeal(formData: FormData) {
   try {
-    await requireSession();
+    const session = await requireSession();
     const parsed = DealSchema.safeParse({
       agentName: formData.get("agentName"),
       dealType: formData.get("dealType"),
@@ -43,6 +43,7 @@ export async function submitNewDeal(formData: FormData) {
     // and needs a real agent picker once role-scoped creation is designed.
     const agentName = parsed.data.agentName.trim();
     const deal = await createDeal({
+      officeId: session.officeId,
       agentId: agentName,
       agentName,
       dealType: parsed.data.dealType,
@@ -62,6 +63,7 @@ export async function submitNewDeal(formData: FormData) {
     // Bill the client the full gross amount — referral not subtracted here,
     // that's an internal office/agent split concern (computeDealValue).
     await createBilling({
+      officeId: session.officeId,
       dealId: deal.id,
       amount: computeBillingAmount(deal),
       issuedDate: new Date().toISOString().slice(0, 10),
@@ -77,7 +79,7 @@ export async function submitNewDeal(formData: FormData) {
 
 export async function submitIncome(dealId: string, formData: FormData) {
   try {
-    await requireSession();
+    const session = await requireSession();
     const parsed = IncomeEntrySchema.safeParse({
       amount: formData.get("amount"),
       receivedDate: formData.get("receivedDate"),
@@ -86,7 +88,7 @@ export async function submitIncome(dealId: string, formData: FormData) {
 
     // greenInvoiceReceiptRef is filled in later, by createReceiptForIncome
     // below — Green Invoice is the source of that id now, not hand typed.
-    await createIncome({ dealId, ...parsed.data });
+    await createIncome({ officeId: session.officeId, dealId, ...parsed.data });
     redirect(`/deals/${dealId}`);
   } catch (e) {
     if (isNextJsRedirect(e)) throw e;
@@ -102,7 +104,7 @@ export async function submitIncome(dealId: string, formData: FormData) {
  */
 export async function postCommission(dealId: string, formData: FormData) {
   try {
-    await requireSession();
+    const session = await requireSession();
     const deal = await getDeal(dealId);
     if (!deal) return;
 
@@ -117,6 +119,7 @@ export async function postCommission(dealId: string, formData: FormData) {
     const commissionAmount = dealValue * receivedShare * agentRate;
 
     await createLedgerEntry({
+      officeId: session.officeId,
       agentId: deal.agentId,
       agentName: deal.agentName,
       type: "commission",

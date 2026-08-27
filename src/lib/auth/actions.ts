@@ -18,6 +18,7 @@ import { otpSendLimiter, otpVerifyLimiter } from "./rate-limit";
 import { logAudit } from "./audit";
 import { setSessionCookie } from "./session-cookie";
 import { isNextJsRedirect } from "../action-utils";
+import { DEFAULT_OFFICE_ID } from "../office";
 
 const MAX_BAD_ATTEMPTS = 5;
 
@@ -173,6 +174,7 @@ export async function verifyOtp(
     }
 
     await setSessionCookie({
+      officeId: DEFAULT_OFFICE_ID,
       agentId: agent.id,
       agentName: agent.name,
       agentEmail: agent.email,

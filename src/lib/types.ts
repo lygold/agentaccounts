@@ -21,6 +21,10 @@ export type PaymentStatus = "due" | "partial_payment" | "paid" | "overdue" | "de
 
 export interface Deal {
   id: string;
+  /** Which office this deal belongs to — see src/lib/office.ts. Single
+   *  fixed value today; exists from day one so a second office is a new
+   *  value, not a backfill. */
+  officeId: string;
   agentId: string;
   agentName: string;
   dealType: DealType;
@@ -53,6 +57,7 @@ export interface Deal {
 
 export interface Billing {
   id: string;
+  officeId: string;
   dealId: string;
   /** Gross amount owed by the client — VAT-inclusive, referral NOT
    *  subtracted (the referral cut is an internal office/agent split
@@ -65,6 +70,7 @@ export interface Billing {
 
 export interface Income {
   id: string;
+  officeId: string;
   dealId: string;
   /** Actual amount received this installment — a deal can span several. */
   amount: number;
@@ -85,6 +91,7 @@ export interface AgentLedgerAttachment {
 
 export interface AgentLedgerEntry {
   id: string;
+  officeId: string;
   agentId: string;
   agentName: string;
   type: AgentLedgerEntryType;
@@ -101,6 +108,7 @@ export interface AgentLedgerEntry {
 
 export interface RecurringExpenseConfig {
   id: string;
+  officeId: string;
   agentId: string;
   agentName: string;
   label: string;
@@ -116,6 +124,7 @@ export interface CommissionTierRule {
 }
 
 export interface CommissionTierOverride {
+  officeId: string;
   agentId: string;
   agentName: string;
   /** Overrides the tier table entirely — a permanent flat rate. */

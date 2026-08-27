@@ -12,7 +12,7 @@ export async function submitLedgerEntry(
   formData: FormData,
 ) {
   try {
-    await requireSession();
+    const session = await requireSession();
     const parsed = LedgerEntrySchema.safeParse({
       type: formData.get("type"),
       amount: formData.get("amount"),
@@ -28,6 +28,7 @@ export async function submitLedgerEntry(
       parsed.data.type === "commission" ? parsed.data.amount : -Math.abs(parsed.data.amount);
 
     await createLedgerEntry({
+      officeId: session.officeId,
       agentId,
       agentName,
       type: parsed.data.type,
