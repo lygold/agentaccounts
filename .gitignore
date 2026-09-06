@@ -28,6 +28,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# one-off data migrations — contain real client data, run locally only
+scripts/*weiser*
+
 # env files (keep .env.example committed)
 .env
 .env.local

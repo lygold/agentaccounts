@@ -60,6 +60,36 @@ export async function findAgentByContact(contact: string): Promise<Agent | null>
   return toAgent(items[0], normalized);
 }
 
+/**
+ * Names of every agent in a given רובע (district) — the team roster a team
+ * leader is scoped to. Read-only lookup against Daf Kesher; the district
+ * column doubles as the team-grouping key (see monday/columns.ts).
+ */
+export async function listAgentNamesInDistrict(district: number): Promise<string[]> {
+  const query = /* GraphQL */ `
+    query AgentsInDistrict($boardId: ID!, $columnId: String!, $value: String!) {
+      items_page_by_column_values(
+        limit: 100
+        board_id: $boardId
+        columns: [{ column_id: $columnId, column_values: [$value] }]
+      ) {
+        items {
+          id
+          name
+        }
+      }
+    }
+  `;
+  const data = await mondayQuery<{
+    items_page_by_column_values: { items: Array<{ id: string; name: string }> };
+  }>(query, {
+    boardId: getAgentsBoardId(),
+    columnId: AGENTS_BOARD.district,
+    value: String(district),
+  });
+  return (data.items_page_by_column_values?.items ?? []).map((i) => i.name);
+}
+
 export async function getAgentById(id: string): Promise<Agent | null> {
   const query = /* GraphQL */ `
     query GetAgent($ids: [ID!]) {

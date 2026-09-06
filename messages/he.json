@@ -5,6 +5,7 @@
   },
   "Nav": {
     "dashboard": "לוח בקרה",
+    "myLedger": "היומן שלי",
     "deals": "עסקאות",
     "signOut": "התנתקות"
   },
@@ -40,6 +41,7 @@
     "ledgerType": {
       "expense": "הוצאה",
       "payment_to_agent": "תשלום לסוכן",
+      "payment_by_agent": "תשלום ע\"י הסוכן",
       "commission": "עמלה"
     }
   },
@@ -93,10 +95,10 @@
     "amount": "סכום (₪)",
     "dateReceived": "תאריך קבלה",
     "logPayment": "רשום תקבול",
-    "postCommissionTitle": "רישום עמלה ביומן הסוכן",
-    "postCommissionDescription": "יזכה את {agentName} בחלקו מתוך מה שהתקבל עד כה.",
-    "agentRate": "אחוז הסוכן (0–1)",
-    "postCommission": "רשום עמלה",
+    "commissionTitle": "עמלת הסוכן",
+    "commissionEffectiveRate": "אחוז משוקלל בעסקה זו",
+    "commissionPosted": "נרשם ביומן עד כה",
+    "commissionAuto": "נרשם אוטומטית עם רישום התקבולים, משוקלל לפי מדרגות ההכנסה השנתית של הסוכן.",
     "billingCreatedOn": "רשומת החיוב נוצרה בתאריך {date}."
   },
   "AgentPage": {
@@ -104,12 +106,14 @@
     "type": "סוג",
     "typeExpense": "הוצאה (דמי משרד, מנוי וכו')",
     "typePaymentToAgent": "תשלום לסוכן",
+    "typePaymentByAgent": "תשלום ע\"י הסוכן (הסוכן שילם את הוצאותיו)",
     "typeCommission": "עמלה (התאמה ידנית)",
-    "amount": "סכום (₪)",
+    "amount": "סכום (₪, כולל מע\"מ)",
     "date": "תאריך",
     "description": "תיאור",
     "submit": "הוספת רשומה",
-    "empty": "אין עדיין רשומות."
+    "empty": "אין עדיין רשומות.",
+    "exVat": "₪{amount} ללא מע\"מ"
   },
   "Login": {
     "title": "יומן סוכן",

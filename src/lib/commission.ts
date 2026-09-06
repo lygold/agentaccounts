@@ -2,6 +2,16 @@ import type { CommissionTierOverride, CommissionTierRule, Deal } from "./types";
 
 export const VAT_RATE = 0.18;
 
+/** Strip VAT from a VAT-inclusive figure. Sign-preserving. */
+export function stripVat(amountInclVat: number): number {
+  return Math.round((amountInclVat / (1 + VAT_RATE)) * 100) / 100;
+}
+
+/** Add VAT to a pre-VAT figure. Sign-preserving. */
+export function addVat(amountExVat: number): number {
+  return Math.round(amountExVat * (1 + VAT_RATE) * 100) / 100;
+}
+
 /**
  * The one correct "what is this deal worth" figure — pre-VAT, referral
  * subtracted. Replaces Red File's two disagreeing formulas (`total fee NEW`,

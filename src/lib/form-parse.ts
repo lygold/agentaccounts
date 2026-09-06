@@ -21,7 +21,7 @@ export const IncomeEntrySchema = z.object({
 });
 
 export const LedgerEntrySchema = z.object({
-  type: z.enum(["commission", "expense", "payment_to_agent"]),
+  type: z.enum(["commission", "expense", "payment_to_agent", "payment_by_agent"]),
   amount: z.coerce.number(),
   description: z.string().trim().min(1),
   date: z.string().trim().min(1),

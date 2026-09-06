@@ -1,5 +1,6 @@
+import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { requireSession } from "@/lib/auth/session-cookie";
+import { requireSession, isManager } from "@/lib/auth/session-cookie";
 import { Nav } from "@/components/nav";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { submitNewDeal } from "../actions";
 
 export default async function NewDealPage() {
-  await requireSession();
+  const session = await requireSession();
+  if (!isManager(session)) redirect("/deals");
   const [t, tDealType, tSide] = await Promise.all([
     getTranslations("NewDeal"),
     getTranslations("Enums.dealType"),

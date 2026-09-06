@@ -4,22 +4,30 @@ import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
 let _doc: DynamoDBDocumentClient | null = null;
 
-/** Scoped IAM user (agent-ledger-app) — DynamoDB + S3 attachments only, not
- *  a personal AWS account's broad credentials. See .env.local. */
+/**
+ * Local dev supplies the scoped `agent-ledger-app` static keys via
+ * .env.local. On Amplify/Lambda the runtime injects the compute role's
+ * credentials (with a session token) — there we pass no explicit
+ * credentials so the SDK's default provider chain uses the role. Grant that
+ * role DynamoDB + S3 access rather than storing static keys.
+ */
 export function getDynamoDoc(): DynamoDBDocumentClient {
   if (_doc) return _doc;
-  const region = process.env.AWS_REGION;
+  // DYNAMO_REGION lets the tables live in a different region than the app —
+  // e.g. an Amplify app not hosted in eu-north-1 still reaches the tables there.
+  const region = process.env.DYNAMO_REGION || process.env.AWS_REGION;
+  if (!region) throw new Error("DYNAMO_REGION / AWS_REGION is not set");
+
   const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
   const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
-  if (!region || !accessKeyId || !secretAccessKey) {
-    throw new Error(
-      "AWS not configured: set AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY",
-    );
-  }
-  const client = new DynamoDBClient({
-    region,
-    credentials: { accessKeyId, secretAccessKey },
-  });
+  const useStaticKeys =
+    !!accessKeyId && !!secretAccessKey && !process.env.AWS_SESSION_TOKEN;
+
+  const client = new DynamoDBClient(
+    useStaticKeys
+      ? { region, credentials: { accessKeyId, secretAccessKey } }
+      : { region },
+  );
   _doc = DynamoDBDocumentClient.from(client, {
     marshallOptions: { removeUndefinedValues: true },
   });
@@ -30,7 +38,9 @@ export const TABLES = {
   deals: () => requireTableName("DYNAMODB_TABLE_DEALS"),
   billing: () => requireTableName("DYNAMODB_TABLE_BILLING"),
   income: () => requireTableName("DYNAMODB_TABLE_INCOME"),
-  ledgerEntries: () => requireTableName("DYNAMODB_TABLE_LEDGER_ENTRIES"),
+  /** The agent's running account with the office — commission, expenses,
+   *  payments to/from them. Physical table: agent-ledger-agent-account. */
+  agentAccount: () => requireTableName("DYNAMODB_TABLE_AGENT_ACCOUNT"),
 };
 
 function requireTableName(envVar: string): string {

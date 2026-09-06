@@ -79,7 +79,11 @@ export interface Income {
   createdAt: string;
 }
 
-export type AgentLedgerEntryType = "commission" | "expense" | "payment_to_agent";
+export type AgentLedgerEntryType =
+  | "commission"
+  | "expense"
+  | "payment_to_agent"
+  | "payment_by_agent";
 
 export interface AgentLedgerAttachment {
   /** e.g. "Tax invoice" (agent's חשבונית מס, authorizes payment) or
@@ -95,9 +99,17 @@ export interface AgentLedgerEntry {
   agentId: string;
   agentName: string;
   type: AgentLedgerEntryType;
-  /** Positive = credit to the agent (commission owed), negative = debit
-   *  (expense charged, or a payment already made reducing the balance). */
+  /** VAT-inclusive signed amount — the cash figure. This is what the
+   *  running balance sums and what the daily report's יתירה תזרימית shows.
+   *  Positive = credit to the agent — commission owed (`commission`), or
+   *  the agent settling their own expense tab (`payment_by_agent`).
+   *  Negative = debit — an expense charged (`expense`), or a payment the
+   *  office already made to the agent (`payment_to_agent`). */
   amount: number;
+  /** Same sign as `amount`, VAT stripped (amount ÷ 1 + VAT_RATE). The
+   *  agent's actual earnings/liability, and what commission-tier
+   *  accumulation is measured in. */
+  amountExVat: number;
   description: string;
   dealId?: string;
   /** payment_to_agent entries should carry exactly 2: tax invoice + Kabbala. */

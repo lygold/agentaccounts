@@ -5,6 +5,7 @@
   },
   "Nav": {
     "dashboard": "Dashboard",
+    "myLedger": "My ledger",
     "deals": "Deals",
     "signOut": "Sign out"
   },
@@ -40,6 +41,7 @@
     "ledgerType": {
       "expense": "expense",
       "payment_to_agent": "payment to agent",
+      "payment_by_agent": "paid by agent",
       "commission": "commission"
     }
   },
@@ -93,10 +95,10 @@
     "amount": "Amount (₪)",
     "dateReceived": "Date received",
     "logPayment": "Log payment received",
-    "postCommissionTitle": "Post commission to agent ledger",
-    "postCommissionDescription": "Credits {agentName} their share of what's been received so far.",
-    "agentRate": "Agent rate (0–1)",
-    "postCommission": "Post commission",
+    "commissionTitle": "Agent commission",
+    "commissionEffectiveRate": "Blended rate on this deal",
+    "commissionPosted": "Posted to ledger so far",
+    "commissionAuto": "Posted automatically as payments are logged, bracket-blended across the agent's YTD tier.",
     "billingCreatedOn": "Billing record created {date}."
   },
   "AgentPage": {
@@ -104,12 +106,14 @@
     "type": "Type",
     "typeExpense": "Expense (office fee, subscription, etc.)",
     "typePaymentToAgent": "Payment to agent",
+    "typePaymentByAgent": "Paid by agent (agent settled their expenses)",
     "typeCommission": "Commission (manual adjustment)",
-    "amount": "Amount (₪)",
+    "amount": "Amount (₪, incl. VAT)",
     "date": "Date",
     "description": "Description",
     "submit": "Add entry",
-    "empty": "No entries yet."
+    "empty": "No entries yet.",
+    "exVat": "₪{amount} excl. VAT"
   },
   "Login": {
     "title": "Agent Ledger",

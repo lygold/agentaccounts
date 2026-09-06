@@ -1,6 +1,8 @@
+import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { requireSession } from "@/lib/auth/session-cookie";
-import { agentRunningBalance, listLedgerEntriesForAgent } from "@/lib/store/agent-ledger";
+import { requireSession, isManager } from "@/lib/auth/session-cookie";
+import { allowedAgentNames, isNameAllowed } from "@/lib/auth/scope";
+import { listLedgerEntriesForAgent, runningBalance, entryExVat } from "@/lib/store/agent-ledger";
 import { Nav } from "@/components/nav";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,17 +14,24 @@ export default async function AgentLedgerPage({
 }: {
   params: Promise<{ agentId: string }>;
 }) {
-  await requireSession();
+  const session = await requireSession();
   const { agentId: rawAgentId } = await params;
   const agentId = decodeURIComponent(rawAgentId);
 
-  const [entries, balance, t, tLedgerType] = await Promise.all([
+  const [entries, allowed, t, tLedgerType] = await Promise.all([
     listLedgerEntriesForAgent(agentId),
-    agentRunningBalance(agentId),
+    allowedAgentNames(session),
     getTranslations("AgentPage"),
     getTranslations("Enums.ledgerType"),
   ]);
+  const balance = runningBalance(entries);
+  const balanceExVat = runningBalance(entries, "exVat");
   const agentName = entries[0]?.agentName ?? agentId;
+  // An agent may only open their own ledger; a team leader their team's;
+  // manager/admin anyone's. Route id or entry name may carry the identity.
+  const isSelf = agentId === session.agentId || agentName === session.agentName;
+  if (!isSelf && !isNameAllowed(allowed, agentName)) notFound();
+  const canEdit = isManager(session);
 
   return (
     <div>
@@ -30,11 +39,19 @@ export default async function AgentLedgerPage({
       <main className="mx-auto max-w-2xl p-6">
         <div className="mb-4 flex items-baseline justify-between">
           <h1 className="text-2xl font-bold">{agentName}</h1>
-          <span className="text-lg font-semibold">
-            ₪{balance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-          </span>
+          <div className="text-right">
+            <div className="text-lg font-semibold">
+              ₪{balance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {t("exVat", {
+                amount: balanceExVat.toLocaleString(undefined, { maximumFractionDigits: 0 }),
+              })}
+            </div>
+          </div>
         </div>
 
+        {canEdit && (
         <section className="mb-6 rounded-lg border p-4">
           <h2 className="mb-2 font-semibold">{t("addEntryTitle")}</h2>
           <form
@@ -51,6 +68,7 @@ export default async function AgentLedgerPage({
               >
                 <option value="expense">{t("typeExpense")}</option>
                 <option value="payment_to_agent">{t("typePaymentToAgent")}</option>
+                <option value="payment_by_agent">{t("typePaymentByAgent")}</option>
                 <option value="commission">{t("typeCommission")}</option>
               </select>
             </div>
@@ -71,6 +89,7 @@ export default async function AgentLedgerPage({
             <Button type="submit">{t("submit")}</Button>
           </form>
         </section>
+        )}
 
         <section className="divide-y overflow-hidden rounded-lg border">
           {entries.length === 0 ? (
@@ -84,10 +103,19 @@ export default async function AgentLedgerPage({
                     {e.date} · {tLedgerType(e.type)}
                   </div>
                 </div>
-                <span className={e.amount >= 0 ? "text-secondary" : "text-destructive"}>
-                  {e.amount >= 0 ? "+" : ""}
-                  ₪{e.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                </span>
+                <div className="text-right">
+                  <div className={e.amount >= 0 ? "text-secondary" : "text-destructive"}>
+                    {e.amount >= 0 ? "+" : ""}
+                    ₪{e.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {t("exVat", {
+                      amount: entryExVat(e).toLocaleString(undefined, {
+                        maximumFractionDigits: 0,
+                      }),
+                    })}
+                  </div>
+                </div>
               </div>
             ))
           )}
