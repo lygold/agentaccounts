@@ -35,16 +35,21 @@ export function getDynamoDoc(): DynamoDBDocumentClient {
 }
 
 export const TABLES = {
-  deals: () => requireTableName("DYNAMODB_TABLE_DEALS"),
-  billing: () => requireTableName("DYNAMODB_TABLE_BILLING"),
-  income: () => requireTableName("DYNAMODB_TABLE_INCOME"),
+  deals: () => requireTableName("DYNAMODB_TABLE_DEALS", process.env.DYNAMODB_TABLE_DEALS),
+  billing: () =>
+    requireTableName("DYNAMODB_TABLE_BILLING", process.env.DYNAMODB_TABLE_BILLING),
+  income: () =>
+    requireTableName("DYNAMODB_TABLE_INCOME", process.env.DYNAMODB_TABLE_INCOME),
   /** The agent's running account with the office — commission, expenses,
    *  payments to/from them. Physical table: agent-ledger-agent-account. */
-  agentAccount: () => requireTableName("DYNAMODB_TABLE_AGENT_ACCOUNT"),
+  agentAccount: () =>
+    requireTableName("DYNAMODB_TABLE_AGENT_ACCOUNT", process.env.DYNAMODB_TABLE_AGENT_ACCOUNT),
 };
 
-function requireTableName(envVar: string): string {
-  const name = process.env[envVar];
+/** Value is passed in via a *static* `process.env.X` read (not a dynamic
+ *  `process.env[name]` lookup) so `next.config.ts`'s build-time env baking
+ *  can inline it — Amplify's SSR runtime has no live env vars. */
+function requireTableName(envVar: string, name: string | undefined): string {
   if (!name) throw new Error(`${envVar} is not set`);
   return name;
 }
