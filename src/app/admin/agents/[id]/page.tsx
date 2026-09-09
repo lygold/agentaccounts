@@ -95,13 +95,13 @@ export default async function EditAgentPage({
             </select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="district">{t("district")}</Label>
+            <Label htmlFor="team">{t("team")}</Label>
             <Input
-              id="district"
-              name="district"
+              id="team"
+              name="team"
               type="number"
               min="1"
-              defaultValue={agent.district ?? ""}
+              defaultValue={agent.team ?? ""}
             />
           </div>
           <label className="flex items-center gap-2">

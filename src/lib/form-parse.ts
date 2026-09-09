@@ -47,7 +47,7 @@ export const AgentFormSchema = z
       .optional()
       .or(z.literal("").transform(() => undefined)),
     role: AgentRoleEnum,
-    district: z.coerce
+    team: z.coerce
       .number()
       .int()
       .positive()

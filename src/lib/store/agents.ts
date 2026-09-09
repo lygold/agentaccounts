@@ -30,7 +30,7 @@ function toItem(a: AgentRecord): AgentItem {
 }
 
 function fromItem(item: Record<string, unknown>): AgentRecord {
-  const i = item as Partial<AgentItem>;
+  const i = item as Partial<AgentItem> & { district?: number | null };
   return {
     id: String(i.id),
     officeId: String(i.officeId),
@@ -40,7 +40,9 @@ function fromItem(item: Record<string, unknown>): AgentRecord {
     firstNameHebrew: i.firstNameHebrew ?? null,
     fullNameEnglish: i.fullNameEnglish ?? null,
     surname: i.surname ?? null,
-    district: i.district ?? null,
+    // `?? district` tolerates rows written before the rename; the migration
+    // (scripts/rename-district-to-team.mjs) clears the old attribute.
+    team: i.team ?? i.district ?? null,
     isTeamLeader: Boolean(i.isTeamLeader),
     role: (i.role ?? "agent") as AppRole,
     status: (i.status ?? "active") as AgentStatus,
@@ -106,7 +108,16 @@ export async function listAgentsByOffice(
     lastKey = res.LastEvaluatedKey;
   } while (lastKey);
   const agents = opts.includeArchived ? out : out.filter((a) => a.status === "active");
-  return agents.sort((a, b) => a.name.localeCompare(b.name));
+  return agents.sort(compareByTeamThenName);
+}
+
+/** Default order for the directory: team ascending (agents with no team last),
+ *  then name. */
+export function compareByTeamThenName(a: AgentRecord, b: AgentRecord): number {
+  const ta = a.team ?? Infinity;
+  const tb = b.team ?? Infinity;
+  if (ta !== tb) return ta - tb;
+  return a.name.localeCompare(b.name);
 }
 
 export interface NewAgentInput {
@@ -115,7 +126,7 @@ export interface NewAgentInput {
   email: string | null;
   phone: string | null;
   role: AppRole;
-  district: number | null;
+  team: number | null;
   isTeamLeader?: boolean;
   firstNameHebrew?: string | null;
   fullNameEnglish?: string | null;
@@ -136,7 +147,7 @@ export async function createAgent(input: NewAgentInput): Promise<AgentRecord> {
     firstNameHebrew: input.firstNameHebrew ?? null,
     fullNameEnglish: input.fullNameEnglish ?? null,
     surname: input.surname ?? null,
-    district: input.district,
+    team: input.team,
     isTeamLeader: input.isTeamLeader ?? false,
     role: input.role,
     status: "active",

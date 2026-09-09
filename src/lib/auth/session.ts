@@ -19,8 +19,8 @@ export interface SessionPayload {
   agentEmail: string | null;
   agentPhone: string | null;
   role: AppRole;
-  /** רובע — null is valid (some agents/managers aren't tied to one). */
-  district: number | null;
+  /** Team number — null is valid (some agents/managers aren't on a team). */
+  team: number | null;
 }
 
 function getSecret(): Uint8Array {
@@ -43,6 +43,10 @@ export async function signSession(payload: SessionPayload): Promise<string> {
 
 const VALID_ROLES: AppRole[] = ["agent", "team_leader", "manager", "admin"];
 
+function normalizeTeam(v: unknown): number | null {
+  return v === null || v === undefined ? null : Number(v);
+}
+
 export async function verifySession(token: string): Promise<SessionPayload | null> {
   try {
     const { payload } = await jwtVerify(token, getSecret(), {
@@ -58,10 +62,8 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
       agentEmail: payload.agentEmail == null ? null : String(payload.agentEmail),
       agentPhone: payload.agentPhone == null ? null : String(payload.agentPhone),
       role,
-      district:
-        payload.district === null || payload.district === undefined
-          ? null
-          : Number(payload.district),
+      // `?? district` tolerates tokens minted before the rename (12h TTL).
+      team: normalizeTeam(payload.team ?? payload.district),
     };
   } catch {
     return null;

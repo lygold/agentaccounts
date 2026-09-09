@@ -21,7 +21,7 @@ function parseForm(formData: FormData) {
     email: formData.get("email") ?? "",
     phone: formData.get("phone") ?? "",
     role: formData.get("role"),
-    district: formData.get("district") ?? "",
+    team: formData.get("team") ?? "",
     isTeamLeader: formData.get("isTeamLeader") === "on",
   });
 }
@@ -63,7 +63,7 @@ export async function createAgentAction(formData: FormData) {
       email: d.email ?? null,
       phone: d.phone ? normalizePhone(d.phone) : null,
       role: d.role,
-      district: d.district ?? null,
+      team: d.team ?? null,
       isTeamLeader: d.isTeamLeader,
     });
     redirect(LIST);
@@ -90,7 +90,7 @@ export async function updateAgentAction(id: string, formData: FormData) {
       email: d.email ?? null,
       phone: d.phone ? normalizePhone(d.phone) : null,
       role: d.role,
-      district: d.district ?? null,
+      team: d.team ?? null,
       isTeamLeader: d.isTeamLeader,
     });
     if (!updated || updated.officeId !== session.officeId) {

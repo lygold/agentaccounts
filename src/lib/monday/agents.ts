@@ -10,7 +10,7 @@ const AGENT_COLUMN_IDS = [
   AGENTS_BOARD.firstNameHebrew,
   AGENTS_BOARD.fullNameEnglish,
   AGENTS_BOARD.surname,
-  AGENTS_BOARD.district,
+  AGENTS_BOARD.team,
   AGENTS_BOARD.isTeamLeader,
   ...(isPendingColumn(AGENTS_BOARD.appRole) ? [] : [AGENTS_BOARD.appRole]),
 ]
@@ -61,13 +61,13 @@ export async function findAgentByContact(contact: string): Promise<Agent | null>
 }
 
 /**
- * Names of every agent in a given רובע (district) — the team roster a team
- * leader is scoped to. Read-only lookup against Daf Kesher; the district
- * column doubles as the team-grouping key (see monday/columns.ts).
+ * Names of every agent on a given team — the roster a team leader is scoped
+ * to. Read-only lookup against Daf Kesher's רובע column. Superseded by an
+ * `agents`-table query in Phase 4c.
  */
-export async function listAgentNamesInDistrict(district: number): Promise<string[]> {
+export async function listAgentNamesInTeam(team: number): Promise<string[]> {
   const query = /* GraphQL */ `
-    query AgentsInDistrict($boardId: ID!, $columnId: String!, $value: String!) {
+    query AgentsInTeam($boardId: ID!, $columnId: String!, $value: String!) {
       items_page_by_column_values(
         limit: 100
         board_id: $boardId
@@ -84,8 +84,8 @@ export async function listAgentNamesInDistrict(district: number): Promise<string
     items_page_by_column_values: { items: Array<{ id: string; name: string }> };
   }>(query, {
     boardId: getAgentsBoardId(),
-    columnId: AGENTS_BOARD.district,
-    value: String(district),
+    columnId: AGENTS_BOARD.team,
+    value: String(team),
   });
   return (data.items_page_by_column_values?.items ?? []).map((i) => i.name);
 }
@@ -113,7 +113,7 @@ export async function getAgentById(id: string): Promise<Agent | null> {
 function toAgent(item: RawItem, matchedContact?: string): Agent {
   const email = getColumnText(item.column_values, AGENTS_BOARD.email);
   const phone = getColumnText(item.column_values, AGENTS_BOARD.phone);
-  const district = getColumnText(item.column_values, AGENTS_BOARD.district);
+  const team = getColumnText(item.column_values, AGENTS_BOARD.team);
   const isTeamLeader = getColumnText(item.column_values, AGENTS_BOARD.isTeamLeader) === "Yes";
   const appRoleText = isPendingColumn(AGENTS_BOARD.appRole)
     ? null
@@ -127,7 +127,7 @@ function toAgent(item: RawItem, matchedContact?: string): Agent {
     firstNameHebrew: getColumnText(item.column_values, AGENTS_BOARD.firstNameHebrew),
     fullNameEnglish: getColumnText(item.column_values, AGENTS_BOARD.fullNameEnglish),
     surname: getColumnText(item.column_values, AGENTS_BOARD.surname),
-    district: district ? Number(district) : null,
+    team: team ? Number(team) : null,
     isTeamLeader,
     role: resolveRole({
       appRoleText,

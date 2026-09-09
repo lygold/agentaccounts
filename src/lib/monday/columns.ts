@@ -11,8 +11,8 @@ export const AGENTS_BOARD = {
   fullNameEnglish: "text_mm01ab4y",
   surname: "surname__1",
   status: "status__1",
-  /** רובע — district number, doubles as the team-grouping key. */
-  district: "numeric_mm0dwhxf",
+  /** רובע — the team-grouping key (surfaced app-wide as "team"). */
+  team: "numeric_mm0dwhxf",
   /** "Is Team Leader" status column, labels Yes/No. */
   isTeamLeader: "color_mm1j9dvy",
   /**

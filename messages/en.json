@@ -139,8 +139,6 @@
     "phone": "Phone",
     "email": "Email",
     "role": "Role",
-    "district": "District (רובע)",
-    "districtShort": "רובע ",
     "isTeamLeader": "Team leader",
     "addSubmit": "Add agent",
     "saveSubmit": "Save changes",
@@ -156,6 +154,11 @@
       "self": "You can't archive your own account.",
       "notfound": "That agent no longer exists.",
       "save": "Something went wrong. Try again."
-    }
+    },
+    "team": "Team",
+    "teamShort": "Team ",
+    "sortBy": "Sort:",
+    "sortTeam": "by team",
+    "sortName": "by name"
   }
 }

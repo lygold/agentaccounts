@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AlertCircle } from "lucide-react";
 import { requireSession, isAdmin } from "@/lib/auth/session-cookie";
-import { listAgentsByOffice } from "@/lib/store/agents";
+import { listAgentsByOffice, compareByTeamThenName } from "@/lib/store/agents";
 import { Nav } from "@/components/nav";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,19 +16,25 @@ const ROLES = ["agent", "team_leader", "manager", "admin"] as const;
 export default async function AdminAgentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; sort?: string }>;
 }) {
   const session = await requireSession();
   if (!isAdmin(session)) redirect("/");
-  const [{ error }, agents, t, tRole] = await Promise.all([
+  const [{ error, sort }, agents, t, tRole] = await Promise.all([
     searchParams,
     listAgentsByOffice(session.officeId, { includeArchived: true }),
     getTranslations("Admin"),
     getTranslations("Enums.role"),
   ]);
 
-  const active = agents.filter((a) => a.status === "active");
-  const archived = agents.filter((a) => a.status === "archived");
+  const sortBy = sort === "name" ? "name" : "team";
+  const order = (list: typeof agents) =>
+    sortBy === "name"
+      ? [...list].sort((a, b) => a.name.localeCompare(b.name))
+      : [...list].sort(compareByTeamThenName);
+
+  const active = order(agents.filter((a) => a.status === "active"));
+  const archived = order(agents.filter((a) => a.status === "archived"));
 
   return (
     <div>
@@ -77,8 +83,8 @@ export default async function AdminAgentsPage({
                 </select>
               </div>
               <div className="flex w-28 flex-col gap-1.5">
-                <Label htmlFor="district">{t("district")}</Label>
-                <Input id="district" name="district" type="number" min="1" />
+                <Label htmlFor="team">{t("team")}</Label>
+                <Input id="team" name="team" type="number" min="1" />
               </div>
               <label className="flex items-center gap-2 pb-2.5">
                 <input type="checkbox" name="isTeamLeader" className="h-4 w-4" />
@@ -88,6 +94,12 @@ export default async function AdminAgentsPage({
             <Button type="submit">{t("addSubmit")}</Button>
           </form>
         </section>
+
+        <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
+          <span>{t("sortBy")}</span>
+          <SortLink active={sortBy === "team"} sort="team" label={t("sortTeam")} />
+          <SortLink active={sortBy === "name"} sort="name" label={t("sortName")} />
+        </div>
 
         <AgentTable
           heading={t("activeHeading", { count: active.length })}
@@ -112,6 +124,29 @@ export default async function AdminAgentsPage({
         )}
       </main>
     </div>
+  );
+}
+
+function SortLink({
+  active,
+  sort,
+  label,
+}: {
+  active: boolean;
+  sort: string;
+  label: string;
+}) {
+  return (
+    <Link
+      href={`/admin/agents?sort=${sort}`}
+      className={
+        active
+          ? "font-semibold text-foreground"
+          : "underline-offset-4 hover:underline"
+      }
+    >
+      {label}
+    </Link>
   );
 }
 
@@ -155,7 +190,7 @@ function AgentTable({
               <div className="flex shrink-0 items-center gap-3">
                 <span className="text-muted-foreground">
                   {tRole(a.role)}
-                  {a.district != null && ` · ${t("districtShort")}${a.district}`}
+                  {a.team != null && ` · ${t("teamShort")}${a.team}`}
                 </span>
                 <Link
                   href={`/admin/agents/${a.id}`}

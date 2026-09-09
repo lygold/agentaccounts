@@ -151,8 +151,9 @@ export interface AgentRecord {
   firstNameHebrew: string | null;
   fullNameEnglish: string | null;
   surname: string | null;
-  /** רובע — team-grouping key for team-leader scoping. */
-  district: number | null;
+  /** Team number (was "רובע" / district on Daf Kesher) — the grouping key
+   *  for team-leader scoping. Null is valid. */
+  team: number | null;
   isTeamLeader: boolean;
   role: AppRole;
   /** `archived` blocks login and hides the agent from pickers; their ledger

@@ -16,7 +16,7 @@ export default async function DealsPage() {
     getTranslations("Enums.stage"),
     getTranslations("Enums.paymentStatus"),
   ]);
-  // agent → own deals; team_leader → own + same-district roster; manager/admin → all.
+  // agent → own deals; team_leader → own + same-team roster; manager/admin → all.
   const deals = filterDealsByNames(allDeals, allowed);
 
   return (

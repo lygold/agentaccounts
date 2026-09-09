@@ -180,7 +180,7 @@ export async function verifyOtp(
       agentEmail: agent.email,
       agentPhone: agent.phone,
       role,
-      district: agent.district,
+      team: agent.team,
     });
 
     await logAudit({ kind: "otp_verify_ok", agentId: agent.id, role, ip });

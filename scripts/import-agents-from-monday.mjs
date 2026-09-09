@@ -55,7 +55,7 @@ const COL = {
   fullNameEnglish: "text_mm01ab4y",
   surname: "surname__1",
   status: "status__1",
-  district: "numeric_mm0dwhxf",
+  team: "numeric_mm0dwhxf",
   isTeamLeader: "color_mm1j9dvy",
 };
 
@@ -144,7 +144,7 @@ function mapAgent(item) {
   const cols = item.column_values;
   const email = text(cols, COL.email)?.toLowerCase() ?? null;
   const phone = normalizePhone(text(cols, COL.phone) ?? "");
-  const districtText = text(cols, COL.district);
+  const teamText = text(cols, COL.team);
   const mondayStatus = text(cols, COL.status);
   const isTeamLeader = text(cols, COL.isTeamLeader) === "Yes";
   return {
@@ -155,7 +155,7 @@ function mapAgent(item) {
     firstNameHebrew: text(cols, COL.firstNameHebrew),
     fullNameEnglish: text(cols, COL.fullNameEnglish),
     surname: text(cols, COL.surname),
-    district: districtText ? Number(districtText) : null,
+    team: teamText ? Number(teamText) : null,
     isTeamLeader,
     role: resolveRole({ isTeamLeader, email, phone }),
     // Inactive / Offboarding on Daf Kesher → archived here (no login, hidden
@@ -228,7 +228,7 @@ for (const raw of items) {
     firstNameHebrew: a.firstNameHebrew,
     fullNameEnglish: a.fullNameEnglish,
     surname: a.surname,
-    district: a.district,
+    team: a.team,
     isTeamLeader: a.isTeamLeader,
     role: a.role,
     status: a.status,

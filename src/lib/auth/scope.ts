@@ -1,22 +1,20 @@
 import "server-only";
 import type { SessionPayload } from "./session";
 import { isManager } from "./session-cookie";
-import { listAgentNamesInDistrict } from "../monday/agents";
+import { listAgentNamesInTeam } from "../monday/agents";
 import type { Deal } from "../types";
 
 /**
  * The set of agent *names* a session is allowed to see data for — used to
  * scope both the deals list and the per-agent ledger:
  *   - manager / admin : everyone  → returns "all"
- *   - team_leader      : themselves + every agent in the same רובע
- *                        (district = the team-grouping key on Daf Kesher)
+ *   - team_leader      : themselves + every agent on the same team
  *   - agent            : themselves only
  *
- * KNOWN LIMITATION — deals and ledger entries created before the Phase 3
- * agent picker carry a *typed* agentName as their identity, not a Daf
- * Kesher pulse id. So matching here is by name string, not id. Once the
- * picker lands (real agentId + denormalised district) this should switch
- * to id matching. See TODO(phase-3) in src/app/deals/actions.ts.
+ * KNOWN LIMITATION — deals and ledger entries created before the Phase 4c
+ * agent picker carry a *typed* agentName as their identity, not an agent id.
+ * So matching here is by name string, not id. Once the picker lands (real
+ * agentId + denormalised team) this switches to id matching.
  */
 export async function allowedAgentNames(
   session: SessionPayload,
@@ -24,8 +22,8 @@ export async function allowedAgentNames(
   if (isManager(session)) return "all";
 
   const names = new Set<string>([session.agentName]);
-  if (session.role === "team_leader" && session.district != null) {
-    for (const n of await listAgentNamesInDistrict(session.district)) {
+  if (session.role === "team_leader" && session.team != null) {
+    for (const n of await listAgentNamesInTeam(session.team)) {
       names.add(n);
     }
   }

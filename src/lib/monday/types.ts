@@ -10,8 +10,8 @@ export interface Agent {
   firstNameHebrew: string | null;
   fullNameEnglish: string | null;
   surname: string | null;
-  /** רובע — district number; also the team-grouping key for team leaders. */
-  district: number | null;
+  /** Team number (Daf Kesher's רובע column) — the team-grouping key. */
+  team: number | null;
   isTeamLeader: boolean;
   /** Resolved role — from the (currently pending) app-role Monday column,
    *  or "agent" as the safe default until that column exists. The
