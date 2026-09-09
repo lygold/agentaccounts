@@ -23,4 +23,6 @@ export const RedisKeys = {
   otpAttempts: (contact: string) => `al:otp:attempts:${contact.toLowerCase()}`,
   otpLock: (contact: string) => `al:otp:lock:${contact.toLowerCase()}`,
   audit: (date: string) => `al:audit:${date}`,
+  /** Dead-letter list for agent → Daf Kesher mirror writes that failed. */
+  agentMirrorDeadletter: "al:sync:agent:deadletter",
 };

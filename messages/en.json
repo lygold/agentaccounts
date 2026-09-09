@@ -158,12 +158,17 @@
       "duplicate": "Another agent in the office already uses that phone or email.",
       "self": "You can't archive your own account.",
       "notfound": "That agent no longer exists.",
-      "save": "Something went wrong. Try again."
+      "save": "Something went wrong. Try again.",
+      "sync": "Sync from Daf Kesher failed. Try again."
     },
     "team": "Team",
     "teamShort": "Team ",
     "sortBy": "Sort:",
     "sortTeam": "by team",
-    "sortName": "by name"
+    "sortName": "by name",
+    "syncFromMonday": "Sync from Daf Kesher",
+    "syncResult": "Synced from Daf Kesher: {created} added, {updated} updated, {archived} archived, {linked} linked.",
+    "syncErrors": "{count} row(s) failed — check the server logs.",
+    "mirrorFails": "{count} agent change(s) failed to write back to Daf Kesher — check the server logs."
   }
 }

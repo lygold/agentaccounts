@@ -11,7 +11,7 @@ frontend:
         # runtime by default — write the ones the app reads into .env.production
         # so process.env has them at request time. Values are redirected to the
         # file, not printed to the build log.
-        - env | grep -E '^(SESSION_SECRET|UPSTASH_|MONDAY_|META_WABA_|MAKE_OTP_WEBHOOK_URL|GREEN_INVOICE_|DYNAMODB_TABLE_|DYNAMO_REGION|S3_ATTACHMENTS_BUCKET|BOOTSTRAP_ADMIN_|OFFICE_ID|NEXT_PUBLIC_)=' >> .env.production
+        - env | grep -E '^(SESSION_SECRET|UPSTASH_|MONDAY_|META_WABA_|MAKE_OTP_WEBHOOK_URL|GREEN_INVOICE_|DYNAMODB_TABLE_|DYNAMO_REGION|S3_ATTACHMENTS_BUCKET|BOOTSTRAP_ADMIN_|OFFICE_ID|SYNC_SECRET|NEXT_PUBLIC_)=' >> .env.production
         - npm run build
   artifacts:
     baseDirectory: .next

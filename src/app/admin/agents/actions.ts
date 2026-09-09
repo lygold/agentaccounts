@@ -10,6 +10,7 @@ import {
   setAgentStatus,
   updateAgent,
 } from "@/lib/store/agents";
+import { mirrorAgentToMonday, syncAgentsFromMonday } from "@/lib/sync/agents";
 import { isNextJsRedirect } from "@/lib/action-utils";
 import type { AgentStatus } from "@/lib/types";
 
@@ -57,7 +58,7 @@ export async function createAgentAction(formData: FormData) {
     if (await contactClash(session.officeId, d.email, d.phone)) {
       redirect(`${LIST}?error=duplicate`);
     }
-    await createAgent({
+    const created = await createAgent({
       officeId: session.officeId,
       name: d.name,
       email: d.email ?? null,
@@ -66,6 +67,7 @@ export async function createAgentAction(formData: FormData) {
       team: d.team ?? null,
       isTeamLeader: d.isTeamLeader,
     });
+    await mirrorAgentToMonday(created); // never throws — dead-letters on failure
     redirect(LIST);
   } catch (e) {
     if (isNextJsRedirect(e)) throw e;
@@ -96,6 +98,7 @@ export async function updateAgentAction(id: string, formData: FormData) {
     if (!updated || updated.officeId !== session.officeId) {
       redirect(`${LIST}?error=notfound`);
     }
+    await mirrorAgentToMonday(updated);
     redirect(LIST);
   } catch (e) {
     if (isNextJsRedirect(e)) throw e;
@@ -114,10 +117,28 @@ export async function setAgentStatusAction(id: string, status: AgentStatus) {
     if (!updated || updated.officeId !== session.officeId) {
       redirect(`${LIST}?error=notfound`);
     }
+    await mirrorAgentToMonday(updated);
     redirect(LIST);
   } catch (e) {
     if (isNextJsRedirect(e)) throw e;
     console.error("setAgentStatusAction failed:", e);
     redirect(`${LIST}?error=save`);
+  }
+}
+
+/** Pull the latest roster from Daf Kesher into the agents table (Phase 4d). */
+export async function syncFromMondayAction() {
+  try {
+    await requireAdmin();
+    const r = await syncAgentsFromMonday();
+    const params = new URLSearchParams({
+      synced: `${r.created}-${r.updated}-${r.archived}-${r.linked}`,
+    });
+    if (r.errors.length) params.set("syncErrors", String(r.errors.length));
+    redirect(`${LIST}?${params.toString()}`);
+  } catch (e) {
+    if (isNextJsRedirect(e)) throw e;
+    console.error("syncFromMondayAction failed:", e);
+    redirect(`${LIST}?error=sync`);
   }
 }

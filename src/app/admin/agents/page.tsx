@@ -3,12 +3,17 @@ import { getTranslations } from "next-intl/server";
 import { AlertCircle } from "lucide-react";
 import { requireSession, isAdmin } from "@/lib/auth/session-cookie";
 import { listAgentsByOffice, compareByTeamThenName } from "@/lib/store/agents";
+import { mirrorFailureCount } from "@/lib/sync/agents";
 import { Nav } from "@/components/nav";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { createAgentAction, setAgentStatusAction } from "./actions";
+import {
+  createAgentAction,
+  setAgentStatusAction,
+  syncFromMondayAction,
+} from "./actions";
 import Link from "next/link";
 
 const ROLES = ["agent", "team_leader", "manager", "admin"] as const;
@@ -16,16 +21,26 @@ const ROLES = ["agent", "team_leader", "manager", "admin"] as const;
 export default async function AdminAgentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; sort?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    sort?: string;
+    synced?: string;
+    syncErrors?: string;
+  }>;
 }) {
   const session = await requireSession();
   if (!isAdmin(session)) redirect("/");
-  const [{ error, sort }, agents, t, tRole] = await Promise.all([
-    searchParams,
-    listAgentsByOffice(session.officeId, { includeArchived: true }),
-    getTranslations("Admin"),
-    getTranslations("Enums.role"),
-  ]);
+  const [{ error, sort, synced, syncErrors }, agents, mirrorFails, t, tRole] =
+    await Promise.all([
+      searchParams,
+      listAgentsByOffice(session.officeId, { includeArchived: true }),
+      mirrorFailureCount(),
+      getTranslations("Admin"),
+      getTranslations("Enums.role"),
+    ]);
+
+  // synced = "created-updated-archived-linked"
+  const syncedCounts = synced?.split("-").map(Number);
 
   const sortBy = sort === "name" ? "name" : "team";
   const order = (list: typeof agents) =>
@@ -40,12 +55,40 @@ export default async function AdminAgentsPage({
     <div>
       <Nav />
       <main className="mx-auto max-w-3xl p-6">
-        <h1 className="mb-4 text-2xl font-bold">{t("title")}</h1>
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <h1 className="text-2xl font-bold">{t("title")}</h1>
+          <form action={syncFromMondayAction}>
+            <Button type="submit" variant="outline" size="sm">
+              {t("syncFromMonday")}
+            </Button>
+          </form>
+        </div>
 
         {error && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" aria-hidden />
             <AlertDescription>{t(`error.${error}`)}</AlertDescription>
+          </Alert>
+        )}
+
+        {syncedCounts && (
+          <Alert className="mb-4">
+            <AlertDescription>
+              {t("syncResult", {
+                created: syncedCounts[0] ?? 0,
+                updated: syncedCounts[1] ?? 0,
+                archived: syncedCounts[2] ?? 0,
+                linked: syncedCounts[3] ?? 0,
+              })}
+              {syncErrors ? ` · ${t("syncErrors", { count: Number(syncErrors) })}` : ""}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {mirrorFails > 0 && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" aria-hidden />
+            <AlertDescription>{t("mirrorFails", { count: mirrorFails })}</AlertDescription>
           </Alert>
         )}
 

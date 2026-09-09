@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySession } from "@/lib/auth/session";
 
-const PUBLIC_PATHS = ["/login"];
+// /api/* routes authenticate themselves (bearer secret, webhook signature).
+const PUBLIC_PATHS = ["/login", "/api/"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
