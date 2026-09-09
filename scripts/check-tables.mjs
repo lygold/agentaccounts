@@ -17,6 +17,7 @@ const EXPECTED = {
   DYNAMODB_TABLE_BILLING: { byDealId: "dealId" },
   DYNAMODB_TABLE_INCOME: { byDealId: "dealId" },
   DYNAMODB_TABLE_AGENT_ACCOUNT: { byAgentId: "agentId" },
+  DYNAMODB_TABLE_AGENTS: { byOfficeId: "officeId", byEmail: "email", byPhone: "phone" },
 };
 
 const region = process.env.AWS_REGION;

@@ -21,14 +21,33 @@ function normalizeContact(contact: string): string {
 }
 
 /**
- * Resolves an agent's role. `BOOTSTRAP_ADMIN_PHONE`/`BOOTSTRAP_ADMIN_EMAIL`
- * is a break-glass override so Levi always has admin access even before the
- * Daf Kesher "app role" column exists (or if it's ever misconfigured) — set
- * one or both in .env.local to your own phone/email.
+ * Break-glass admin override. `BOOTSTRAP_ADMIN_PHONE` / `BOOTSTRAP_ADMIN_EMAIL`
+ * (set one or both in the env) always resolve to `admin`, even if the agent
+ * row / Daf Kesher says otherwise — so Levi can never lock himself out.
+ * Applied at login (src/lib/auth/actions.ts) on top of the stored role.
+ */
+export function isBootstrapAdmin(contact: string | null | undefined): boolean {
+  if (!contact) return false;
+  const normalized = normalizeContact(contact);
+  const bootstrapPhone = process.env.BOOTSTRAP_ADMIN_PHONE
+    ? normalizePhone(process.env.BOOTSTRAP_ADMIN_PHONE)
+    : null;
+  const bootstrapEmail = process.env.BOOTSTRAP_ADMIN_EMAIL?.toLowerCase() ?? null;
+  return (
+    (!!bootstrapPhone && normalized === bootstrapPhone) ||
+    (!!bootstrapEmail && normalized === bootstrapEmail)
+  );
+}
+
+/**
+ * Resolves an agent's role from Daf Kesher data — used only by the Monday
+ * import path now (src/lib/monday/agents.ts + import-agents-from-monday.mjs).
+ * Once an agent lives in the `agents` table the role is read straight off the
+ * row; see [[isBootstrapAdmin]] for the login-time override.
  *
- * Falls back to "team_leader" from the existing "Is Team Leader" flag when
- * the app-role column isn't set for an agent yet, then "agent" as the safe
- * default — never silently grants admin/manager without an explicit source.
+ * Falls back to "team_leader" from the "Is Team Leader" flag when the
+ * (still nonexistent) app-role column isn't set, then "agent" — never
+ * silently grants admin/manager without an explicit source.
  */
 export function resolveRole(opts: {
   appRoleText: string | null;
@@ -37,19 +56,7 @@ export function resolveRole(opts: {
 }): AppRole {
   const { appRoleText, isTeamLeader, contact } = opts;
 
-  if (contact) {
-    const normalized = normalizeContact(contact);
-    const bootstrapPhone = process.env.BOOTSTRAP_ADMIN_PHONE
-      ? normalizePhone(process.env.BOOTSTRAP_ADMIN_PHONE)
-      : null;
-    const bootstrapEmail = process.env.BOOTSTRAP_ADMIN_EMAIL?.toLowerCase() ?? null;
-    if (
-      (bootstrapPhone && normalized === bootstrapPhone) ||
-      (bootstrapEmail && normalized === bootstrapEmail)
-    ) {
-      return "admin";
-    }
-  }
+  if (isBootstrapAdmin(contact)) return "admin";
 
   if (appRoleText && LABEL_TO_ROLE[appRoleText]) {
     return LABEL_TO_ROLE[appRoleText];

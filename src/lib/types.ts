@@ -1,8 +1,13 @@
 /**
- * Core data model — see the approved roadmap plan for the full rationale.
- * agentId is a Daf Kesher (Monday) pulse/item ID as of Phase 2 — same
- * identity sikkumPigisha's own MONDAY_AGENTS_BOARD_ID resolves against.
+ * Core data model — see ROADMAP.md for the full rationale.
+ *
+ * agentId on Deal/AgentLedgerEntry is this app's own `agents` table id
+ * (`agt_…`) as of Phase 4. Rows imported from Daf Kesher (Monday) before
+ * Phase 4 carried the Monday pulse id and were migrated
+ * (scripts/migrate-deal-agent-ids.mjs).
  */
+
+import type { AppRole } from "./monday/types";
 
 export type DealType = "sale" | "rental";
 export type DealSide = "seller" | "buyer" | "landlord" | "renter";
@@ -126,6 +131,38 @@ export interface RecurringExpenseConfig {
   label: string;
   amount: number;
   active: boolean;
+}
+
+export type AgentStatus = "active" | "archived";
+
+/**
+ * The office's own agent directory — the app's canonical identity store as
+ * of Phase 4, replacing per-request reads of the Daf Kesher (Monday) board.
+ * Physical table: agent-ledger-agents (key `id`, GSIs byOfficeId / byEmail /
+ * byPhone).
+ */
+export interface AgentRecord {
+  /** `agt_<uuid>` — generated here, never a Monday id (see `mondayItemId`). */
+  id: string;
+  officeId: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  firstNameHebrew: string | null;
+  fullNameEnglish: string | null;
+  surname: string | null;
+  /** רובע — team-grouping key for team-leader scoping. */
+  district: number | null;
+  isTeamLeader: boolean;
+  role: AppRole;
+  /** `archived` blocks login and hides the agent from pickers; their ledger
+   *  history stays readable. Hard delete only when nothing references them. */
+  status: AgentStatus;
+  /** Daf Kesher pulse id this row was imported from, if any — null for
+   *  agents created in-app. Kept for the migration bridge + reconciliation. */
+  mondayItemId: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CommissionTierRule {

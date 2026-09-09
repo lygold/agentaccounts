@@ -35,6 +35,19 @@ const TABLES = [
     gsis: [["byAgentId", "agentId"]],
   },
   {
+    // The office's agent directory — canonical identity store (Phase 4),
+    // replacing per-request reads of Daf Kesher. Populate with
+    // scripts/import-agents-from-monday.mjs. email/phone GSIs back the login
+    // lookup; an item with no email/phone is simply absent from that index.
+    name: "agent-ledger-agents",
+    attrs: { id: S, officeId: S, email: S, phone: S },
+    gsis: [
+      ["byOfficeId", "officeId"],
+      ["byEmail", "email"],
+      ["byPhone", "phone"],
+    ],
+  },
+  {
     name: "agent-ledger-signed-contracts",
     attrs: { id: S, agentId: S },
     gsis: [["byAgentId", "agentId"]],

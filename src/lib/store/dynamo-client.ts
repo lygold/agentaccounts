@@ -44,6 +44,9 @@ export const TABLES = {
    *  payments to/from them. Physical table: agent-ledger-agent-account. */
   agentAccount: () =>
     requireTableName("DYNAMODB_TABLE_AGENT_ACCOUNT", process.env.DYNAMODB_TABLE_AGENT_ACCOUNT),
+  /** The office's agent directory — canonical identity store (Phase 4).
+   *  Physical table: agent-ledger-agents. */
+  agents: () => requireTableName("DYNAMODB_TABLE_AGENTS", process.env.DYNAMODB_TABLE_AGENTS),
 };
 
 /** Value is passed in via a *static* `process.env.X` read (not a dynamic

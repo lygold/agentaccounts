@@ -3,7 +3,9 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { findAgentByContact, normalizePhone } from "../monday/agents";
+import { findAgentByContact } from "../store/agents";
+import { canonicalizeContact } from "../phone";
+import { isBootstrapAdmin } from "./roles";
 import { sendOtpEmail } from "../email/make-webhook";
 import { sendOtpTemplate, toMetaPhone } from "../waba/client";
 import {
@@ -18,7 +20,6 @@ import { otpSendLimiter, otpVerifyLimiter } from "./rate-limit";
 import { logAudit } from "./audit";
 import { setSessionCookie } from "./session-cookie";
 import { isNextJsRedirect } from "../action-utils";
-import { DEFAULT_OFFICE_ID } from "../office";
 
 const MAX_BAD_ATTEMPTS = 5;
 
@@ -32,11 +33,6 @@ async function getClientIp(): Promise<string> {
   return (
     h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? h.get("x-real-ip") ?? "unknown"
   );
-}
-
-function canonicalize(contact: string): string {
-  const t = contact.trim();
-  return t.includes("@") ? t.toLowerCase() : normalizePhone(t);
 }
 
 const ContactSchema = z.object({
@@ -69,7 +65,7 @@ export async function requestOtp(
   }
 
   const contactInput = parsed.data.contact;
-  const key = canonicalize(contactInput);
+  const key = canonicalizeContact(contactInput);
   const ip = await getClientIp();
 
   if (await isContactLocked(key)) {
@@ -135,7 +131,7 @@ export async function verifyOtp(
     return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
   const { contact, code } = parsed.data;
-  const key = canonicalize(contact);
+  const key = canonicalizeContact(contact);
   const ip = await getClientIp();
 
   try {
@@ -173,17 +169,21 @@ export async function verifyOtp(
       return { ok: false, message: "Account not found." };
     }
 
+    // The stored role is authoritative; the bootstrap allowlist can still
+    // promote to admin so Levi can't be locked out (see roles.ts).
+    const role = isBootstrapAdmin(contact) ? "admin" : agent.role;
+
     await setSessionCookie({
-      officeId: DEFAULT_OFFICE_ID,
+      officeId: agent.officeId,
       agentId: agent.id,
       agentName: agent.name,
       agentEmail: agent.email,
       agentPhone: agent.phone,
-      role: agent.role,
+      role,
       district: agent.district,
     });
 
-    await logAudit({ kind: "otp_verify_ok", agentId: agent.id, role: agent.role, ip });
+    await logAudit({ kind: "otp_verify_ok", agentId: agent.id, role, ip });
   } catch (e) {
     if (isNextJsRedirect(e)) throw e;
     console.error("verifyOtp failed:", e);
