@@ -414,6 +414,10 @@ the review queue.
 
 ## 6. Unscheduled / later
 
+- **Search on every list page** — deals, agents, per-agent ledger, and each
+  pipeline-entity list get a search/filter box. Not yet built; fold into the
+  design pass (Phase 11) or do per-page as the lists grow. (Agents list already
+  has team/name sorting as of Phase 4b.)
 - **Public "open page"** — a pre-auth landing page (link launcher: Drive, forms,
   scheduling, review link, contact sheet, passwords doc, deal-summary /
   price-quote / referral forms), PWA-installable, plus actions agents can take
