@@ -7,7 +7,8 @@
     "dashboard": "לוח בקרה",
     "myLedger": "היומן שלי",
     "deals": "עסקאות",
-    "signOut": "התנתקות"
+    "signOut": "התנתקות",
+    "agents": "סוכנים"
   },
   "Enums": {
     "role": {
@@ -130,5 +131,31 @@
     "submit": "אימות",
     "verifying": "מאמת...",
     "resend": "שליחת קוד מחדש"
+  },
+  "Admin": {
+    "title": "סוכנים",
+    "addTitle": "הוספת סוכן",
+    "name": "שם",
+    "phone": "טלפון",
+    "email": "אימייל",
+    "role": "תפקיד",
+    "district": "רובע",
+    "districtShort": "רובע ",
+    "isTeamLeader": "ראש צוות",
+    "addSubmit": "הוסף סוכן",
+    "saveSubmit": "שמירת שינויים",
+    "edit": "עריכה",
+    "archive": "העברה לארכיון",
+    "restore": "שחזור",
+    "empty": "אין סוכנים.",
+    "activeHeading": "פעילים ({count})",
+    "archivedHeading": "בארכיון ({count})",
+    "error": {
+      "invalid": "בדקו את הטופס — משהו חסר או שגוי.",
+      "duplicate": "לסוכן אחר במשרד כבר יש את הטלפון או האימייל הזה.",
+      "self": "אי אפשר להעביר לארכיון את החשבון שלך.",
+      "notfound": "הסוכן הזה כבר לא קיים.",
+      "save": "משהו השתבש. נסו שוב."
+    }
   }
 }

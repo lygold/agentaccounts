@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { logout } from "@/app/logout/actions";
-import { getSession, isManager } from "@/lib/auth/session-cookie";
+import { getSession, isManager, isAdmin } from "@/lib/auth/session-cookie";
 
 export async function Nav() {
   const [session, t, tRole] = await Promise.all([
@@ -10,6 +10,7 @@ export async function Nav() {
     getTranslations("Enums.role"),
   ]);
   const showDashboard = session ? isManager(session) : false;
+  const showAdmin = session ? isAdmin(session) : false;
   // pr-24: keep the trailing item (sign out in LTR, the links in RTL) clear of
   // the language switcher that's fixed to the top-right corner (LocaleToggle).
   return (
@@ -25,6 +26,7 @@ export async function Nav() {
           )
         )}
         <Link href="/deals">{t("deals")}</Link>
+        {showAdmin && <Link href="/admin/agents">{t("agents")}</Link>}
       </div>
       <div className="flex items-center gap-4">
         {session && (

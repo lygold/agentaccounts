@@ -18,6 +18,17 @@ export function isManager(session: SessionPayload): boolean {
   return MANAGER_ROLES.includes(session.role);
 }
 
+export function isAdmin(session: SessionPayload): boolean {
+  return session.role === "admin";
+}
+
+/** Guard for admin-only surfaces — user/role management, office settings. */
+export async function requireAdmin(): Promise<SessionPayload> {
+  const session = await requireSession();
+  if (!isAdmin(session)) throw new Error("FORBIDDEN");
+  return session;
+}
+
 /** Guard for write actions that only Levi / office managers may perform —
  *  logging deal income, posting commissions, ledger adjustments, creating
  *  deals. Agents (incl. team leaders acting as agents) are read-only. */

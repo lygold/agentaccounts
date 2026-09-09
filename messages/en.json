@@ -7,7 +7,8 @@
     "dashboard": "Dashboard",
     "myLedger": "My ledger",
     "deals": "Deals",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "agents": "Agents"
   },
   "Enums": {
     "role": {
@@ -130,5 +131,31 @@
     "submit": "Verify",
     "verifying": "Verifying...",
     "resend": "Resend code"
+  },
+  "Admin": {
+    "title": "Agents",
+    "addTitle": "Add an agent",
+    "name": "Name",
+    "phone": "Phone",
+    "email": "Email",
+    "role": "Role",
+    "district": "District (רובע)",
+    "districtShort": "רובע ",
+    "isTeamLeader": "Team leader",
+    "addSubmit": "Add agent",
+    "saveSubmit": "Save changes",
+    "edit": "Edit",
+    "archive": "Archive",
+    "restore": "Restore",
+    "empty": "No agents.",
+    "activeHeading": "Active ({count})",
+    "archivedHeading": "Archived ({count})",
+    "error": {
+      "invalid": "Check the form — something's missing or malformed.",
+      "duplicate": "Another agent in the office already uses that phone or email.",
+      "self": "You can't archive your own account.",
+      "notfound": "That agent no longer exists.",
+      "save": "Something went wrong. Try again."
+    }
   }
 }

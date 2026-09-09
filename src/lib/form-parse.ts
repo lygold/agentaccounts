@@ -26,3 +26,36 @@ export const LedgerEntrySchema = z.object({
   description: z.string().trim().min(1),
   date: z.string().trim().min(1),
 });
+
+const AgentRoleEnum = z.enum(["agent", "team_leader", "manager", "admin"]);
+
+/** Admin add/edit agent form. Email/phone are optional individually but at
+ *  least one must be present — it's the login identifier. */
+export const AgentFormSchema = z
+  .object({
+    name: z.string().trim().min(1, "Name is required.").max(120),
+    email: z
+      .string()
+      .trim()
+      .email("Enter a valid email.")
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+    phone: z
+      .string()
+      .trim()
+      .max(30)
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+    role: AgentRoleEnum,
+    district: z.coerce
+      .number()
+      .int()
+      .positive()
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+    isTeamLeader: z.boolean(),
+  })
+  .refine((d) => d.email || d.phone, {
+    message: "Add a phone number or an email — it's how the agent signs in.",
+    path: ["email"],
+  });
