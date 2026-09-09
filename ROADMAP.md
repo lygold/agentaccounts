@@ -398,6 +398,12 @@ the review queue.
 - **Full design pass** — layout system, data density, KPI cards, charts,
   empty / loading / error states, responsive, RTL polish. A professional
   dashboard, not a raw CRUD app.
+- **i18n polish backlog** (collected as found):
+  - Agent names render in Hebrew even on the English site — prefer
+    `agent.fullNameEnglish` when the locale is `en` (the `agents` row carries
+    both). Applies to the ledger page, deals list, admin list, nav.
+  - Login/OTP server-action error messages (`lib/auth/actions.ts`) are still
+    hardcoded English.
 - **Per-office branding — scoped version only:**
   - `office.branding` → inject a `<style>` overriding the CSS design tokens on
     `<html>`; swap the nav logo.
