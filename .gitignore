@@ -43,6 +43,9 @@ scripts/*weiser*
 *.tsbuildinfo
 next-env.d.ts
 
+# raw Claude session transcripts kept locally for reference, not in history
+docs/archive/*.jsonl
+
 # editor
 .vscode/
 .idea/
