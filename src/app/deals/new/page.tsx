@@ -1,16 +1,25 @@
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { AlertCircle } from "lucide-react";
 import { requireSession, isManager } from "@/lib/auth/session-cookie";
+import { listAgentsByOffice } from "@/lib/store/agents";
 import { Nav } from "@/components/nav";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { submitNewDeal } from "../actions";
 
-export default async function NewDealPage() {
+export default async function NewDealPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const session = await requireSession();
   if (!isManager(session)) redirect("/deals");
-  const [t, tDealType, tSide] = await Promise.all([
+  const [{ error }, agents, t, tDealType, tSide] = await Promise.all([
+    searchParams,
+    listAgentsByOffice(session.officeId),
     getTranslations("NewDeal"),
     getTranslations("Enums.dealType"),
     getTranslations("Enums.side"),
@@ -21,8 +30,33 @@ export default async function NewDealPage() {
       <Nav />
       <main className="mx-auto max-w-lg p-6">
         <h1 className="mb-4 text-2xl font-bold">{t("title")}</h1>
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" aria-hidden />
+            <AlertDescription>{t(`error.${error}`)}</AlertDescription>
+          </Alert>
+        )}
         <form action={submitNewDeal} className="flex flex-col gap-4">
-          <Field label={t("agentName")} name="agentName" required />
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="agentId">{t("agent")}</Label>
+            <select
+              id="agentId"
+              name="agentId"
+              required
+              defaultValue=""
+              className="h-11 rounded-md border border-input bg-background px-3"
+            >
+              <option value="" disabled>
+                {t("agentPlaceholder")}
+              </option>
+              {agents.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                  {a.team != null ? ` · ${t("teamShort")}${a.team}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="dealType">{t("dealType")}</Label>
             <select

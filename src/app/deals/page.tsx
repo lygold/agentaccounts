@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { requireSession, isManager } from "@/lib/auth/session-cookie";
-import { allowedAgentNames, filterDealsByNames } from "@/lib/auth/scope";
+import { allowedAgentIds, filterDealsByIds } from "@/lib/auth/scope";
 import { DEAL_INTAKE_URL } from "@/lib/office";
 import { listDeals } from "@/lib/store/deals";
 import { Nav } from "@/components/nav";
@@ -11,13 +11,13 @@ export default async function DealsPage() {
   const session = await requireSession();
   const [allDeals, allowed, t, tStage, tPaymentStatus] = await Promise.all([
     listDeals(),
-    allowedAgentNames(session),
+    allowedAgentIds(session),
     getTranslations("Deals"),
     getTranslations("Enums.stage"),
     getTranslations("Enums.paymentStatus"),
   ]);
   // agent → own deals; team_leader → own + same-team roster; manager/admin → all.
-  const deals = filterDealsByNames(allDeals, allowed);
+  const deals = filterDealsByIds(allDeals, allowed);
 
   return (
     <div>

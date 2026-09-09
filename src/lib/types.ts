@@ -30,8 +30,13 @@ export interface Deal {
    *  fixed value today; exists from day one so a second office is a new
    *  value, not a backfill. */
   officeId: string;
+  /** The `agents` table id (`agt_…`). Set from the agent picker as of
+   *  Phase 4c; pre-4c rows were migrated from a Monday pulse id / typed name. */
   agentId: string;
   agentName: string;
+  /** The agent's team when the deal was created — denormalised so
+   *  team-leader scoping needs no roster lookup. */
+  team?: number | null;
   dealType: DealType;
   side: DealSide;
   clientName: string;

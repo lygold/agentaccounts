@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireSession, isManager } from "@/lib/auth/session-cookie";
-import { allowedAgentNames, isNameAllowed } from "@/lib/auth/scope";
+import { allowedAgentIds, isIdAllowed } from "@/lib/auth/scope";
 import { getAgentById } from "@/lib/store/agents";
 import { listLedgerEntriesForAgent, runningBalance, entryExVat } from "@/lib/store/agent-ledger";
 import { Nav } from "@/components/nav";
@@ -22,7 +22,7 @@ export default async function AgentLedgerPage({
   const [agent, entries, allowed, t, tLedgerType] = await Promise.all([
     getAgentById(agentId),
     listLedgerEntriesForAgent(agentId),
-    allowedAgentNames(session),
+    allowedAgentIds(session),
     getTranslations("AgentPage"),
     getTranslations("Enums.ledgerType"),
   ]);
@@ -33,7 +33,7 @@ export default async function AgentLedgerPage({
   // An agent may only open their own ledger; a team leader their team's;
   // manager/admin anyone's.
   const isSelf = agentId === session.agentId;
-  if (!isSelf && !isNameAllowed(allowed, agentName)) notFound();
+  if (!isSelf && !isIdAllowed(allowed, agentId)) notFound();
   const canEdit = isManager(session);
 
   return (

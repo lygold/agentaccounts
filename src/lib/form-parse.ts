@@ -2,7 +2,7 @@ import "server-only";
 import { z } from "zod";
 
 export const DealSchema = z.object({
-  agentName: z.string().trim().min(1),
+  agentId: z.string().trim().min(1),
   dealType: z.enum(["sale", "rental"]),
   side: z.enum(["seller", "buyer", "landlord", "renter"]),
   clientName: z.string().trim().min(1),

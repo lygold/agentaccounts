@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { requireManager } from "@/lib/auth/session-cookie";
+import { getAgentById } from "@/lib/store/agents";
 import { DealSchema, IncomeEntrySchema } from "@/lib/form-parse";
 import { DOCUMENT_TYPE, type ReceiptDocumentType } from "@/lib/green-invoice/documents";
 import {
@@ -18,7 +19,7 @@ export async function submitNewDeal(formData: FormData) {
   try {
     const session = await requireManager();
     const parsed = DealSchema.safeParse({
-      agentName: formData.get("agentName"),
+      agentId: formData.get("agentId"),
       dealType: formData.get("dealType"),
       side: formData.get("side"),
       clientName: formData.get("clientName"),
@@ -32,14 +33,15 @@ export async function submitNewDeal(formData: FormData) {
     });
     if (!parsed.success) return;
 
-    // TODO(phase-3): agentId is still the typed name, not a real Daf Kesher
-    // id — this manual-entry form predates Monday-backed identity and needs
-    // a real agent picker once role-scoped creation is designed.
-    const agentName = parsed.data.agentName.trim();
+    const agent = await getAgentById(parsed.data.agentId);
+    if (!agent || agent.officeId !== session.officeId || agent.status !== "active") {
+      redirect("/deals/new?error=agent");
+    }
     const deal = await createDealWithBilling({
       officeId: session.officeId,
-      agentId: agentName,
-      agentName,
+      agentId: agent.id,
+      agentName: agent.name,
+      team: agent.team,
       dealType: parsed.data.dealType,
       side: parsed.data.side,
       clientName: parsed.data.clientName,

@@ -26,6 +26,7 @@ export interface NewDealInput {
   officeId: string;
   agentId: string;
   agentName: string;
+  team?: number | null;
   dealType: DealType;
   side: DealSide;
   clientName: string;
@@ -46,6 +47,7 @@ export interface NewDealInput {
 export async function createDealWithBilling(input: NewDealInput): Promise<Deal> {
   const deal = await createDeal({
     ...input,
+    team: input.team ?? null,
     stage: input.signingDate ? "signed" : "potential",
     paymentStatus: "due",
   });

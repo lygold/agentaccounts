@@ -58,7 +58,6 @@
   },
   "NewDeal": {
     "title": "עסקה חדשה",
-    "agentName": "שם הסוכן",
     "dealType": "סוג עסקה",
     "side": "צד מיוצג",
     "clientName": "שם הלקוח",
@@ -69,7 +68,13 @@
     "referralPercent": "אחוז ההפניה מהעמלה",
     "sikkumDate": "תאריך הסיכום",
     "signingDate": "תאריך חתימה",
-    "submit": "צור עסקה"
+    "submit": "צור עסקה",
+    "agent": "סוכן",
+    "agentPlaceholder": "בחרו סוכן…",
+    "teamShort": "צוות ",
+    "error": {
+      "agent": "הסוכן הזה לא במשרד שלך, או שהועבר לארכיון."
+    }
   },
   "DealDetail": {
     "errorBanner": "משהו נכשל — בדקו את יומני השרת (למשל, ייתכן שפרטי ההתחברות ל-Green Invoice עדיין לא הוגדרו ב-.env.local).",

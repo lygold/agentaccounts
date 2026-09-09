@@ -1,45 +1,44 @@
 import "server-only";
 import type { SessionPayload } from "./session";
 import { isManager } from "./session-cookie";
-import { listAgentNamesInTeam } from "../monday/agents";
+import { listAgentIdsInTeam } from "../store/agents";
 import type { Deal } from "../types";
 
 /**
- * The set of agent *names* a session is allowed to see data for — used to
- * scope both the deals list and the per-agent ledger:
- *   - manager / admin : everyone  → returns "all"
+ * The set of agent ids a session may see data for — scopes the deals list
+ * and the per-agent ledger:
+ *   - manager / admin : everyone      → "all"
  *   - team_leader      : themselves + every agent on the same team
  *   - agent            : themselves only
  *
- * KNOWN LIMITATION — deals and ledger entries created before the Phase 4c
- * agent picker carry a *typed* agentName as their identity, not an agent id.
- * So matching here is by name string, not id. Once the picker lands (real
- * agentId + denormalised team) this switches to id matching.
+ * As of Phase 4c this is id-based (the deal's `agentId` is the `agents`
+ * table id). Deals created before the agent picker were migrated; any that
+ * still carry a name simply won't match for a non-manager (managers see all).
  */
-export async function allowedAgentNames(
+export async function allowedAgentIds(
   session: SessionPayload,
 ): Promise<Set<string> | "all"> {
   if (isManager(session)) return "all";
 
-  const names = new Set<string>([session.agentName]);
+  const ids = new Set<string>([session.agentId]);
   if (session.role === "team_leader" && session.team != null) {
-    for (const n of await listAgentNamesInTeam(session.team)) {
-      names.add(n);
+    for (const id of await listAgentIdsInTeam(session.officeId, session.team)) {
+      ids.add(id);
     }
   }
-  return names;
+  return ids;
 }
 
-export function isNameAllowed(allowed: Set<string> | "all", name: string): boolean {
-  return allowed === "all" || allowed.has(name);
+export function isIdAllowed(allowed: Set<string> | "all", id: string): boolean {
+  return allowed === "all" || allowed.has(id);
 }
 
-export function filterDealsByNames(deals: Deal[], allowed: Set<string> | "all"): Deal[] {
+export function filterDealsByIds(deals: Deal[], allowed: Set<string> | "all"): Deal[] {
   if (allowed === "all") return deals;
-  return deals.filter((d) => allowed.has(d.agentName));
+  return deals.filter((d) => allowed.has(d.agentId));
 }
 
 /** Single-deal guard for the deal detail page. */
 export async function canSeeDeal(session: SessionPayload, deal: Deal): Promise<boolean> {
-  return isNameAllowed(await allowedAgentNames(session), deal.agentName);
+  return isIdAllowed(await allowedAgentIds(session), deal.agentId);
 }

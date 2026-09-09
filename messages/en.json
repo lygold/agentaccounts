@@ -58,7 +58,6 @@
   },
   "NewDeal": {
     "title": "New deal",
-    "agentName": "Agent name",
     "dealType": "Deal type",
     "side": "Side represented",
     "clientName": "Client name",
@@ -69,7 +68,13 @@
     "referralPercent": "Referral % of commission",
     "sikkumDate": "Sikkum date",
     "signingDate": "Signing date",
-    "submit": "Create deal"
+    "submit": "Create deal",
+    "agent": "Agent",
+    "agentPlaceholder": "Select an agent…",
+    "teamShort": "Team ",
+    "error": {
+      "agent": "That agent isn't in your office, or is archived."
+    }
   },
   "DealDetail": {
     "errorBanner": "Something failed — check the server logs (e.g. Green Invoice credentials may not be set yet in .env.local).",

@@ -120,6 +120,16 @@ export function compareByTeamThenName(a: AgentRecord, b: AgentRecord): number {
   return a.name.localeCompare(b.name);
 }
 
+/** Ids of every agent on a team (any status) — the roster a team leader is
+ *  scoped to. Replaces the Daf Kesher roster lookup (Phase 4c). */
+export async function listAgentIdsInTeam(
+  officeId: string,
+  team: number,
+): Promise<string[]> {
+  const roster = await listAgentsByOffice(officeId, { includeArchived: true });
+  return roster.filter((a) => a.team === team).map((a) => a.id);
+}
+
 export interface NewAgentInput {
   officeId: string;
   name: string;
