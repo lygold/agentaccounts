@@ -1,0 +1,569 @@
+<title>Building the Agent Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500&display=swap">
+
+<style>
+  :root {
+    --ground:      #f4f6f8;
+    --surface:     #ffffff;
+    --surface-2:   #eef1f4;
+    --ink:         #1b2233;
+    --ink-soft:    #59616f;
+    --ink-faint:   #8b93a1;
+    --rule:        #e0e4e9;
+    --rule-strong: #cbd1da;
+    --accent:      #0e7c6b;
+    --accent-ink:  #0a5d50;
+    --accent-soft: #e6f2ef;
+    --flag:        #a56a12;
+    --flag-soft:   #f8efdd;
+    --risk:        #a83a3a;
+    --risk-soft:   #f7e8e6;
+    --shadow:      0 1px 2px rgba(20,28,45,.05), 0 6px 20px -12px rgba(20,28,45,.14);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #13161d;
+      --surface:     #1b1f28;
+      --surface-2:   #22273080;
+      --ink:         #e6e9ef;
+      --ink-soft:    #a0a8b6;
+      --ink-faint:   #6d7583;
+      --rule:        #2b303b;
+      --rule-strong: #3a414f;
+      --accent:      #37a998;
+      --accent-ink:  #5fc3b3;
+      --accent-soft: #16302c;
+      --flag:        #dcab55;
+      --flag-soft:   #322a19;
+      --risk:        #dc8686;
+      --risk-soft:   #331f1f;
+      --shadow:      0 1px 2px rgba(0,0,0,.3), 0 8px 24px -14px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:      #13161d;
+    --surface:     #1b1f28;
+    --surface-2:   #22273080;
+    --ink:         #e6e9ef;
+    --ink-soft:    #a0a8b6;
+    --ink-faint:   #6d7583;
+    --rule:        #2b303b;
+    --rule-strong: #3a414f;
+    --accent:      #37a998;
+    --accent-ink:  #5fc3b3;
+    --accent-soft: #16302c;
+    --flag:        #dcab55;
+    --flag-soft:   #322a19;
+    --risk:        #dc8686;
+    --risk-soft:   #331f1f;
+    --shadow:      0 1px 2px rgba(0,0,0,.3), 0 8px 24px -14px rgba(0,0,0,.5);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", "IBM Plex Sans Hebrew", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: clamp(2rem, 5vw, 5rem) clamp(1.15rem, 4vw, 2.5rem) 6rem;
+  }
+
+  h1, h2, h3 {
+    font-family: "Fraunces", ui-serif, Georgia, serif;
+    font-weight: 500;
+    color: var(--ink);
+    text-wrap: balance;
+    margin: 0;
+  }
+  h1 {
+    font-size: clamp(2.1rem, 5.5vw, 3.15rem);
+    line-height: 1.08;
+    letter-spacing: -0.015em;
+    font-weight: 600;
+  }
+  h2 {
+    font-size: clamp(1.4rem, 3vw, 1.7rem);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+  h3 {
+    font-size: 1.075rem;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    font-family: "IBM Plex Sans", "IBM Plex Sans Hebrew", sans-serif;
+  }
+  p { margin: 0; max-width: 68ch; }
+  a { color: var(--accent-ink); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  strong { font-weight: 600; }
+  em { font-style: normal; background: var(--accent-soft); color: var(--accent-ink); padding: 0 .22em; border-radius: 3px; }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .72rem;
+    font-weight: 500;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+  }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .86em;
+    background: var(--surface-2);
+    border: 1px solid var(--rule);
+    padding: .06em .38em;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .masthead { margin-bottom: 3.5rem; }
+  .masthead .eyebrow { display: block; margin-bottom: 1.1rem; }
+  .masthead h1 { margin-bottom: 1.15rem; }
+  .lede {
+    font-size: 1.14rem;
+    color: var(--ink-soft);
+    max-width: 62ch;
+  }
+  .lede strong { color: var(--ink); }
+  .meta {
+    margin-top: 1.9rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    flex-wrap: wrap;
+    gap: .6rem 1.6rem;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .76rem;
+    letter-spacing: .04em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+  }
+  .meta b { color: var(--ink-soft); font-weight: 500; }
+  .tag {
+    display: inline-block;
+    border: 1px solid var(--accent);
+    color: var(--accent-ink);
+    border-radius: 999px;
+    padding: .12em .7em;
+    font-size: .7rem;
+    letter-spacing: .1em;
+  }
+
+  section { margin-top: 3.4rem; }
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: .9rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: .7rem;
+    border-bottom: 2px solid var(--ink);
+  }
+  .sec-head .n {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .8rem;
+    font-weight: 500;
+    color: var(--ink-faint);
+  }
+  .prose > * + * { margin-top: 1rem; }
+  .prose { color: var(--ink); }
+
+  .decisions { display: grid; gap: .8rem; margin-top: 1.4rem; }
+  .decision {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: 7px;
+    padding: .95rem 1.15rem;
+    box-shadow: var(--shadow);
+  }
+  .decision h3 { margin-bottom: .3rem; }
+  .decision p { color: var(--ink-soft); font-size: .93rem; }
+  .decision .k {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .66rem;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    display: block;
+    margin-bottom: .45rem;
+  }
+
+  .questions {
+    background: var(--flag-soft);
+    border: 1px solid color-mix(in srgb, var(--flag) 35%, transparent);
+    border-radius: 8px;
+    padding: 1.3rem 1.4rem;
+    margin-top: 1.4rem;
+  }
+  .questions ul { margin: 0; padding: 0; list-style: none; display: grid; gap: .8rem; }
+  .questions li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: .7rem;
+    font-size: .93rem;
+    color: var(--ink);
+  }
+  .questions li::before {
+    content: "?";
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 600;
+    color: var(--flag);
+    line-height: 1.5;
+  }
+  .questions li b { font-weight: 600; }
+  .questions li span { color: var(--ink-soft); }
+
+  .split { display: grid; gap: 1.1rem; margin-top: 1.3rem; }
+  @media (min-width: 720px) { .split { grid-template-columns: 1fr 1fr; } }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 1.15rem 1.25rem;
+  }
+  .panel h3 { margin-bottom: .8rem; display: flex; align-items: center; gap: .5rem; }
+  .panel h3 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
+  .panel ul { margin: 0; padding-left: 1.1rem; display: grid; gap: .4rem; }
+  .panel li { font-size: .9rem; color: var(--ink-soft); }
+  .panel li b { color: var(--ink); font-weight: 500; }
+
+  .tablewrap { overflow-x: auto; margin-top: 1.3rem; border: 1px solid var(--rule); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: .88rem; min-width: 560px; }
+  th, td { text-align: left; padding: .65rem .85rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  thead th {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .66rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    background: var(--surface-2);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td .mono { font-size: .82rem; color: var(--accent-ink); }
+  td.new::after { content: "NEW"; font-family: "IBM Plex Mono", monospace; font-size: .58rem; letter-spacing: .1em; color: var(--accent); border: 1px solid var(--accent); border-radius: 3px; padding: .05em .3em; margin-left: .45em; vertical-align: middle; }
+
+  .phases { display: grid; gap: 1rem; margin-top: 1.5rem; }
+  .phase {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 9px;
+    padding: 1.2rem 1.3rem 1.3rem;
+    box-shadow: var(--shadow);
+  }
+  .phase-top { display: flex; align-items: baseline; gap: .8rem; flex-wrap: wrap; margin-bottom: .2rem; }
+  .phase-n {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .7rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    color: var(--surface);
+    background: var(--accent);
+    padding: .2em .6em;
+    border-radius: 4px;
+  }
+  .phase:first-child .phase-n { background: var(--ink-faint); }
+  .phase-title { font-family: "Fraunces", serif; font-size: 1.18rem; font-weight: 600; letter-spacing: -.01em; }
+  .phase-goal { color: var(--ink-soft); font-size: .93rem; margin: .5rem 0 .85rem; }
+  .phase ul { margin: 0; padding-left: 1.15rem; display: grid; gap: .45rem; }
+  .phase li { font-size: .9rem; }
+  .phase li b { font-weight: 600; }
+  .phase-out {
+    margin-top: .95rem;
+    padding-top: .75rem;
+    border-top: 1px dashed var(--rule-strong);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .72rem;
+    letter-spacing: .03em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+  }
+  .phase-out b { color: var(--accent-ink); font-weight: 500; }
+
+  .later {
+    margin-top: 1.1rem;
+    background: var(--surface-2);
+    border: 1px dashed var(--rule-strong);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    font-size: .9rem;
+    color: var(--ink-soft);
+  }
+  .later b { color: var(--ink); font-weight: 600; }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--rule);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .74rem;
+    letter-spacing: .04em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+  }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <span class="eyebrow">Program plan &middot; agentLedger</span>
+    <h1>Building the Agent Hub</h1>
+    <p class="lede">One app RE/MAX Jerusalem agents open for <strong>everything</strong> — their standing (owed / owing, has the client paid, has Ariyel paid me), receipt uploads, deal notes, new deals via the summary-of-terms form, and adding a property. <strong>agentLedger</strong> is the base; <strong>sikkumPigisha</strong>'s wizard moves in and it's retired. Monday stays in two-way sync as a <em>migration bridge</em>, then it's archived.</p>
+    <div class="meta">
+      <span><b>Status</b> <span class="tag">Phase 0 &middot; deploying</span></span>
+      <span><b>Owner</b> Levi</span>
+      <span><b>Backup admin</b> Ariyel</span>
+      <span><b>Date</b> 2026-09-03</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-head"><span class="n">01</span><h2>Why one app</h2></div>
+    <div class="prose">
+      <p>agentLedger and sikkumPigisha are ~60% the same code — Next 15 / App Router / Tailwind / shadcn, the same OTP&nbsp;&rarr;&nbsp;Daf&nbsp;Kesher&nbsp;&rarr;&nbsp;JWT auth, one Monday token, one WhatsApp template, one Redis account, one Green Invoice account. They independently carry near-identical <code>auth/</code>, <code>monday/client.ts</code>, <code>commission.ts</code>, <code>waba/client.ts</code>, <code>redis.ts</code>, and the UI primitives.</p>
+      <p>agentLedger has the DynamoDB layer, the four-role permission system, and the ledger. sikkumPigisha is single-role and form-only. So the wizard moves <em>into</em> agentLedger and sikkumPigisha is retired. Design polish is deliberately deferred — functionality first.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="n">02</span><h2>Decisions locked</h2></div>
+    <div class="decisions">
+      <div class="decision">
+        <span class="k">Monday</span>
+        <h3>Two-way sync as a migration bridge</h3>
+        <p>DynamoDB is the source of truth from Phase&nbsp;1. Monday mirrors both directions so the secretary, Ariyel, and the Make PDF scenario keep working — then the boards are archived within months. Daf Kesher (identity) stays.</p>
+      </div>
+      <div class="decision">
+        <span class="k">Client signing</span>
+        <h3>The hub is not a signing platform</h3>
+        <p>The three external signing programs stay. The hub receives <strong>emailed copies</strong> of signed forms (haskama / biladiut / buyer representation), Claude-parses them into a draft record, Levi confirms, and it's matched to a property or deal.</p>
+      </div>
+      <div class="decision">
+        <span class="k">Pipeline</span>
+        <h3>Linked entities with propagation rules</h3>
+        <p>Signed&nbsp;Contract &rlarr; Property &rlarr; Offer &rlarr; Deal — each its own record and its own status, cross-linked. Rules propagate both ways: offer accepted &rarr; property "In Negotiation"; deal signed &rarr; property "Signed"; deal cancelled &rarr; property "Active".</p>
+      </div>
+      <div class="decision">
+        <span class="k">Income</span>
+        <h3>Green Invoice is the source of truth</h3>
+        <p>Receipts (<strong>חשבונית מס / קבלה</strong>) are made on the Green Invoice website. A <strong>webhook</strong> tells the hub; it resolves the receipt to its חשבון עסקה (300), to the deal, creates the income row, and auto-posts the agent's commission. Scheduled poll as a fallback; manual PDF upload as a last resort.</p>
+      </div>
+      <div class="decision">
+        <span class="k">Agent expenses</span>
+        <h3>Billed via a 300, cleared by webhook</h3>
+        <p>Expense rows are added — recurring ones automatically, others by hand. The hub then sends the agent a <strong>חשבון עסקה</strong> via the GI API; Levi charges their card in GI; the webhook marks those expenses <strong>paid</strong> (<code>payment_by_agent</code>). Ariyel always pays agents their <em>full</em> commission — expenses are settled separately.</p>
+      </div>
+      <div class="decision">
+        <span class="k">Ledger amounts</span>
+        <h3>Every entry carries both VAT figures</h3>
+        <p><code>amount</code> (VAT-inclusive — the cash figure, drives the daily-report balance) and <code>amountExVat</code> (pre-VAT — what the agent earns, what commission tiers accumulate). Already built.</p>
+      </div>
+      <div class="decision">
+        <span class="k">Deal notes</span>
+        <h3>Append-only timestamped log</h3>
+        <p>Every deal — potential or signed — has a running thread. Each note carries its author and time; nothing overwrites. Agents write on their own deals, team leaders on their team's, managers on any.</p>
+      </div>
+      <div class="decision">
+        <span class="k">Deferred</span>
+        <h3>Contact layer, in-app PDF, WhatsApp control</h3>
+        <p>Start with the Signed Contract as the client unit (dedup into a Contact entity later). Keep the Make.com PDF during the bridge; rebuild it in-app at Monday retirement. Managing the hub by WhatsApp command is a later layer — which is why every operation is written as a callable service now.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="n">03</span><h2>The pipeline</h2></div>
+    <div class="prose">
+      <p><strong>Sign client</strong> (haskama / biladiut) &rarr; for a seller, the property is listed and the secretary publishes it; for a buyer, an <strong>offer</strong> (הצעת מחיר) is made and accepted &rarr; the agent fills the <strong>summary of terms</strong> (prefilled from the offer + property + signed contract) &rarr; <strong>potential deal</strong> &rarr; Levi marks it <strong>signed</strong> (due) &rarr; חשבון עסקה &rarr; client pays &rarr; חשבונית מס / קבלה &rarr; income + auto-commission &rarr; agent sends their חשבונית מס &rarr; daily report &rarr; Ariyel pays &rarr; agent's קבלה.</p>
+      <p>Deals can be one-sided (we represent only the seller or only the buyer) — the other side is recorded by name only, no chase for their details.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="n">04</span><h2>Cross-cutting</h2></div>
+    <div class="split">
+      <div class="panel">
+        <h3><span class="dot"></span>Principles</h3>
+        <ul>
+          <li><b>Service layer</b> — every business operation is a plain function in <code>lib/services/*</code>; the web forms and a future WhatsApp bot are thin callers</li>
+          <li><b>DynamoDB is the source of truth</b> from Phase&nbsp;1</li>
+          <li><b>Mirror writes never block the user</b> — dead-letter log + a manager "resync" action</li>
+          <li><b>Ariyel = admin</b> (reports + full backup for Levi). Secretary tooling is later</li>
+          <li><b>Reuse, don't rebuild</b> — agentLedger's shared code wins; sikkumPigisha's extra pieces move over</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3><span class="dot"></span>Moves from sikkumPigisha</h3>
+        <ul>
+          <li>The <b>18-step wizard</b> &rarr; <code>/deals/new/(wizard)/*</code></li>
+          <li><b>Claude doc-extraction</b> + the upload step</li>
+          <li>Monday board libs — properties, clients, offers, deal-write</li>
+          <li>Matching — <code>property-match</code>, <code>offer-match</code></li>
+          <li>Wizard infra — step routing, Redis drafts, validation</li>
+          <li>Party sub-forms — owners / buyers / lawyers / agents, commission</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="n">05</span><h2>Data model</h2></div>
+    <p class="prose" style="color:var(--ink-soft)">New DynamoDB tables (patterns follow <code>lib/store/dynamo-store.ts</code>). All carry <code>officeId</code>.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Table</th><th>Holds</th><th>Key / index</th></tr></thead>
+        <tbody>
+          <tr><td class="new"><span class="mono">signed-contracts</span></td><td>Parsed copy of a signed form — client(s) + ID, side, haskama/biladiut, property, commission terms, signed &amp; exclusivity dates, PDF key</td><td><span class="mono">id</span> &middot; <span class="mono">byAgentId</span></td></tr>
+          <tr><td class="new"><span class="mono">properties</span></td><td>Listing — mirror of Properties Raw Data + hub-added. Address, price, attributes, photos, listing status, secretary publish-status</td><td><span class="mono">id</span> &middot; <span class="mono">byAgentId</span></td></tr>
+          <tr><td class="new"><span class="mono">offers</span></td><td>הצעת מחיר — buyer(s), property, price, terms, signatures, status</td><td><span class="mono">id</span> &middot; <span class="mono">byAgentId</span></td></tr>
+          <tr><td class="new"><span class="mono">referrals</span></td><td>Incoming / outgoing referral — referring agent/office, contact, % of commission, linked deal</td><td><span class="mono">id</span> &middot; <span class="mono">byDealId</span></td></tr>
+          <tr><td class="new"><span class="mono">deal-notes</span></td><td>Append-only — <span class="mono">dealId, authorId, authorName, body, createdAt</span></td><td><span class="mono">id</span> &middot; <span class="mono">byDealId</span></td></tr>
+          <tr><td class="new"><span class="mono">gi-documents</span></td><td>Every GI doc (300/305/320/400) — type, GI client, amount, <b>target</b> (a deal, or an agent's expense batch), linked-300 id, PDF key</td><td><span class="mono">id</span> &middot; <span class="mono">byDealId</span> &middot; <span class="mono">byGiClientId</span></td></tr>
+          <tr><td><span class="mono">deals</span></td><td>+ <span class="mono">mondayItemId</span>, wizard rich fields, links to signed-contract / offer / property, <span class="mono">pdfStatus</span>, payment lifecycle <span class="mono">owed &rarr; invoice_requested &rarr; payable &rarr; paid &rarr; receipted</span></td><td>unchanged</td></tr>
+          <tr><td><span class="mono">income</span></td><td>+ <span class="mono">source</span> (app / webhook / manual), <span class="mono">greenInvoiceDocId</span>, <span class="mono">attachmentKey</span></td><td>unchanged</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="n">06</span><h2>Phases</h2></div>
+    <p class="prose" style="color:var(--ink-soft)">Ordered. Each phase ships on its own and leaves the app working.</p>
+    <div class="phases">
+
+      <div class="phase">
+        <div class="phase-top"><span class="phase-n">PHASE 0</span><span class="phase-title">Foundations &amp; deploy</span></div>
+        <p class="phase-goal">agentLedger becomes deployable, with room for the work. No UX change. <em>Mostly done.</em></p>
+        <ul>
+          <li>&check; New Amplify app (Git-connected). <b>&check; <code>amplify.yml</code></b> — writes env vars into <code>.env.production</code> at build; Amplify SSR doesn't expose console env vars to the runtime otherwise. This was the deploy blocker.</li>
+          <li>&check; <code>lib/services/{deals,payments,ledger}.ts</code>; actions are thin callers.</li>
+          <li>&check; <code>dynamo-client.ts</code> uses the Amplify compute role at runtime, static keys locally.</li>
+          <li>&check; <code>scripts/create-tables.mjs</code> — 6 new tables + <code>agent-ledger-agent-account</code> (renamed from <code>-ledger-entries</code>).</li>
+          <li>&mdash; Run the table script, attach the IAM compute role, fill real secret values, verify login. <code>pushToDrive()</code> stub &rarr; Phase 3.</li>
+        </ul>
+        <div class="phase-out"><b>Ships:</b> agentLedger live at the Amplify URL, feature-identical to today.</div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-top"><span class="phase-n">PHASE 1</span><span class="phase-title">Dual-write bridge</span></div>
+        <p class="phase-goal">DynamoDB becomes the read source; Monday stays current both ways.</p>
+        <ul>
+          <li><code>lib/sync/</code> — <code>mirrorOut</code> upserts a hub record to its Monday board (fire-and-forget, dead-letter, <code>resync</code> action).</li>
+          <li><code>mirrorIn</code> — a scheduled poll pulls Monday changes back, so secretary / Ariyel edits reach the hub during the bridge.</li>
+          <li>Backfill (2026-forward) — generalise the Weiser import scripts for Red File, Signed Contracts, Properties, Offers.</li>
+          <li>Flip all hub reads to DynamoDB.</li>
+        </ul>
+        <div class="phase-out"><b>Ships:</b> every read served from AWS; Monday mirrors both ways.</div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-top"><span class="phase-n">PHASE 2</span><span class="phase-title">Merge the wizard</span></div>
+        <p class="phase-goal">Deal intake lives in the hub. sikkumPigisha retired.</p>
+        <ul>
+          <li>Move the wizard tree to <code>/deals/new/(wizard)/*</code>; rewire to the shared libs. Keep the Claude upload / pre-fill step.</li>
+          <li>Submit &rarr; <code>services/createDeal</code> &rarr; DynamoDB + mirror to <b>Deals_Raw_Data</b> (Make PDF keeps firing) + Red File.</li>
+          <li>Prefill from the linked accepted offer + property + signed contract.</li>
+          <li>Redirect sikkumPigisha's URL &rarr; <code>/deals/new</code>. Its users re-login once.</li>
+        </ul>
+        <div class="phase-out"><b>Ships:</b> one app, one login. Second codebase gone.</div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-top"><span class="phase-n">PHASE 3</span><span class="phase-title">Green Invoice income + expense engine</span></div>
+        <p class="phase-goal">Income and expenses come from GI documents, not typed numbers.</p>
+        <ul>
+          <li>Green Invoice <b>production cutover</b>.</li>
+          <li>חשבון עסקה (300) stays a <b>button</b> — for a deal, and (new) for an agent's expense batch. Each 300 recorded in <code>gi-documents</code> with its target.</li>
+          <li><code>/api/green-invoice/webhook</code> — receipt &rarr; its 300 &rarr; target. Deal &rarr; income + auto-commission + advance lifecycle. Agent &rarr; mark expenses paid (<code>payment_by_agent</code>). Poll fallback.</li>
+          <li>Manual upload portal. Remove the free-text "log payment" field. Monthly recurring-expense job.</li>
+        </ul>
+        <div class="phase-out"><b>Ships:</b> income and expenses can't drift from Green Invoice.</div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-top"><span class="phase-n">PHASE 4</span><span class="phase-title">Pipeline entities + propagation</span></div>
+        <p class="phase-goal">The linked pipeline agents and managers navigate and update.</p>
+        <ul>
+          <li>Cross-link the entities; <code>lib/services/pipeline.ts</code> runs the propagation rules on both a hub write and a mirrored-in Monday change.</li>
+          <li>Signed-form <b>email ingestion</b> &rarr; Claude extract &rarr; draft record &rarr; Levi's review queue.</li>
+          <li>"Add / update property" form — prefill owner from the signed contract, Google Maps address, photo upload, mirror to Properties.</li>
+          <li>Deal notes thread (own / team / all). Offers created &amp; accepted in the hub.</li>
+        </ul>
+        <div class="phase-out"><b>Ships:</b> agents self-serve notes, properties, offers; pipeline status is live.</div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-top"><span class="phase-n">PHASE 5</span><span class="phase-title">Daily report, standing, notifications</span></div>
+        <p class="phase-goal">Replace the manual Excel tabs and the hand-sent handoffs.</p>
+        <ul>
+          <li>Agent standing view — income &minus; expenses = net, plus a per-deal payment-lifecycle strip.</li>
+          <li><code>/reports/daily?date=</code> — standings, "to pay today", RE/MAX Israel receipts, bank snapshot. Ariyel gets a checklist view.</li>
+          <li>WhatsApp notifications for each handoff — offer accepted, payment received, agent invoice in, Ariyel paid, expense billed, exclusivity expiring.</li>
+        </ul>
+        <div class="phase-out"><b>Ships:</b> the daily report and standings come out of the hub.</div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-top"><span class="phase-n">PHASE 6</span><span class="phase-title">Monday retirement</span></div>
+        <p class="phase-goal">One system of record.</p>
+        <ul>
+          <li>Stop <code>mirrorOut</code> / <code>mirrorIn</code>. Archive Deals_Raw_Data, Red File, Properties, Signed Contracts, Offers, Referrals. Keep Daf Kesher.</li>
+          <li>Rebuild the summary-of-terms PDF in-app; drop the Make scenario.</li>
+          <li>Full pre-2026 backfill if wanted.</li>
+        </ul>
+        <div class="phase-out"><b>Ships:</b> single system of record.</div>
+      </div>
+
+    </div>
+    <div class="later">
+      <b>Later, noted:</b> WhatsApp-first management (natural-language commands over the service layer) &middot; a design pass on the hub and the summary-of-terms form &middot; secretary ad-publishing tools &middot; the deduplicated Contact layer &middot; bank-CSV import feeding the cash-flow reconciliation &middot; agent self-service "mark signed" with a fraud-control gate.
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="n">07</span><h2>Open questions</h2></div>
+    <p class="prose" style="color:var(--ink-soft)">None block Phase&nbsp;0. Several need something from you or an external system.</p>
+    <div class="questions">
+      <ul>
+        <li><b>RE/MAX Israel receipts.</b> <span>Read as: for some cross-office referrals the client pays <strong>RE/MAX Israel</strong>, which issues the tax document (invoice numbers ~221xxx, outside the office's Green Invoice) and remits to RE/MAX Jerusalem. Plan assumes a manual entry form in Phase&nbsp;5. Confirm the money path and whether any feed exists.</span></li>
+        <li><b>Signed-form email parsing.</b> <span>Which forms, from which addresses, how structured (labelled PDF vs. scan)? Are the three signing programs' Make scenarios shareable — they may carry structured data we can POST instead of parsing an email.</span></li>
+        <li><b>Offers Google Form + its Make scenarios.</b> <span>You'll share these — decides whether offers sync automatically or are re-entered.</span></li>
+        <li><b>Per-deal payment lifecycle.</b> <span>Confirm the states <code>owed &rarr; invoice_requested &rarr; payable &rarr; paid &rarr; receipted</code>, and what you key when entering a payment (amount, date, notes, method?).</span></li>
+        <li><b>Notification list &amp; wording.</b> <span>Confirm each handoff fires a WhatsApp, and the exact RE/MAX-brand message text.</span></li>
+        <li><b>Green Invoice webhooks.</b> <span>Confirmed available? Event / payload shape — otherwise the scheduled poll is the primary path.</span></li>
+        <li><b>Monday change transport.</b> <span>Webhooks vs. a scheduled poll for <code>mirrorIn</code> — poll is simpler and the bridge is temporary.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="n">08</span><h2>Verification per phase</h2></div>
+    <div class="panel">
+      <ul>
+        <li><b>Phase 0</b> — hub loads at the Amplify URL; <code>tsc</code> / <code>lint</code> / <code>build</code> clean; a table-check script reports every table + GSI reachable.</li>
+        <li><b>Phase 1</b> — a deal changed in Monday appears in the hub within the poll window and vice-versa; killing the Monday token routes writes to the dead-letter log; backfill count matches the board's 2026 items.</li>
+        <li><b>Phase 2</b> — run the wizard end-to-end in the deployed hub: a Deals_Raw_Data item is created with <code>pdfStatus = "building pdf"</code> and the Make scenario emails the PDF.</li>
+        <li><b>Phase 3</b> — create a 300 from the hub, issue a 320 in GI sandbox, confirm the webhook creates the income row, auto-posts the commission (both VAT figures), advances the lifecycle. Repeat for an agent-expense 300.</li>
+        <li><b>Phase 4</b> — accept an offer &rarr; property flips to "In Negotiation" and the agent gets the prefilled link. Forward a signed haskama &rarr; a draft appears in the review queue.</li>
+        <li><b>Phase 5</b> — <code>/reports/daily</code> for a past date reconciles against that day's PDF in the accounting Drive folder (David Weiser's line already reconciles to ₪23,286 incl / ₪19,734 excl).</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    Building the Agent Hub &middot; Approved 2026-09-03 &middot; agentLedger &larr; sikkumPigisha
+  </footer>
+
+</div>

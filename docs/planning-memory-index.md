@@ -1,0 +1,10 @@
+- [CURRENT STATUS — start here](current-status.md) — Phase 0 deploy mid-flight; done + immediate next actions (2026-09-07)
+- [Agent Hub plan](agent-hub-plan.md) — the program: merge sikkumPigisha wizard into agentLedger; Monday+AWS dual-write bridge; phases 0–6; open questions
+- [User: Levi](user-levi.md) — runs RE/MAX Jerusalem; owns this accounting app
+- [Running locally](running-locally.md) — dev OTP bypass 565656, tables, what must be reachable
+- [Role scoping model](role-scoping.md) — managers write / agents read-only; dashboard/deals/ledger gating
+- [Commission auto-calc](commission-auto.md) — payment auto-posts bracket-blended commission; VAT dual amounts; tier tables
+- [Weiser import](weiser-import.md) — David Weiser 2026 migration; חלוקת חדש 2026.xlsx `data` sheet is the real agent ledger
+- [Daily report is the north star](daily-report-goal.md) — auto-generate the manual daily PDF + replace manual cash-flow Excel
+- [Deals/ledger identity gap](deals-identity-gap.md) — records store typed name not Monday ID; agent picker needed
+- [Key file paths](reference-paths.md) — daily report PDFs, cash-flow Excel, Monday board IDs
