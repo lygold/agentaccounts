@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireSession, isManager } from "@/lib/auth/session-cookie";
 import { allowedAgentNames, isNameAllowed } from "@/lib/auth/scope";
+import { getAgentById } from "@/lib/store/agents";
 import { listLedgerEntriesForAgent, runningBalance, entryExVat } from "@/lib/store/agent-ledger";
 import { Nav } from "@/components/nav";
 import { Input } from "@/components/ui/input";
@@ -18,7 +19,8 @@ export default async function AgentLedgerPage({
   const { agentId: rawAgentId } = await params;
   const agentId = decodeURIComponent(rawAgentId);
 
-  const [entries, allowed, t, tLedgerType] = await Promise.all([
+  const [agent, entries, allowed, t, tLedgerType] = await Promise.all([
+    getAgentById(agentId),
     listLedgerEntriesForAgent(agentId),
     allowedAgentNames(session),
     getTranslations("AgentPage"),
@@ -26,10 +28,11 @@ export default async function AgentLedgerPage({
   ]);
   const balance = runningBalance(entries);
   const balanceExVat = runningBalance(entries, "exVat");
-  const agentName = entries[0]?.agentName ?? agentId;
+  // Prefer the directory name; fall back to a ledger row, then the id.
+  const agentName = agent?.name ?? entries[0]?.agentName ?? agentId;
   // An agent may only open their own ledger; a team leader their team's;
-  // manager/admin anyone's. Route id or entry name may carry the identity.
-  const isSelf = agentId === session.agentId || agentName === session.agentName;
+  // manager/admin anyone's.
+  const isSelf = agentId === session.agentId;
   if (!isSelf && !isNameAllowed(allowed, agentName)) notFound();
   const canEdit = isManager(session);
 
