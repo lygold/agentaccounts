@@ -64,14 +64,30 @@ const tok = await token();
 console.log("auth ok\n");
 
 if (CMD === "create-300") {
-  const client = await api(tok, "/clients", {
-    method: "POST",
-    body: JSON.stringify({
-      name: `Webhook Test — ${new Date().toISOString().slice(0, 10)}`,
-      emails: ["webhook-test@example.com"],
-    }),
-  });
-  console.log("client:", client.id, client.name);
+  // ARG can be an existing client id to reuse.
+  let clientRef = ARG;
+  if (!clientRef) {
+    try {
+      const client = await api(tok, "/clients", {
+        method: "POST",
+        body: JSON.stringify({
+          name: `Webhook Test ${Date.now()}`,
+          emails: ["webhook-test@example.com"],
+        }),
+      });
+      clientRef = client.id;
+      console.log("client (new):", client.id, client.name);
+    } catch (e) {
+      // errorCode 1010 = client with that name exists; message carries its id.
+      const m = String(e.message).match(/"errorMessage":"([0-9a-f-]{36})"/);
+      if (!m) throw e;
+      clientRef = m[1];
+      console.log("client (existing):", clientRef);
+    }
+  } else {
+    console.log("client (reused):", clientRef);
+  }
+  const client = { id: clientRef };
 
   const AMOUNT_INCL = 11700; // ₪10,000 + 18% VAT
   const doc = await api(tok, "/documents", {
