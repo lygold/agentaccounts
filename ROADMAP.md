@@ -83,9 +83,9 @@ log-payment → auto-commission, Green Invoice 300 + receipt creation.
   Phase 4c** (id-based; agent picker; old rows migrated).
 - ~~Deal write actions only `requireSession()`~~ → **fixed Phase 4c** (all
   behind `requireManager()`).
-- Queries are **not office-scoped**: `listAll()` is a raw table scan; the
-  balances dashboard sums every row. Single-item pages don't check
-  `row.officeId`. → **Phase 5a / 5b**
+- ~~Queries not office-scoped; single-item pages don't check `row.officeId`~~
+  → **fixed Phase 5a/5b** (byOfficeId GSIs, `listAll` deleted, `sameOffice`
+  guards, store write-time assertion).
 - Commission tiers (`commission-tiers.ts`) and Green Invoice creds are global
   constants / env, not per-office. → **Phase 5c / 5d**
 - Free-text "log payment" amount on the deal page — should come from GI. → **Phase 6**
@@ -204,11 +204,10 @@ and the per-office / per-agent config that a second office needs — commission
 schemes, expense prices, branding — moved off global constants onto records
 that an office admin can edit. Also the agent lifecycle + richer agent record.
 
-Split into shippable slices. **5a + 5b are the isolation fix and the
-migration-avoiding model changes — do these next. 5c–5e wait until office #2 is
-actually near** (decision D8).
+Split into shippable slices. **5a + 5b done 2026-09-10 (isolation complete).
+5c–5e wait until office #2 is actually near** (decision D8).
 
-#### 5a — office-scoped queries + land the data model
+#### 5a — office-scoped queries + land the data model — ✅ done (`f475d64`, `ba67c26`)
 
 - **`byOfficeId` GSI** on `deals` (HASH `officeId`, RANGE `createdAt`),
   `agent-account` (RANGE `date` — also serves the Phase 7 report),
@@ -238,10 +237,12 @@ actually near** (decision D8).
   - `AgentRecord.licenseNumber?`, and the add form gains the currently
     sync-only optional fields: `fullNameEnglish`, `firstNameHebrew`,
     `surname`. Required stays name + (phone|email) + role.
-  - `Office` type + `agent-ledger-offices` table (key `id`, no GSI) — see 5c
-    for the shape. Seed the `remax-jerusalem` row from current constants/env.
+  - _(deferred to 5c: `Office` type + `agent-ledger-offices` table.)_
+  - _Done: `commissionSchemeId` is type-only until 5c defines the schemes.
+    `expenseChargeDate` is a manual input — the Daf Kesher date column is still
+    on Levi._
 
-#### 5b — office guards + write-time assertion
+#### 5b — office guards + write-time assertion — ✅ done (`59c4c52`)
 
 - **`assertOffice(row, session)` helper** → `notFound()` on mismatch. Apply
   after every `getDeal` / `getAgentById` at a page/action (`/deals/[id]`,
