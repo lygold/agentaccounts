@@ -1,46 +1,73 @@
 ---
 name: role-scoping
-description: "How the dashboard, deals list, and per-agent ledger are gated by role"
+description: "How the dashboard, deals list, per-agent ledger, and admin surfaces are gated by role"
 metadata: 
   node_type: memory
   type: project
   originSessionId: 6609ff1d-e85f-4c01-9fbc-2bcbb4bf3dee
-  modified: 2026-09-02T12:17:03.774Z
+  modified: 2026-09-10
 ---
 
-Added 2026-08-31. Roles: `agent` | `team_leader` | `manager` | `admin`
-(`src/lib/monday/types.ts`). "Managers" = `manager` + `admin`
-(`MANAGER_ROLES` / `isManager()` in `src/lib/auth/session-cookie.ts`).
+Roles: `agent` | `team_leader` | `manager` | `admin` (`AppRole` in
+`src/lib/monday/types.ts`). "Managers" = `manager` + `admin`
+(`MANAGER_ROLES` / `isManager()` in `src/lib/auth/session-cookie.ts`);
+`isAdmin()` is admin-only.
 
-Scoping helper: `src/lib/auth/scope.ts` — `allowedAgentNames(session)` returns
-`"all"` for managers, else a `Set` of agent names (own name always included;
-team leaders add their רובע/district roster via Monday).
+Guards in `session-cookie.ts`: `requireSession()` (any logged-in),
+`requireManager()` (throws `FORBIDDEN` otherwise), `requireAdmin()`
+(admin only).
+
+## Read scoping — `src/lib/auth/scope.ts` (id-based since Phase 4c)
+
+`allowedAgentIds(session)` → `"all"` for managers, else a `Set<string>` of
+**agent-table ids** (`agt_…`): own id always, plus — for a team leader with a
+`session.team` — every id on that team via `listAgentIdsInTeam(officeId,
+team)` (agents table, `byOfficeId` GSI; includes archived). No Monday call.
+Helpers: `isIdAllowed`, `filterDealsByIds`, `canSeeDeal`.
+
+Matching is by `deal.agentId` === agents-table id. Deals are created with the
+real id via the `/deals/new` agent picker; pre-Phase-4 rows were migrated
+(`scripts/migrate-deal-agent-ids.mjs`). A row still carrying a bare name just
+won't match for a non-manager. See [[deals-identity-gap]].
 
 | Route | agent | team_leader | manager/admin |
 |---|---|---|---|
-| `/` dashboard (all agent balances) | redirected to own ledger | redirected to own ledger | full view |
-| `/deals` + `/deals/[id]` | own deals only, VIEW ONLY | own + same-district, VIEW ONLY | all + all write actions |
-| `/agents/[agentId]` ledger | own only, VIEW ONLY | own + district, VIEW ONLY | anyone + Add-entry form |
-| `/deals/new` | redirected to /deals | redirected to /deals | full |
+| `/` dashboard (all agent balances) | → own ledger | → own ledger | full view |
+| `/deals` + `/deals/[id]` | own deals, VIEW ONLY | own + same-team, VIEW ONLY | all + all write actions |
+| `/agents/[agentId]` ledger | own only, VIEW ONLY | own + team, VIEW ONLY | anyone + Add-entry form |
+| `/deals/new` | → /deals | → /deals | full (agent picker) |
+| `/admin/agents` + `/admin/agents/[id]` | → / | → / | **admin only** (`isAdmin`, else redirect `/`) |
 
-**Write actions are manager-only** (added 2026-09-02): `requireManager()` helper
-in session-cookie.ts (throws "FORBIDDEN" for non-managers). Gates every action in
-`deals/actions.ts` (submitNewDeal, submitIncome, GI client/300/receipt actions) and
-`agents/[agentId]/actions.ts` submitLedgerEntry. Pages hide the forms via
-`canEdit = isManager(session)`. Agents/team-leaders are strictly read-only.
+## Write scoping
 
-Nav (`src/components/nav.tsx`): managers see "Dashboard" link; everyone else
-sees "My ledger" → `/agents/{session.agentId}`.
+All write actions are **manager-only** (`requireManager()`):
+`deals/actions.ts` — `submitNewDeal`, `submitIncome`,
+`searchGreenInvoiceClientForDeal`, `confirmGreenInvoiceClient`,
+`createTransactionAccountForDeal`, `createReceiptForIncome`;
+`agents/[agentId]/actions.ts` — `submitLedgerEntry`.
+Pages hide the forms via `canEdit = isManager(session)`.
 
-A team leader is also an individual agent — handled by always seeding the
-allowed-set with their own name, so one list shows their deals + their team's.
+Agent management (`admin/agents/actions.ts` — `createAgentAction`,
+`updateAgentAction`, `setAgentStatusAction`, `syncFromMondayAction`) is
+**admin-only** (`requireAdmin()`). As of 2026-09-10 the mutating actions
+fetch the target and check `officeId === session.officeId` **before** the
+write (the store's `updateAgent` is a blind put by id) — a direct POST can't
+mutate another office's row. `createAgentAction` stamps `session.officeId`.
 
-Matching is by name string, not id — see [[deals-identity-gap]] for why and the
-planned fix.
+## Nav (`src/components/nav.tsx`)
 
-Nav gotcha (fixed 2026-09-02): `LocaleToggle` is `position:fixed top-3 right-3
-z-50` (in layout.tsx, shows on login pages too). The Nav's trailing item —
-"Sign out" in LTR/English, the links in RTL/Hebrew — rendered *under* it and
-looked missing. Fixed with `pr-24` on the `<nav>`. Verified in-app as David
-Weiser (team_leader): sign out visible, his 14 imported deals + ₪23,286 ledger
-balance render correctly.
+Managers see "Dashboard"; everyone else sees "My ledger" →
+`/agents/{session.agentId}`. Admins additionally see "Agents" →
+`/admin/agents`. A team leader is also an agent — the allowed-set is always
+seeded with their own id, so one list shows their deals + their team's.
+
+Nav gotcha (fixed 2026-09-02): `LocaleToggle` is `position:fixed top-3
+right-3 z-50` (layout.tsx, shows on login pages too). The Nav's trailing item
+rendered *under* it; fixed with `pr-24` on the `<nav>`.
+
+## Known-open (ROADMAP Phase 5)
+
+Reads are **not office-scoped**: `listDeals()` / `listAgentBalances()` are
+table scans, so a manager's "all" spans every office. The per-agent ledger
+page doesn't check the agent's `officeId`. Fine while there's one office;
+Phase 5 adds `byOfficeId` queries + a store-layer write assertion.

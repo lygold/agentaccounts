@@ -6,6 +6,7 @@ import { AgentFormSchema } from "@/lib/form-parse";
 import { normalizePhone } from "@/lib/phone";
 import {
   createAgent,
+  getAgentById,
   listAgentsByOffice,
   setAgentStatus,
   updateAgent,
@@ -84,6 +85,14 @@ export async function updateAgentAction(id: string, formData: FormData) {
       redirect(`${LIST}/${id}?error=invalid`);
     }
     const d = parsed.data;
+
+    // Verify the target is in this admin's office *before* writing — a direct
+    // POST could carry another office's agent id, and updateAgent() is a blind
+    // put by id with no office guard of its own.
+    const existing = await getAgentById(id);
+    if (!existing || existing.officeId !== session.officeId) {
+      redirect(`${LIST}?error=notfound`);
+    }
     if (await contactClash(session.officeId, d.email, d.phone, id)) {
       redirect(`${LIST}/${id}?error=duplicate`);
     }
@@ -95,7 +104,7 @@ export async function updateAgentAction(id: string, formData: FormData) {
       team: d.team ?? null,
       isTeamLeader: d.isTeamLeader,
     });
-    if (!updated || updated.officeId !== session.officeId) {
+    if (!updated) {
       redirect(`${LIST}?error=notfound`);
     }
     await mirrorAgentToMonday(updated);
@@ -113,8 +122,14 @@ export async function setAgentStatusAction(id: string, status: AgentStatus) {
     if (id === session.agentId && status === "archived") {
       redirect(`${LIST}?error=self`);
     }
+
+    // Office check before the write — see updateAgentAction.
+    const existing = await getAgentById(id);
+    if (!existing || existing.officeId !== session.officeId) {
+      redirect(`${LIST}?error=notfound`);
+    }
     const updated = await setAgentStatus(id, status);
-    if (!updated || updated.officeId !== session.officeId) {
+    if (!updated) {
       redirect(`${LIST}?error=notfound`);
     }
     await mirrorAgentToMonday(updated);
