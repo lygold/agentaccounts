@@ -67,12 +67,13 @@ export async function createDealWithBilling(input: NewDealInput): Promise<Deal> 
  */
 export async function resolveGiClientForDeal(
   dealId: string,
+  officeId: string,
 ): Promise<ClientResolution | null> {
   const deal = await getDeal(dealId);
-  if (!deal) return null;
+  if (!deal || deal.officeId !== officeId) return null;
   const resolution = await resolveGreenInvoiceClient(deal.clientName);
   if (resolution.status === "resolved") {
-    await updateDeal(dealId, { greenInvoiceClientId: resolution.clientId });
+    await updateDeal(dealId, { greenInvoiceClientId: resolution.clientId }, officeId);
   }
   return resolution;
 }
@@ -85,9 +86,10 @@ export async function resolveGiClientForDeal(
 export async function setGiClientForDeal(
   dealId: string,
   choice: string,
+  officeId: string,
 ): Promise<string | null> {
   const deal = await getDeal(dealId);
-  if (!deal) return null;
+  if (!deal || deal.officeId !== officeId) return null;
   let clientId: string;
   if (choice === "new") {
     clientId = (await createGreenInvoiceClient({ name: deal.clientName })).id;
@@ -96,7 +98,7 @@ export async function setGiClientForDeal(
   } else {
     return null;
   }
-  await updateDeal(dealId, { greenInvoiceClientId: clientId });
+  await updateDeal(dealId, { greenInvoiceClientId: clientId }, officeId);
   return clientId;
 }
 
@@ -107,9 +109,10 @@ export async function setGiClientForDeal(
  */
 export async function createDealTransactionAccount(
   dealId: string,
+  officeId: string,
 ): Promise<GreenInvoiceDocument | null> {
   const deal = await getDeal(dealId);
-  if (!deal?.greenInvoiceClientId) return null;
+  if (!deal || deal.officeId !== officeId || !deal.greenInvoiceClientId) return null;
   const billing = (await listBillingForDeal(dealId))[0];
   if (!billing || billing.greenInvoiceRef) return null;
 
@@ -119,7 +122,7 @@ export async function createDealTransactionAccount(
     description: `${deal.clientName} — ${deal.propertyAddress ?? deal.dealType}`,
     side: deal.side,
   });
-  await updateBilling(billing.id, { greenInvoiceRef: doc.id });
+  await updateBilling(billing.id, { greenInvoiceRef: doc.id }, officeId);
   return doc;
 }
 
@@ -132,9 +135,10 @@ export async function createIncomeReceipt(
   dealId: string,
   incomeId: string,
   type: ReceiptDocumentType,
+  officeId: string,
 ): Promise<GreenInvoiceDocument | null> {
   const deal = await getDeal(dealId);
-  if (!deal?.greenInvoiceClientId) return null;
+  if (!deal || deal.officeId !== officeId || !deal.greenInvoiceClientId) return null;
   const billing = (await listBillingForDeal(dealId))[0];
   if (!billing?.greenInvoiceRef) return null;
   const income = await getIncome(incomeId);
@@ -148,6 +152,6 @@ export async function createIncomeReceipt(
     linkedTransactionAccountId: billing.greenInvoiceRef,
     paymentDate: income.receivedDate,
   });
-  await updateIncome(incomeId, { greenInvoiceReceiptRef: doc.id });
+  await updateIncome(incomeId, { greenInvoiceReceiptRef: doc.id }, officeId);
   return doc;
 }

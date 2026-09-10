@@ -97,8 +97,8 @@ export async function submitIncome(dealId: string, formData: FormData) {
  */
 export async function searchGreenInvoiceClientForDeal(dealId: string) {
   try {
-    await requireManager();
-    const resolution = await resolveGiClientForDeal(dealId);
+    const session = await requireManager();
+    const resolution = await resolveGiClientForDeal(dealId, session.officeId);
     if (!resolution || resolution.status === "resolved") {
       redirect(`/deals/${dealId}`);
     } else {
@@ -115,10 +115,10 @@ export async function searchGreenInvoiceClientForDeal(dealId: string) {
 /** Finalizes an ambiguous client match — either an existing candidate's id, or "new". */
 export async function confirmGreenInvoiceClient(dealId: string, formData: FormData) {
   try {
-    await requireManager();
+    const session = await requireManager();
     const choice = formData.get("clientChoice");
     if (typeof choice === "string") {
-      await setGiClientForDeal(dealId, choice);
+      await setGiClientForDeal(dealId, choice, session.officeId);
     }
     redirect(`/deals/${dealId}`);
   } catch (e) {
@@ -131,8 +131,8 @@ export async function confirmGreenInvoiceClient(dealId: string, formData: FormDa
 /** Manually-triggered — creates the חשבון עסקה (300) for this deal's billing. */
 export async function createTransactionAccountForDeal(dealId: string) {
   try {
-    await requireManager();
-    await createDealTransactionAccount(dealId);
+    const session = await requireManager();
+    await createDealTransactionAccount(dealId, session.officeId);
     redirect(`/deals/${dealId}`);
   } catch (e) {
     if (isNextJsRedirect(e)) throw e;
@@ -156,11 +156,16 @@ export async function createReceiptForIncome(
   formData: FormData,
 ) {
   try {
-    await requireManager();
+    const session = await requireManager();
     const typeRaw = Number(formData.get("documentType"));
     if (!RECEIPT_DOCUMENT_TYPES.includes(typeRaw as ReceiptDocumentType)) return;
 
-    await createIncomeReceipt(dealId, incomeId, typeRaw as ReceiptDocumentType);
+    await createIncomeReceipt(
+      dealId,
+      incomeId,
+      typeRaw as ReceiptDocumentType,
+      session.officeId,
+    );
     redirect(`/deals/${dealId}`);
   } catch (e) {
     if (isNextJsRedirect(e)) throw e;

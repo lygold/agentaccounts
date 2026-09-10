@@ -17,6 +17,7 @@ export async function createBilling(
 export async function updateBilling(
   id: string,
   patch: Partial<Omit<Billing, "id" | "createdAt">>,
+  expectedOfficeId?: string,
 ): Promise<Billing | null> {
-  return update<Billing>(TABLES.billing(), id, patch);
+  return update<Billing>(TABLES.billing(), id, patch, expectedOfficeId);
 }

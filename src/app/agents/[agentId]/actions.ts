@@ -4,13 +4,10 @@ import { redirect } from "next/navigation";
 import { requireManager } from "@/lib/auth/session-cookie";
 import { LedgerEntrySchema } from "@/lib/form-parse";
 import { addManualLedgerEntry } from "@/lib/services/ledger";
+import { getAgentById } from "@/lib/store/agents";
 import { isNextJsRedirect } from "@/lib/action-utils";
 
-export async function submitLedgerEntry(
-  agentId: string,
-  agentName: string,
-  formData: FormData,
-) {
+export async function submitLedgerEntry(agentId: string, formData: FormData) {
   try {
     const session = await requireManager();
     const parsed = LedgerEntrySchema.safeParse({
@@ -21,10 +18,17 @@ export async function submitLedgerEntry(
     });
     if (!parsed.success) return;
 
+    // The agentId is a bound arg from the page — verify it's a real agent in
+    // this office before posting an entry against it.
+    const agent = await getAgentById(agentId);
+    if (!agent || agent.officeId !== session.officeId) {
+      redirect(`/agents/${encodeURIComponent(agentId)}?error=save`);
+    }
+
     await addManualLedgerEntry({
       officeId: session.officeId,
       agentId,
-      agentName,
+      agentName: agent.name,
       type: parsed.data.type,
       amount: parsed.data.amount,
       description: parsed.data.description,

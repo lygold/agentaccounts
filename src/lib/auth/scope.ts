@@ -33,12 +33,27 @@ export function isIdAllowed(allowed: Set<string> | "all", id: string): boolean {
   return allowed === "all" || allowed.has(id);
 }
 
+/**
+ * Does this row belong to the session's office? The isolation backstop for
+ * pages/actions that fetch a single row by primary key (`getDeal`,
+ * `getAgentById`) — the key carries no `officeId`, so the query can't scope
+ * itself. Pair with `notFound()`. Manager scope is "all agents", NOT "all
+ * offices", so this check still bites for a manager.
+ */
+export function sameOffice(
+  row: { officeId: string },
+  session: SessionPayload,
+): boolean {
+  return row.officeId === session.officeId;
+}
+
 export function filterDealsByIds(deals: Deal[], allowed: Set<string> | "all"): Deal[] {
   if (allowed === "all") return deals;
   return deals.filter((d) => allowed.has(d.agentId));
 }
 
-/** Single-deal guard for the deal detail page. */
+/** Single-deal guard for the deal detail page — office first, then agent scope. */
 export async function canSeeDeal(session: SessionPayload, deal: Deal): Promise<boolean> {
+  if (!sameOffice(deal, session)) return false;
   return isIdAllowed(await allowedAgentIds(session), deal.agentId);
 }

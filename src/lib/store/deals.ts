@@ -23,8 +23,14 @@ export async function createDeal(
 export async function updateDeal(
   id: string,
   patch: Partial<Omit<Deal, "id" | "createdAt">>,
+  expectedOfficeId?: string,
 ): Promise<Deal | null> {
-  return update<Deal>(TABLES.deals(), id, { ...patch, updatedAt: new Date().toISOString() });
+  return update<Deal>(
+    TABLES.deals(),
+    id,
+    { ...patch, updatedAt: new Date().toISOString() },
+    expectedOfficeId,
+  );
 }
 
 export async function listDealsByAgent(agentId: string): Promise<Deal[]> {

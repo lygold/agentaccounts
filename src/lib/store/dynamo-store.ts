@@ -39,6 +39,15 @@ export async function insert<T extends { id: string }>(
   tableName: string,
   item: T,
 ): Promise<T> {
+  // Every row in this app is office-scoped. A create that forgot to stamp
+  // `officeId` is a bug that would silently produce an unreachable row.
+  if (
+    "officeId" in item &&
+    (typeof (item as { officeId?: unknown }).officeId !== "string" ||
+      !(item as { officeId: string }).officeId)
+  ) {
+    throw new Error(`insert(${tableName}): row is missing officeId`);
+  }
   const doc = getDynamoDoc();
   await doc.send(new PutCommand({ TableName: tableName, Item: item }));
   return item;
@@ -52,9 +61,19 @@ export async function update<T extends { id: string }>(
   tableName: string,
   id: string,
   patch: Partial<T>,
+  /** When given, the existing row must belong to this office or the write is
+   *  refused (returns null, same as "not found"). Defense in depth on top of
+   *  the caller's own scoping. */
+  expectedOfficeId?: string,
 ): Promise<T | null> {
   const existing = await getById<T>(tableName, id);
   if (!existing) return null;
+  if (
+    expectedOfficeId !== undefined &&
+    (existing as { officeId?: string }).officeId !== expectedOfficeId
+  ) {
+    return null;
+  }
   const merged = { ...existing, ...patch } as T;
   await insert(tableName, merged);
   return merged;

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireSession, isManager } from "@/lib/auth/session-cookie";
-import { allowedAgentIds, isIdAllowed } from "@/lib/auth/scope";
+import { allowedAgentIds, isIdAllowed, sameOffice } from "@/lib/auth/scope";
 import { getAgentById } from "@/lib/store/agents";
 import { listLedgerEntriesForAgent, runningBalance, entryExVat } from "@/lib/store/agent-ledger";
 import { Nav } from "@/components/nav";
@@ -30,6 +30,11 @@ export default async function AgentLedgerPage({
   const balanceExVat = runningBalance(entries, "exVat");
   // Prefer the directory name; fall back to a ledger row, then the id.
   const agentName = agent?.name ?? entries[0]?.agentName ?? agentId;
+  // Office isolation: never render a row from another office, even for a
+  // manager (whose agent-scope is "all"). Check whichever office signal we
+  // have — the directory row, or a ledger entry when there's no row.
+  const rowOffice = agent ?? entries[0];
+  if (rowOffice && !sameOffice(rowOffice, session)) notFound();
   // An agent may only open their own ledger; a team leader their team's;
   // manager/admin anyone's.
   const isSelf = agentId === session.agentId;
@@ -58,7 +63,7 @@ export default async function AgentLedgerPage({
         <section className="mb-6 rounded-lg border p-4">
           <h2 className="mb-2 font-semibold">{t("addEntryTitle")}</h2>
           <form
-            action={submitLedgerEntry.bind(null, agentId, agentName)}
+            action={submitLedgerEntry.bind(null, agentId)}
             className="flex flex-col gap-3"
           >
             <div className="flex flex-col gap-1.5">

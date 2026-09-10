@@ -29,7 +29,7 @@ export async function recordDealPayment(
   input: RecordPaymentInput,
 ): Promise<{ income: Income; commission: AgentLedgerEntry | null } | null> {
   const deal = await getDeal(input.dealId);
-  if (!deal) return null;
+  if (!deal || deal.officeId !== input.officeId) return null;
 
   const income = await createIncome({
     officeId: input.officeId,

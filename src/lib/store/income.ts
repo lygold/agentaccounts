@@ -26,6 +26,7 @@ export async function createIncome(
 export async function updateIncome(
   id: string,
   patch: Partial<Omit<Income, "id" | "createdAt">>,
+  expectedOfficeId?: string,
 ): Promise<Income | null> {
-  return update<Income>(TABLES.income(), id, patch);
+  return update<Income>(TABLES.income(), id, patch, expectedOfficeId);
 }
