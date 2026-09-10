@@ -328,10 +328,18 @@ activity, not typed numbers.
 - ✅ **`gi-documents` table** wired (`store/gi-documents.ts`, keyed by the GI
   doc id; flat `targetKind`/`dealId`/`agentId`/`expenseEntryIds`; `byDealId`
   GSI). `Income` gained `source` / `giDocId` / `paymentMethod`.
-- **חשבון עסקה (300) stays a button** — ✅ for a deal (records the
-  `gi-documents` 300 with its `{deal}` target). New: for an **agent**
-  (`billAgentExpenses` bundles outstanding `expense` rows into one 300 with an
-  `{agent-expenses}` target) — pending, with the expense engine.
+- **חשבון עסקה (300) stays a button** — ✅ for a deal. Records the
+  `gi-documents` 300 with its `{deal}` target; the line uses the deal side's
+  catalog מק"ט + a normalised Hebrew description template (`866bd61`,
+  `green-invoice/gi-items.ts` — English + real city come with the wizard,
+  Phase 8). ✅ **Send to agent / client** — repeatable, with a send log, via
+  `POST /documents/{id}/distribute` (`876ec5c`). WhatsApp send → Phase 7.
+  New: for an **agent** (`billAgentExpenses` bundles outstanding `expense`
+  rows into one 300 with an `{agent-expenses}` target) — pending, with the
+  expense engine.
+- ✅ **End-to-end verified in prod** 2026-09-10 — the 300 button, the
+  `300→305→400` and `320→300` chains, 305=invoiced-only, 320/400=income +
+  commission + `paymentStatus`. Test data purged.
 - ✅ **`/api/green-invoice/webhook`** (`5a3afe2`) — HMAC-SHA256(secret, body)
   verify → Redis idempotency on the GI doc id → `processGiDocument`
   (`green-invoice/webhook-handler.ts`, shared with the poll):
@@ -343,13 +351,12 @@ activity, not typed numbers.
     expense engine: mark `expenseEntryIds` paid + a `payment_by_agent`).
   - ✅ **poll fallback**: `/api/green-invoice/poll` + `gi-poll.yml` (daily,
     bearer `SYNC_SECRET`).
-  - Deploy needs: `DYNAMODB_TABLE_GI_DOCUMENTS` + `GREEN_INVOICE_WEBHOOK_SECRET`
-    in the Amplify console. End-to-end sandbox test still pending.
   - The app's "Create receipt" button + `createIncomeReceipt` were **removed** —
     Levi/Ariyel issue 305/320/400 in GI, the webhook reacts.
 - **Manual upload portal** (manager): upload a GI PDF → key amount / date /
-  target → same row creation, `source: "manual"`, PDF to S3.
-- **Remove the free-text "log payment" amount field** from the deal page.
+  target → same row creation, `source: "manual"`, PDF to S3. — later.
+- **The free-text "log payment" amount field** stays for now as a labelled
+  manual fallback (Levi, 2026-09-10) — not removed.
 - **Agent monthly expenses — two mechanisms**, both writing `expense` rows to
   `agent-account` (negative, dual VAT amounts, no `dealId`), both skipping any
   agent whose `firstChargeMonth` (Phase 5, from `expenseChargeDate`) is after
