@@ -56,6 +56,31 @@ export default async function EditAgentPage({
           </Alert>
         )}
 
+        {(agent.commissionTier != null ||
+          agent.yad2Number ||
+          agent.madlanNumber) && (
+          <dl className="mb-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-lg border p-3 text-sm">
+            {agent.commissionTier != null && (
+              <>
+                <dt className="text-muted-foreground">{t("commissionTier")}</dt>
+                <dd>{agent.commissionTier}%</dd>
+              </>
+            )}
+            {agent.yad2Number && (
+              <>
+                <dt className="text-muted-foreground">Yad2</dt>
+                <dd dir="ltr">{agent.yad2Number}</dd>
+              </>
+            )}
+            {agent.madlanNumber && (
+              <>
+                <dt className="text-muted-foreground">Madlan</dt>
+                <dd dir="ltr">{agent.madlanNumber}</dd>
+              </>
+            )}
+          </dl>
+        )}
+
         <form
           action={updateAgentAction.bind(null, agent.id)}
           className="flex flex-col gap-4"

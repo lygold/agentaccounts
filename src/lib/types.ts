@@ -229,6 +229,13 @@ export interface AgentRecord {
   /** Which office commission scheme applies. Null = office default.
    *  Unused until Phase 5c defines the schemes on the office record. */
   commissionSchemeId: string | null;
+  /** Daf Kesher "Commission Tier": 50 (standard 50/55/60 brackets) or 60
+   *  (flat 60). The bridge value until 5c turns it into a scheme. */
+  commissionTier: number | null;
+  /** Daf Kesher virtual phone numbers — match a Yad2 / Madlan ad-report row
+   *  to the agent for the bulk expense import. */
+  yad2Number: string | null;
+  madlanNumber: string | null;
   /** Daf Kesher pulse id this row was imported from, if any — null for
    *  agents created in-app. Kept for the migration bridge + reconciliation. */
   mondayItemId: string | null;

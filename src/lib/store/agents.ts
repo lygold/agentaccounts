@@ -51,6 +51,9 @@ function fromItem(item: Record<string, unknown>): AgentRecord {
     expenseChargeDate: i.expenseChargeDate ?? null,
     officeFeeExVat: i.officeFeeExVat ?? null,
     commissionSchemeId: i.commissionSchemeId ?? null,
+    commissionTier: i.commissionTier ?? null,
+    yad2Number: i.yad2Number ?? null,
+    madlanNumber: i.madlanNumber ?? null,
     mondayItemId: i.mondayItemId ?? null,
     createdAt: String(i.createdAt ?? ""),
     updatedAt: String(i.updatedAt ?? ""),
@@ -155,6 +158,9 @@ export interface NewAgentInput {
   expenseChargeDate?: string | null;
   officeFeeExVat?: number | null;
   commissionSchemeId?: string | null;
+  commissionTier?: number | null;
+  yad2Number?: string | null;
+  madlanNumber?: string | null;
   mondayItemId?: string | null;
   /** For imports that need a deterministic id; defaults to a fresh `agt_…`. */
   id?: string;
@@ -181,6 +187,9 @@ export async function createAgent(input: NewAgentInput): Promise<AgentRecord> {
     expenseChargeDate: input.expenseChargeDate ?? null,
     officeFeeExVat: input.officeFeeExVat ?? null,
     commissionSchemeId: input.commissionSchemeId ?? null,
+    commissionTier: input.commissionTier ?? null,
+    yad2Number: input.yad2Number ?? null,
+    madlanNumber: input.madlanNumber ?? null,
     mondayItemId: input.mondayItemId ?? null,
     createdAt: now,
     updatedAt: now,

@@ -1,7 +1,11 @@
 /**
- * Daf Kesher (board 1593085910) — the shared agent-identity board. Same
- * board sikkumPigisha's own MONDAY_AGENTS_BOARD_ID points to; read-only
- * from this app. IDs confirmed live 2026-08-22.
+ * Daf Kesher (board 1593085910, "Daf Kesher") — the shared agent directory
+ * the app imports from and mirrors back during the migration bridge. Column
+ * ids confirmed live 2026-09-10.
+ *
+ * There is no "app role" column — role is app-owned (`AgentRecord.role`, set
+ * in /admin/agents, `BOOTSTRAP_ADMIN_*` as break-glass). `comm` is the
+ * commission *tier*, not the role.
  */
 export const AGENTS_BOARD = {
   name: "name",
@@ -15,25 +19,17 @@ export const AGENTS_BOARD = {
   team: "numeric_mm0dwhxf",
   /** "Is Team Leader" status column, labels Yes/No. */
   isTeamLeader: "color_mm1j9dvy",
-  /**
-   * TODO(agent-ledger-roles): does not exist yet. Levi needs to add a
-   * status/dropdown column to Daf Kesher with labels Agent / Team Leader /
-   * Manager / Admin, then swap this placeholder for the real column id —
-   * same pattern sikkumPigisha's commission columns went through. Until
-   * then, isPendingColumn() guards this read and every agent resolves to
-   * the "agent" role unless BOOTSTRAP_ADMIN_PHONE/EMAIL matches (see
-   * src/lib/auth/roles.ts).
-   */
-  appRole: "__PENDING_appRole__",
+  /** "Charge Date" — when the agent starts paying monthly expenses. Blank
+   *  (most active agents) = already past due → charge from now. */
+  chargeDate: "date_mkqxg29d",
+  /** "Commission Tier" — a number, 50 or 60 (the agent's starting %). 50 =
+   *  the standard 50/55/60 bracket table, 60 = flat 60. */
+  commissionTier: "comm",
+  /** "License Number" (מספר רישיון תיווך). */
+  licenseNumber: "text_mkzy35r6",
+  /** "Virtual Num Yad2" — the agent's Yad2 virtual phone; matches a Yad2
+   *  ad-report row to the agent for the bulk expense import. */
+  yad2Number: "yad2",
+  /** "Virtual Num Madlan" — same, for Madlan. */
+  madlanNumber: "madlan",
 } as const;
-
-export const APP_ROLE_LABELS = {
-  agent: "Agent",
-  team_leader: "Team Leader",
-  manager: "Manager",
-  admin: "Admin",
-} as const;
-
-export function isPendingColumn(id: string): boolean {
-  return id.startsWith("__PENDING_");
-}

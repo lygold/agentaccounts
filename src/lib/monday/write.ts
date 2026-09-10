@@ -34,6 +34,12 @@ function columnValues(agent: AgentRecord): Record<string, unknown> {
   if (agent.team != null) {
     cv[AGENTS_BOARD.team] = String(agent.team);
   }
+  if (agent.licenseNumber) {
+    cv[AGENTS_BOARD.licenseNumber] = agent.licenseNumber;
+  }
+  if (agent.expenseChargeDate) {
+    cv[AGENTS_BOARD.chargeDate] = { date: agent.expenseChargeDate };
+  }
   return cv;
 }
 

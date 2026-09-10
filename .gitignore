@@ -53,3 +53,7 @@ docs/mem/
 # editor
 .vscode/
 .idea/
+
+# ad-hoc data/report exports dropped in for reference
+example files/
+*.xlsx

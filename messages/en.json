@@ -184,6 +184,7 @@
     },
     "team": "Team",
     "teamShort": "Team ",
+    "commissionTier": "Commission tier",
     "sortBy": "Sort:",
     "sortTeam": "by team",
     "sortName": "by name",

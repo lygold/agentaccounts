@@ -35,7 +35,7 @@ import type { AppRole } from "../monday/types";
 
 // --- shared -----------------------------------------------------------------
 
-/** Fields Monday owns during the bridge. */
+/** Fields Monday owns during the bridge (keys of AgentRecord). */
 const MIRRORED_KEYS = [
   "name",
   "email",
@@ -45,6 +45,11 @@ const MIRRORED_KEYS = [
   "surname",
   "team",
   "isTeamLeader",
+  "expenseChargeDate",
+  "commissionTier",
+  "licenseNumber",
+  "yad2Number",
+  "madlanNumber",
 ] as const;
 
 function initialRole(m: DafKesherAgent): AppRole {
@@ -62,6 +67,11 @@ function mondayOwnedInput(m: DafKesherAgent) {
     surname: m.surname,
     team: m.team,
     isTeamLeader: m.isTeamLeader,
+    expenseChargeDate: m.chargeDate,
+    commissionTier: m.commissionTier,
+    licenseNumber: m.licenseNumber,
+    yad2Number: m.yad2Number,
+    madlanNumber: m.madlanNumber,
   };
 }
 
@@ -155,6 +165,11 @@ export async function syncAgentsFromMonday(
         surname: m.surname,
         team: m.team,
         isTeamLeader: m.isTeamLeader,
+        expenseChargeDate: m.chargeDate,
+        commissionTier: m.commissionTier,
+        licenseNumber: m.licenseNumber,
+        yad2Number: m.yad2Number,
+        madlanNumber: m.madlanNumber,
         role: initialRole(m),
         // Onboarding on Daf Kesher → onboarding here (only at create; the
         // onboarding → active move is an in-app admin action after that).

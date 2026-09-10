@@ -14,6 +14,13 @@ export interface DafKesherAgent {
   surname: string | null;
   team: number | null;
   isTeamLeader: boolean;
+  /** yyyy-mm-dd, or null (= already past due, charge from now). */
+  chargeDate: string | null;
+  /** 50 or 60 — the agent's starting commission %. */
+  commissionTier: number | null;
+  licenseNumber: string | null;
+  yad2Number: string | null;
+  madlanNumber: string | null;
   /** Raw Status label: Active | Onboarding | Inactive | Offboarding. */
   mondayStatus: string | null;
 }
@@ -27,6 +34,11 @@ const COL_IDS = [
   AGENTS_BOARD.team,
   AGENTS_BOARD.status,
   AGENTS_BOARD.isTeamLeader,
+  AGENTS_BOARD.chargeDate,
+  AGENTS_BOARD.commissionTier,
+  AGENTS_BOARD.licenseNumber,
+  AGENTS_BOARD.yad2Number,
+  AGENTS_BOARD.madlanNumber,
 ]
   .map((c) => `"${c}"`)
   .join(",");
@@ -46,6 +58,8 @@ function toAgent(item: RawItem): DafKesherAgent {
   const teamText = text(c, AGENTS_BOARD.team);
   const email = text(c, AGENTS_BOARD.email);
   const phone = text(c, AGENTS_BOARD.phone);
+  const tierText = text(c, AGENTS_BOARD.commissionTier);
+  const chargeText = text(c, AGENTS_BOARD.chargeDate);
   return {
     mondayItemId: String(item.id),
     name: item.name,
@@ -56,6 +70,11 @@ function toAgent(item: RawItem): DafKesherAgent {
     surname: text(c, AGENTS_BOARD.surname),
     team: teamText ? Number(teamText) : null,
     isTeamLeader: text(c, AGENTS_BOARD.isTeamLeader) === "Yes",
+    chargeDate: /^\d{4}-\d{2}-\d{2}$/.test(chargeText ?? "") ? chargeText : null,
+    commissionTier: tierText && !Number.isNaN(Number(tierText)) ? Number(tierText) : null,
+    licenseNumber: text(c, AGENTS_BOARD.licenseNumber),
+    yad2Number: text(c, AGENTS_BOARD.yad2Number),
+    madlanNumber: text(c, AGENTS_BOARD.madlanNumber),
     mondayStatus: text(c, AGENTS_BOARD.status),
   };
 }
