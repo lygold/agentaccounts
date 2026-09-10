@@ -121,8 +121,9 @@ export async function createDealTransactionAccount(
   const doc = await createTransactionAccount({
     clientId: deal.greenInvoiceClientId,
     amount: billing.amount,
-    description: `${deal.clientName} — ${deal.propertyAddress ?? deal.dealType}`,
     side: deal.side,
+    propertyAddress: deal.propertyAddress,
+    propertyPrice: deal.salePrice,
   });
   await updateBilling(billing.id, { greenInvoiceRef: doc.id }, officeId);
 
