@@ -51,6 +51,13 @@ export const TABLES = {
    *  agent-ledger-gi-documents. */
   giDocuments: () =>
     requireTableName("DYNAMODB_TABLE_GI_DOCUMENTS", process.env.DYNAMODB_TABLE_GI_DOCUMENTS),
+  /** Per-agent standing monthly charges (Phase 6). Physical table:
+   *  agent-ledger-recurring-expenses. */
+  recurringExpenses: () =>
+    requireTableName(
+      "DYNAMODB_TABLE_RECURRING_EXPENSES",
+      process.env.DYNAMODB_TABLE_RECURRING_EXPENSES,
+    ),
 };
 
 /** Value is passed in via a *static* `process.env.X` read (not a dynamic

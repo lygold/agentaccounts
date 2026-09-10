@@ -1,0 +1,44 @@
+name: Monthly agent expenses
+
+# Writes the month's fixed recurring charges (office fee, מדלן, פרמי) into
+# agent-account (ROADMAP Phase 6). Idempotent — runs daily 20th–24th so it's
+# in place before Levi issues the GI docs on the 22nd, and a missed day
+# self-heals the next.
+#
+# Setup: repo secret SYNC_SECRET, optional repo variable APP_URL.
+
+on:
+  schedule:
+    - cron: "0 6 20-24 * *" # 06:00 UTC, the 20th–24th of each month
+  workflow_dispatch:
+    inputs:
+      month:
+        description: "yyyy-mm to (re)run; blank = current"
+        required: false
+
+concurrency:
+  group: expenses-monthly
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST /api/expenses/run-monthly
+        env:
+          SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
+          APP_URL: ${{ vars.APP_URL || 'https://main.d2aqfzo6esnq4n.amplifyapp.com' }}
+          MONTH: ${{ github.event.inputs.month }}
+        run: |
+          if [ -z "$SYNC_SECRET" ]; then
+            echo "::error::SYNC_SECRET repo secret is not set"
+            exit 1
+          fi
+          url="$APP_URL/api/expenses/run-monthly"
+          [ -n "$MONTH" ] && url="$url?month=$MONTH"
+          code=$(curl -sS -o /tmp/body.json -w '%{http_code}' \
+            --retry 3 --retry-delay 10 --retry-all-errors --max-time 120 \
+            -X POST "$url" -H "Authorization: Bearer $SYNC_SECRET")
+          echo "HTTP $code"
+          cat /tmp/body.json; echo
+          test "$code" = "200"

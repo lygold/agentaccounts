@@ -80,6 +80,16 @@ const TABLES = [
       ["byGiClientId", "giClientId"],
     ],
   },
+  {
+    // Per-agent standing monthly charges (דמי משרד / מדלן / פרמי). The monthly
+    // cron reads these and writes `expense` rows into agent-account. Phase 6.
+    name: "agent-ledger-recurring-expenses",
+    attrs: { id: S, agentId: S, officeId: S },
+    gsis: [
+      ["byAgentId", "agentId"],
+      ["byOfficeId", "officeId"],
+    ],
+  },
 ];
 
 function buildInput(t) {

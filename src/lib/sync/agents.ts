@@ -9,6 +9,7 @@ import {
   type NewAgentInput,
 } from "../store/agents";
 import { DEFAULT_OFFICE_ID } from "../office";
+import { seedOfficeFee } from "../services/expenses";
 import { getRedis, RedisKeys } from "../redis";
 import type { AgentRecord } from "../types";
 import type { AppRole } from "../monday/types";
@@ -179,7 +180,7 @@ export async function syncAgentsFromMonday(
             ? "onboarding"
             : "active",
       };
-      await createAgent(input);
+      await seedOfficeFee(await createAgent(input));
       res.created++;
     } catch (e) {
       res.errors.push(

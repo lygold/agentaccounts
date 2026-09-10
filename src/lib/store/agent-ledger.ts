@@ -1,6 +1,7 @@
 import "server-only";
+import { PutCommand } from "@aws-sdk/lib-dynamodb";
 import { insert, newId, queryByIndex } from "./dynamo-store";
-import { TABLES } from "./dynamo-client";
+import { getDynamoDoc, TABLES } from "./dynamo-client";
 import { stripVat } from "../commission";
 import type { AgentLedgerEntry } from "../types";
 
@@ -78,4 +79,36 @@ export async function createLedgerEntry(
     createdAt: new Date().toISOString(),
   };
   return insert(TABLES.agentAccount(), entry);
+}
+
+/**
+ * Idempotent create with a caller-supplied deterministic id — the monthly
+ * expense cron uses `rex-<recurringId>-<yyyy-mm>` so a re-run never
+ * double-charges. Returns null when the id already exists.
+ */
+export async function createLedgerEntryIfAbsent(
+  id: string,
+  input: Omit<AgentLedgerEntry, "id" | "createdAt" | "amountExVat"> & {
+    amountExVat?: number;
+  },
+): Promise<AgentLedgerEntry | null> {
+  const entry: AgentLedgerEntry = {
+    ...input,
+    amountExVat: input.amountExVat ?? stripVat(input.amount),
+    id,
+    createdAt: new Date().toISOString(),
+  };
+  try {
+    await getDynamoDoc().send(
+      new PutCommand({
+        TableName: TABLES.agentAccount(),
+        Item: entry,
+        ConditionExpression: "attribute_not_exists(id)",
+      }),
+    );
+    return entry;
+  } catch (e) {
+    if ((e as { name?: string }).name === "ConditionalCheckFailedException") return null;
+    throw e;
+  }
 }

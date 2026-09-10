@@ -4,12 +4,18 @@ import { getTranslations } from "next-intl/server";
 import { AlertCircle } from "lucide-react";
 import { requireSession, isAdmin } from "@/lib/auth/session-cookie";
 import { getAgentById } from "@/lib/store/agents";
+import { listRecurringExpensesForAgent } from "@/lib/store/recurring-expenses";
+import { isChargeableInMonth, currentMonth } from "@/lib/expense-schedule";
 import { Nav } from "@/components/nav";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { updateAgentAction } from "../actions";
+import {
+  addRecurringExpenseAction,
+  toggleRecurringExpenseAction,
+  updateAgentAction,
+} from "../actions";
 
 const ROLES = ["agent", "team_leader", "manager", "admin"] as const;
 
@@ -31,6 +37,9 @@ export default async function EditAgentPage({
 
   const agent = await getAgentById(id);
   if (!agent || agent.officeId !== session.officeId) notFound();
+
+  const recurring = await listRecurringExpensesForAgent(id);
+  const chargingNow = isChargeableInMonth(agent.expenseChargeDate, currentMonth());
 
   return (
     <div>
@@ -207,6 +216,67 @@ export default async function EditAgentPage({
             {t("saveSubmit")}
           </Button>
         </form>
+
+        <section className="mt-8 rounded-lg border p-4">
+          <h2 className="mb-1 font-semibold">{t("recurringTitle")}</h2>
+          <p className="mb-3 text-xs text-muted-foreground">
+            {chargingNow
+              ? t("recurringChargingNow")
+              : t("recurringFrom", {
+                  date: agent.expenseChargeDate ?? "—",
+                })}
+          </p>
+          <div className="mb-4 divide-y rounded-md border">
+            {recurring.length === 0 ? (
+              <p className="p-3 text-sm text-muted-foreground">{t("recurringEmpty")}</p>
+            ) : (
+              recurring.map((r) => (
+                <div
+                  key={r.id}
+                  className={`flex items-center justify-between gap-3 p-3 text-sm ${
+                    r.active ? "" : "opacity-50"
+                  }`}
+                >
+                  <span>{r.label}</span>
+                  <span className="flex items-center gap-3">
+                    <span>{t("recurringRowAmount", { amount: r.amountExVat.toLocaleString() })}</span>
+                    <form action={toggleRecurringExpenseAction.bind(null, agent.id, r.id)}>
+                      <button
+                        type="submit"
+                        className="text-xs underline-offset-4 hover:underline"
+                      >
+                        {r.active ? t("recurringPause") : t("recurringResume")}
+                      </button>
+                    </form>
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+          <form
+            action={addRecurringExpenseAction.bind(null, agent.id)}
+            className="flex flex-wrap items-end gap-3"
+          >
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="label">{t("recurringLabel")}</Label>
+              <Input id="label" name="label" className="w-40" required />
+            </div>
+            <div className="flex w-32 flex-col gap-1.5">
+              <Label htmlFor="amountExVat">{t("recurringAmount")}</Label>
+              <Input
+                id="amountExVat"
+                name="amountExVat"
+                type="number"
+                min="1"
+                step="1"
+                required
+              />
+            </div>
+            <Button type="submit" variant="outline" size="sm">
+              {t("recurringAdd")}
+            </Button>
+          </form>
+        </section>
       </main>
     </div>
   );

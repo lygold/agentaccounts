@@ -12,6 +12,12 @@ import {
   updateAgent,
 } from "@/lib/store/agents";
 import { mirrorAgentToMonday, syncAgentsFromMonday } from "@/lib/sync/agents";
+import { seedOfficeFee } from "@/lib/services/expenses";
+import {
+  createRecurringExpense,
+  listRecurringExpensesForAgent,
+  updateRecurringExpense,
+} from "@/lib/store/recurring-expenses";
 import { isNextJsRedirect } from "@/lib/action-utils";
 import type { AgentStatus } from "@/lib/types";
 
@@ -82,6 +88,7 @@ export async function createAgentAction(formData: FormData) {
       expenseChargeDate: d.expenseChargeDate ?? null,
       officeFeeExVat: d.officeFeeExVat ?? null,
     });
+    await seedOfficeFee(created);
     await mirrorAgentToMonday(created); // never throws — dead-letters on failure
     redirect(LIST);
   } catch (e) {
@@ -163,6 +170,50 @@ export async function setAgentStatusAction(id: string, status: AgentStatus) {
     if (isNextJsRedirect(e)) throw e;
     console.error("setAgentStatusAction failed:", e);
     redirect(`${LIST}?error=save`);
+  }
+}
+
+/** Add a standing monthly charge to an agent (Phase 6). */
+export async function addRecurringExpenseAction(agentId: string, formData: FormData) {
+  const back = `${LIST}/${agentId}`;
+  try {
+    const session = await requireAdmin();
+    const agent = await getAgentById(agentId);
+    if (!agent || agent.officeId !== session.officeId) redirect(`${LIST}?error=notfound`);
+
+    const label = String(formData.get("label") ?? "").trim();
+    const amountExVat = Number(formData.get("amountExVat"));
+    if (!label || !Number.isFinite(amountExVat) || amountExVat <= 0) {
+      redirect(`${back}?error=invalid`);
+    }
+    await createRecurringExpense({
+      officeId: session.officeId,
+      agentId,
+      label,
+      amountExVat,
+      catalogNum: (formData.get("catalogNum") as string)?.trim() || null,
+    });
+    redirect(back);
+  } catch (e) {
+    if (isNextJsRedirect(e)) throw e;
+    console.error("addRecurringExpenseAction failed:", e);
+    redirect(`${back}?error=save`);
+  }
+}
+
+/** Toggle a standing charge active/inactive. */
+export async function toggleRecurringExpenseAction(agentId: string, expenseId: string) {
+  const back = `${LIST}/${agentId}`;
+  try {
+    const session = await requireAdmin();
+    const row = (await listRecurringExpensesForAgent(agentId)).find((r) => r.id === expenseId);
+    if (!row || row.officeId !== session.officeId) redirect(`${back}?error=notfound`);
+    await updateRecurringExpense(row, { active: !row.active });
+    redirect(back);
+  } catch (e) {
+    if (isNextJsRedirect(e)) throw e;
+    console.error("toggleRecurringExpenseAction failed:", e);
+    redirect(`${back}?error=save`);
   }
 }
 

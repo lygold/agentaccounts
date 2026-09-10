@@ -176,14 +176,29 @@ export interface AgentLedgerEntry {
   createdAt: string;
 }
 
-export interface RecurringExpenseConfig {
+/**
+ * A per-agent standing monthly charge (דמי משרד / מדלן / פרמי …). The monthly
+ * cron (Phase 6, `services/expenses.ts`) reads the active rows and writes one
+ * `expense` entry into `agent-account` per agent per month, respecting the
+ * agent's `expenseChargeDate` schedule. Variable charges (Yad2, Torah
+ * Tidbits) are NOT rows here — they come from the monthly bulk import.
+ */
+export interface RecurringExpense {
   id: string;
   officeId: string;
   agentId: string;
-  agentName: string;
+  /** Human label; matches a GI item מק"ט where one exists. */
   label: string;
-  amount: number;
+  /** GI catalog מק"ט, when this maps to a catalog item (`green-invoice/gi-items`). */
+  catalogNum: string | null;
+  /** Pre-VAT monthly amount. */
+  amountExVat: number;
   active: boolean;
+  /** First month to charge, "yyyy-mm" — narrows the agent's own charge-date
+   *  schedule when a line started later. Null = from the agent's first month. */
+  startMonth: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type AgentStatus = "onboarding" | "active" | "archived";
