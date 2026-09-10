@@ -19,9 +19,12 @@ interface GreenInvoiceConfig {
 }
 
 function getConfig(): GreenInvoiceConfig {
-  const isProduction = process.env.GREEN_INVOICE_ENV === "production";
-  const clientId = process.env.GREEN_INVOICE_CLIENT_ID;
-  const clientSecret = process.env.GREEN_INVOICE_CLIENT_SECRET;
+  // The GI secret is full of shell/URL-hostile characters (% } : + * ") and
+  // reliably picks up a stray leading space or loses a trailing brace when
+  // pasted into the Amplify console — trim defensively.
+  const isProduction = process.env.GREEN_INVOICE_ENV?.trim() === "production";
+  const clientId = process.env.GREEN_INVOICE_CLIENT_ID?.trim();
+  const clientSecret = process.env.GREEN_INVOICE_CLIENT_SECRET?.trim();
   if (!clientId || !clientSecret) {
     throw new Error(
       "Green Invoice not configured: set GREEN_INVOICE_CLIENT_ID and GREEN_INVOICE_CLIENT_SECRET",

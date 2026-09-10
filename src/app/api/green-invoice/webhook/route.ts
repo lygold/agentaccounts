@@ -20,7 +20,7 @@ import { processGiDocument, type GiWebhookDoc } from "@/lib/green-invoice/webhoo
  */
 
 function verifySignature(rawBody: string, sig: string): boolean {
-  const secret = process.env.GREEN_INVOICE_WEBHOOK_SECRET;
+  const secret = process.env.GREEN_INVOICE_WEBHOOK_SECRET?.trim();
   if (!secret || !sig) return false;
   const expected = createHmac("sha256", secret).update(rawBody, "utf8").digest("hex");
   try {
