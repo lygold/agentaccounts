@@ -96,6 +96,7 @@
     "giCreate300": "Create חשבון עסקה (300)",
     "giCreated300": "חשבון עסקה created (ref {ref}). Create a receipt document per payment below.",
     "incomeTitle": "Income received",
+    "fromGreenInvoice": "from Green Invoice",
     "receiptCreated": "Receipt created (ref {ref})",
     "createReceipt": "Create receipt",
     "amount": "Amount (₪)",

@@ -7,7 +7,6 @@ import { listBillingForDeal } from "@/lib/store/billing";
 import { listIncomeForDeal, totalReceivedForDeal } from "@/lib/store/income";
 import { listLedgerEntriesForAgent, entryExVat } from "@/lib/store/agent-ledger";
 import { computeBillingAmount, computeDealValue } from "@/lib/commission";
-import { DOCUMENT_TYPE } from "@/lib/green-invoice/documents";
 import type { GreenInvoiceClient } from "@/lib/green-invoice/clients";
 import { Nav } from "@/components/nav";
 import { Input } from "@/components/ui/input";
@@ -16,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   confirmGreenInvoiceClient,
-  createReceiptForIncome,
   createTransactionAccountForDeal,
   searchGreenInvoiceClientForDeal,
   submitIncome,
@@ -163,36 +161,16 @@ export default async function DealDetailPage({
           {incomeRows.length > 0 && (
             <ul className="mb-3 space-y-2 text-sm">
               {incomeRows.map((r) => (
-                <li key={r.id} className="flex flex-col gap-1 border-b pb-2 last:border-0">
-                  <div className="flex justify-between">
-                    <span>{r.receivedDate}</span>
-                    <span>₪{r.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                  </div>
-                  {r.greenInvoiceReceiptRef ? (
-                    <span className="text-xs text-muted-foreground">
-                      {t("receiptCreated", { ref: r.greenInvoiceReceiptRef })}
-                    </span>
-                  ) : (
-                    canEdit && billing?.greenInvoiceRef && (
-                      <form
-                        action={createReceiptForIncome.bind(null, deal.id, r.id)}
-                        className="flex items-center gap-2"
-                      >
-                        <select
-                          name="documentType"
-                          defaultValue={DOCUMENT_TYPE.taxInvoiceReceipt}
-                          className="h-9 rounded-md border border-input bg-background px-2 text-sm"
-                        >
-                          <option value={DOCUMENT_TYPE.taxInvoice}>חשבונית מס</option>
-                          <option value={DOCUMENT_TYPE.taxInvoiceReceipt}>חשבונית מס / קבלה</option>
-                          <option value={DOCUMENT_TYPE.receipt}>קבלה</option>
-                        </select>
-                        <Button type="submit" size="sm">
-                          {t("createReceipt")}
-                        </Button>
-                      </form>
-                    )
-                  )}
+                <li key={r.id} className="flex justify-between border-b pb-2 last:border-0">
+                  <span>
+                    {r.receivedDate}
+                    {r.source === "webhook" && (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {t("fromGreenInvoice")}
+                      </span>
+                    )}
+                  </span>
+                  <span>₪{r.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                 </li>
               ))}
             </ul>

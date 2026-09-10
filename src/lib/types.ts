@@ -86,7 +86,52 @@ export interface Income {
   amount: number;
   receivedDate: string;
   greenInvoiceReceiptRef?: string;
+  /** How the row was created. `webhook` = a GI receipt (320/400) landed and
+   *  the handler posted it; `manual` = keyed on the deal page; `app` = a
+   *  future app-issued receipt. Absent on pre-Phase-6 rows. */
+  source?: "app" | "webhook" | "manual";
+  /** The `gi-documents` id (= the GI document id) this payment came from,
+   *  when `source: "webhook"`. */
+  giDocId?: string;
+  /** GI's payment-method string ("wire-transfer", "cheque", …) for a
+   *  webhook-sourced row. */
+  paymentMethod?: string;
   createdAt: string;
+}
+
+/** Green Invoice document types the app tracks — see
+ *  `src/lib/green-invoice/documents.ts` DOCUMENT_TYPE. */
+export type GiDocType = 300 | 305 | 320 | 400;
+
+/**
+ * One Green Invoice document the app knows about, keyed by the GI document id.
+ * The app writes the 300 (with its target) when its "create חשבון עסקה" button
+ * fires; the webhook writes 305/320/400 rows as it processes them, copying the
+ * target down from the resolved 300. Physical table:
+ * agent-ledger-gi-documents (key `id`, GSIs byDealId / byGiClientId).
+ */
+export interface GiDocumentRecord {
+  /** = the Green Invoice document GUID. */
+  id: string;
+  officeId: string;
+  giType: GiDocType;
+  giNumber: number;
+  giClientId: string;
+  /** Total, VAT-inclusive. */
+  amount: number;
+  /** Parent GI doc id: 305→300, 400→305, 320→300. Null for a 300. */
+  linkedGiId: string | null;
+  /** What the document (chain) bills. `deal` today; `agent-expenses` is
+   *  wired in the Phase 6 agent-expense work. Flat fields (not a union) so
+   *  the byDealId GSI can index `dealId`. */
+  targetKind: "deal" | "agent-expenses";
+  dealId?: string;
+  agentId?: string;
+  expenseEntryIds?: string[];
+  /** Who created this row. */
+  origin: "app" | "webhook";
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type AgentLedgerEntryType =

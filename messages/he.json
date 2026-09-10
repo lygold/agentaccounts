@@ -96,6 +96,7 @@
     "giCreate300": "צור חשבון עסקה (300)",
     "giCreated300": "חשבון עסקה נוצר (מס' אסמכתא {ref}). ניתן ליצור מסמך קבלה לכל תשלום למטה.",
     "incomeTitle": "תקבולים",
+    "fromGreenInvoice": "מ‑Green Invoice",
     "receiptCreated": "קבלה נוצרה (מס' אסמכתא {ref})",
     "createReceipt": "צור קבלה",
     "amount": "סכום (₪)",

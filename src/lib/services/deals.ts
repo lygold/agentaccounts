@@ -2,7 +2,7 @@ import "server-only";
 import type { Deal, DealSide, DealType } from "../types";
 import { createDeal, getDeal, updateDeal } from "../store/deals";
 import { createBilling, listBillingForDeal, updateBilling } from "../store/billing";
-import { getIncome, updateIncome } from "../store/income";
+import { putGiDocument } from "../store/gi-documents";
 import { computeBillingAmount } from "../commission";
 import {
   createGreenInvoiceClient,
@@ -10,10 +10,8 @@ import {
   type ClientResolution,
 } from "../green-invoice/clients";
 import {
-  createReceiptDocument,
   createTransactionAccount,
   type GreenInvoiceDocument,
-  type ReceiptDocumentType,
 } from "../green-invoice/documents";
 
 /**
@@ -123,35 +121,24 @@ export async function createDealTransactionAccount(
     side: deal.side,
   });
   await updateBilling(billing.id, { greenInvoiceRef: doc.id }, officeId);
-  return doc;
-}
 
-/**
- * Create a חשבונית מס / חשבונית מס-קבלה / קבלה for one income row, linked
- * back to the deal's 300. No-op (null) when the deal has no GI client, the
- * 300 doesn't exist yet, or the income row is missing / already receipted.
- */
-export async function createIncomeReceipt(
-  dealId: string,
-  incomeId: string,
-  type: ReceiptDocumentType,
-  officeId: string,
-): Promise<GreenInvoiceDocument | null> {
-  const deal = await getDeal(dealId);
-  if (!deal || deal.officeId !== officeId || !deal.greenInvoiceClientId) return null;
-  const billing = (await listBillingForDeal(dealId))[0];
-  if (!billing?.greenInvoiceRef) return null;
-  const income = await getIncome(incomeId);
-  if (!income || income.dealId !== dealId || income.greenInvoiceReceiptRef) return null;
-
-  const doc = await createReceiptDocument({
-    type,
-    clientId: deal.greenInvoiceClientId,
-    amount: income.amount,
-    description: `${deal.clientName} — payment ${income.receivedDate}`,
-    linkedTransactionAccountId: billing.greenInvoiceRef,
-    paymentDate: income.receivedDate,
+  // Record the 300 so the GI webhook can resolve a later 320/400 back to this
+  // deal (see docs/mem/gi-webhook.md — resolution is by document link).
+  await putGiDocument({
+    id: doc.id,
+    officeId,
+    giType: 300,
+    giNumber: Number(doc.number),
+    giClientId: deal.greenInvoiceClientId,
+    amount: billing.amount,
+    linkedGiId: null,
+    targetKind: "deal",
+    dealId: deal.id,
+    origin: "app",
   });
-  await updateIncome(incomeId, { greenInvoiceReceiptRef: doc.id }, officeId);
   return doc;
 }
+
+// createIncomeReceipt was removed in Phase 6: the app only ever creates 300s;
+// Levi/Ariyel issue the 305/320/400 in Green Invoice, and the GI webhook
+// (/api/green-invoice/webhook) turns those into income + commission.

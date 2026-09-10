@@ -4,11 +4,9 @@ import { redirect } from "next/navigation";
 import { requireManager } from "@/lib/auth/session-cookie";
 import { getAgentById } from "@/lib/store/agents";
 import { DealSchema, IncomeEntrySchema } from "@/lib/form-parse";
-import { DOCUMENT_TYPE, type ReceiptDocumentType } from "@/lib/green-invoice/documents";
 import {
   createDealTransactionAccount,
   createDealWithBilling,
-  createIncomeReceipt,
   resolveGiClientForDeal,
   setGiClientForDeal,
 } from "@/lib/services/deals";
@@ -141,35 +139,6 @@ export async function createTransactionAccountForDeal(dealId: string) {
   }
 }
 
-const RECEIPT_DOCUMENT_TYPES: ReceiptDocumentType[] = [
-  DOCUMENT_TYPE.taxInvoice,
-  DOCUMENT_TYPE.taxInvoiceReceipt,
-  DOCUMENT_TYPE.receipt,
-];
-
-/** Manually-triggered — creates a חשבונית מס / חשבונית מס-קבלה / קבלה for
- *  one income row, linked back to the deal's 300. Levi/Ariyel pick the
- *  type at the moment the payment is confirmed. */
-export async function createReceiptForIncome(
-  dealId: string,
-  incomeId: string,
-  formData: FormData,
-) {
-  try {
-    const session = await requireManager();
-    const typeRaw = Number(formData.get("documentType"));
-    if (!RECEIPT_DOCUMENT_TYPES.includes(typeRaw as ReceiptDocumentType)) return;
-
-    await createIncomeReceipt(
-      dealId,
-      incomeId,
-      typeRaw as ReceiptDocumentType,
-      session.officeId,
-    );
-    redirect(`/deals/${dealId}`);
-  } catch (e) {
-    if (isNextJsRedirect(e)) throw e;
-    console.error("createReceiptForIncome failed:", e);
-    redirect(`/deals/${dealId}?error=save`);
-  }
-}
+// createReceiptForIncome removed in Phase 6 — the app doesn't issue receipts.
+// Levi/Ariyel create the 305/320/400 in Green Invoice; the GI webhook
+// (/api/green-invoice/webhook) turns those into income + commission.

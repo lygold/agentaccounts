@@ -1,9 +1,9 @@
 import "server-only";
-import type { AgentLedgerEntry, Income } from "../types";
-import { getDeal } from "../store/deals";
-import { createIncome } from "../store/income";
+import type { AgentLedgerEntry, Income, PaymentStatus } from "../types";
+import { getDeal, updateDeal } from "../store/deals";
+import { createIncome, totalReceivedForDeal } from "../store/income";
 import { createLedgerEntry } from "../store/agent-ledger";
-import { addVat } from "../commission";
+import { addVat, computeBillingAmount } from "../commission";
 import { commissionForPayment } from "../commission-auto";
 
 /**
@@ -17,6 +17,11 @@ export interface RecordPaymentInput {
   dealId: string;
   amount: number;
   receivedDate: string;
+  /** Provenance — defaults to "manual" (keyed on the deal page). The GI
+   *  webhook passes "webhook" + the originating gi-documents id + method. */
+  source?: "app" | "webhook" | "manual";
+  giDocId?: string;
+  paymentMethod?: string;
 }
 
 /**
@@ -36,6 +41,9 @@ export async function recordDealPayment(
     dealId: input.dealId,
     amount: input.amount,
     receivedDate: input.receivedDate,
+    source: input.source ?? "manual",
+    giDocId: input.giDocId,
+    paymentMethod: input.paymentMethod,
   });
 
   const commissionExVat = await commissionForPayment(deal, income);
@@ -53,5 +61,18 @@ export async function recordDealPayment(
       date: input.receivedDate,
     });
   }
+
+  // Roll the deal's payment status forward from total received vs. billed.
+  // overdue / dead_debt are explicit manual flags, so leave those alone.
+  if (deal.paymentStatus !== "overdue" && deal.paymentStatus !== "dead_debt") {
+    const received = await totalReceivedForDeal(input.dealId);
+    const billed = computeBillingAmount(deal);
+    const next: PaymentStatus =
+      received >= billed ? "paid" : received > 0 ? "partial_payment" : "due";
+    if (next !== deal.paymentStatus) {
+      await updateDeal(input.dealId, { paymentStatus: next }, input.officeId);
+    }
+  }
+
   return { income, commission };
 }

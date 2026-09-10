@@ -1,61 +1,97 @@
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
+import { getRedis, RedisKeys } from "@/lib/redis";
+import { getDeal } from "@/lib/store/deals";
+import { getGiDocument, putGiDocument } from "@/lib/store/gi-documents";
+import { recordDealPayment } from "@/lib/services/payments";
+import { greenInvoiceFetch } from "@/lib/green-invoice/client";
+import { processGiDocument, type GiWebhookDoc } from "@/lib/green-invoice/webhook-handler";
 
 /**
- * Green Invoice / Morning "document created" webhook.
+ * Green Invoice / Morning webhook — `document/created` for every doc type.
+ * Verified live against the sandbox 2026-09-10, see docs/mem/gi-webhook.md.
  *
- * STAGE 1 (Phase 6 discovery — current): capture + signature probe. Logs the
- * raw body, the headers, and every plausible HMAC-SHA256 construction of the
- * secret so we can see which one matches GI's `x-webhook-signature`. Always
- * 200 so GI doesn't retry-storm.
- *
- * TODO STAGE 2: keep only the verified signature check, resolve the document
- * to a deal via the gi-documents table, create income + post commission for a
- * receipt (320/400), advance the deal lifecycle. Then stop logging payloads
- * (they carry client PII).
+ * - signature: `HMAC-SHA256(GREEN_INVOICE_WEBHOOK_SECRET, rawBody)` hex, in
+ *   `x-webhook-signature`
+ * - idempotency: keyed on the GI document id (stable across retries — the
+ *   delivery id is not)
+ * - the app only ever creates 300s; Levi/Ariyel issue 305/320/400 in GI, and
+ *   this turns those into income + commission
  */
+
+function verifySignature(rawBody: string, sig: string): boolean {
+  const secret = process.env.GREEN_INVOICE_WEBHOOK_SECRET;
+  if (!secret || !sig) return false;
+  const expected = createHmac("sha256", secret).update(rawBody, "utf8").digest("hex");
+  try {
+    return timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(sig, "hex"));
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: Request) {
   const rawBody = await request.text();
-  const headers: Record<string, string> = {};
-  request.headers.forEach((value, key) => {
-    headers[key] = value;
-  });
+  const sig = request.headers.get("x-webhook-signature") ?? "";
 
-  const sig = headers["x-webhook-signature"] ?? "";
-  const ts = headers["x-webhook-timestamp"] ?? "";
-  const secret = process.env.GREEN_INVOICE_WEBHOOK_SECRET ?? "";
+  if (!verifySignature(rawBody, sig)) {
+    console.warn("[gi-webhook] signature check failed — rejecting");
+    return NextResponse.json({ error: "invalid signature" }, { status: 401 });
+  }
 
-  const hmac = (msg: string) =>
-    createHmac("sha256", secret).update(msg, "utf8").digest("hex");
+  let doc: GiWebhookDoc;
+  try {
+    doc = JSON.parse(rawBody);
+  } catch {
+    return NextResponse.json({ error: "invalid json" }, { status: 400 });
+  }
+  if (!doc?.id || typeof doc.type !== "number") {
+    return NextResponse.json({ error: "not a document payload" }, { status: 202 });
+  }
 
-  const candidates: Record<string, string> = secret
-    ? {
-        body: hmac(rawBody),
-        "ts.body": hmac(`${ts}.${rawBody}`),
-        "ts+body": hmac(`${ts}${rawBody}`),
-        "body.ts": hmac(`${rawBody}.${ts}`),
-        "id+ts": hmac(`${headers["x-webhook-id"] ?? ""}${ts}${rawBody}`),
+  // Idempotency — a 320/400 must only ever be processed once, even if GI
+  // redelivers it. Redis SET NX is the fast atomic guard; the gi-documents
+  // row existing is the durable backstop (checked in the handler).
+  if (doc.type !== 300) {
+    try {
+      const fresh = await getRedis().set(RedisKeys.giWebhookDoc(doc.id), Date.now(), {
+        nx: true,
+        ex: 60 * 60 * 24 * 30,
+      });
+      if (fresh === null) {
+        console.log(`[gi-webhook] ${doc.type} ${doc.id} already handled — skipping`);
+        return NextResponse.json({ received: true, duplicate: true });
       }
-    : {};
-  const match =
-    Object.entries(candidates).find(([, v]) => v === sig)?.[0] ?? "NONE";
+    } catch (e) {
+      console.error("[gi-webhook] Redis dedup unavailable, relying on the DB guard:", e);
+    }
+  }
 
-  console.log("[gi-webhook] --- inbound ---");
-  console.log("[gi-webhook] topic:", headers["x-webhook-topic"]);
-  console.log("[gi-webhook] received sig:", sig, "| secret set:", !!secret);
-  console.log("[gi-webhook] hmac candidates:", JSON.stringify(candidates));
-  console.log("[gi-webhook] >>> MATCH:", match);
-  console.log("[gi-webhook] headers:", JSON.stringify(headers));
-  console.log("[gi-webhook] body:", rawBody || "(empty)");
+  try {
+    await processGiDocument(doc, {
+      getGiDocument,
+      putGiDocument,
+      getDeal,
+      recordDealPayment,
+      fetchGiDocument: (id) =>
+        greenInvoiceFetch(`/documents/${id}`) as Promise<{
+          linkedDocuments?: Array<{ id: string; type: number }>;
+        }>,
+    });
+  } catch (e) {
+    // Always 200 past signature/parse: GI retrying won't fix a logic error,
+    // and the scheduled poll re-checks for genuine misses. Release the Redis
+    // guard so a poll-triggered reprocess isn't blocked.
+    console.error(`[gi-webhook] handling ${doc.type} ${doc.id} failed:`, e);
+    try {
+      await getRedis().del(RedisKeys.giWebhookDoc(doc.id));
+    } catch {}
+  }
 
   return NextResponse.json({ received: true });
 }
 
-/** Lets you (and GI's "test" button) confirm the URL is reachable. */
+/** Reachability check — also what GI's config UI pings when you save the URL. */
 export async function GET() {
-  return NextResponse.json({
-    ok: true,
-    endpoint: "green-invoice webhook",
-    stage: "capture",
-  });
+  return NextResponse.json({ ok: true, endpoint: "green-invoice webhook" });
 }

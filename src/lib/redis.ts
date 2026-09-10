@@ -25,4 +25,7 @@ export const RedisKeys = {
   audit: (date: string) => `al:audit:${date}`,
   /** Dead-letter list for agent → Daf Kesher mirror writes that failed. */
   agentMirrorDeadletter: "al:sync:agent:deadletter",
+  /** Idempotency guard per Green Invoice document id (stable across webhook
+   *  retries — the delivery id is not). */
+  giWebhookDoc: (giDocId: string) => `al:gi:webhook:doc:${giDocId}`,
 };

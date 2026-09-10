@@ -47,6 +47,10 @@ export const TABLES = {
   /** The office's agent directory — canonical identity store (Phase 4).
    *  Physical table: agent-ledger-agents. */
   agents: () => requireTableName("DYNAMODB_TABLE_AGENTS", process.env.DYNAMODB_TABLE_AGENTS),
+  /** Green Invoice documents the app tracks (Phase 6). Physical table:
+   *  agent-ledger-gi-documents. */
+  giDocuments: () =>
+    requireTableName("DYNAMODB_TABLE_GI_DOCUMENTS", process.env.DYNAMODB_TABLE_GI_DOCUMENTS),
 };
 
 /** Value is passed in via a *static* `process.env.X` read (not a dynamic
