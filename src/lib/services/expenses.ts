@@ -108,3 +108,50 @@ export async function runMonthlyExpenses(
   }
   return res;
 }
+
+// --- variable expenses: bulk import commit --------------------------------
+
+export interface ImportRow {
+  agentId: string;
+  agentName: string;
+  date: string;
+  qty: number;
+  unitCost: number;
+}
+
+/**
+ * Turn a reviewed bulk-import batch into `expense` entries. Idempotent per
+ * (vendor, agent, date, qty, unitCost) so re-importing the same file is a
+ * no-op. Line amount = qty × unitCost, pre-VAT.
+ */
+export async function commitExpenseImport(
+  officeId: string,
+  vendor: string,
+  rows: ImportRow[],
+): Promise<{ created: number; skipped: number }> {
+  let created = 0;
+  let skipped = 0;
+  for (const r of rows) {
+    const amountExVat = Math.round(r.qty * r.unitCost * 100) / 100;
+    if (!r.agentId || amountExVat <= 0) {
+      skipped++;
+      continue;
+    }
+    const id = `imp-${vendor}-${r.agentId}-${r.date}-${r.qty}x${r.unitCost}`
+      .replace(/[^\w.-]/g, "_")
+      .slice(0, 200);
+    const entry = await createLedgerEntryIfAbsent(id, {
+      officeId,
+      agentId: r.agentId,
+      agentName: r.agentName,
+      type: "expense",
+      amount: -addVat(amountExVat),
+      amountExVat: -amountExVat,
+      description: `${vendor} — ${r.qty} × ₪${r.unitCost} (${r.date})`,
+      date: r.date,
+    });
+    if (entry) created++;
+    else skipped++;
+  }
+  return { created, skipped };
+}

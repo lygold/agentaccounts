@@ -144,6 +144,32 @@
     "verifying": "Verifying...",
     "resend": "Resend code"
   },
+  "ExpenseImport": {
+    "title": "Import variable expenses",
+    "intro": "One file per vendor per month (Yad2, Torah Tidbits …). Columns: agent · date · number · cost (pre-VAT unit price). Paste from Excel or upload a CSV.",
+    "vendor": "Vendor",
+    "paste": "Paste rows",
+    "orFile": "or upload a CSV",
+    "parse": "Preview",
+    "previewHead": "{vendor}: {rows} rows, {unmatched} need an agent.",
+    "colRaw": "In file",
+    "colDate": "Date",
+    "colQty": "Qty",
+    "colCost": "Unit ₪",
+    "colTotal": "Line ₪",
+    "colAgent": "Agent",
+    "skipRow": "— skip —",
+    "commit": "Post expenses",
+    "cancel": "Cancel",
+    "done": "Posted {created}, skipped {skipped}.",
+    "error": {
+      "empty": "Add a vendor and paste or upload the rows.",
+      "norows": "No data rows found.",
+      "parse": "Couldn't parse that. Check the columns.",
+      "expired": "That batch expired — parse again.",
+      "commit": "Something went wrong posting the expenses."
+    }
+  },
   "Admin": {
     "title": "Agents",
     "addTitle": "Add an agent",
@@ -199,6 +225,7 @@
     "sortTeam": "by team",
     "sortName": "by name",
     "syncFromMonday": "Sync from Daf Kesher",
+    "importExpenses": "Import expenses",
     "syncResult": "Synced from Daf Kesher: {created} added, {updated} updated, {archived} archived, {linked} linked.",
     "syncErrors": "{count} row(s) failed — check the server logs.",
     "mirrorFails": "{count} agent change(s) failed to write back to Daf Kesher — check the server logs."

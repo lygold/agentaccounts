@@ -58,11 +58,16 @@ export default async function AdminAgentsPage({
       <main className="mx-auto max-w-3xl p-6">
         <div className="mb-4 flex items-center justify-between gap-4">
           <h1 className="text-2xl font-bold">{t("title")}</h1>
-          <form action={syncFromMondayAction}>
-            <Button type="submit" variant="outline" size="sm">
-              {t("syncFromMonday")}
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/admin/expenses/import">{t("importExpenses")}</Link>
             </Button>
-          </form>
+            <form action={syncFromMondayAction}>
+              <Button type="submit" variant="outline" size="sm">
+                {t("syncFromMonday")}
+              </Button>
+            </form>
+          </div>
         </div>
 
         {error && (

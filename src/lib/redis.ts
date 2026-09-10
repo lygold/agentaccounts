@@ -28,4 +28,9 @@ export const RedisKeys = {
   /** Idempotency guard per Green Invoice document id (stable across webhook
    *  retries — the delivery id is not). */
   giWebhookDoc: (giDocId: string) => `al:gi:webhook:doc:${giDocId}`,
+  /** A parsed bulk-expense-import batch awaiting the manager's review. */
+  expenseImportBatch: (token: string) => `al:expense:import:${token}`,
+  /** Hash: normalised "<vendor>:<nickname>" → agentId, so a fixed match
+   *  sticks for next month's import. */
+  expenseImportAliases: "al:expense:import:aliases",
 };
