@@ -5,7 +5,7 @@ say "see the roadmap plan" / "the Agent Hub plan" mean this file. Earlier
 planning docs live in [`docs/archive/`](docs/archive/) — where they disagree
 with this file, this file wins.
 
-Last reworked: 2026-09-09.
+Last reworked: 2026-09-09. Phase 4 closed + Phase 5/6 expanded 2026-09-10.
 
 ---
 
@@ -70,29 +70,25 @@ getting there and then going further.
 | **2** | Green Invoice integration (client resolve/create, חשבון עסקה/300, receipts 305/320/400), sandbox-verified end to end; i18n (he/en, cookie-based, RTL) | ✅ done |
 | **3** | Role-based access (manager-only writes; agent/team-leader read-only), VAT-aware ledger (`amount` incl + `amountExVat`), auto-commission (bracket-blended by YTD tier), service-layer extraction | ✅ done |
 | **3.5** | Deploy hardening: server env baked into the build via `next.config.ts` for Amplify SSR, IAM policy fixes, login verified end-to-end in prod. David Weiser's real 2026 ledger imported and reconciled (₪23,286.36 incl / ₪19,734.20 excl) | ✅ done |
+| **4** | App owns its agent directory: `agents` table, admin CRUD, auth reads it (not Monday), id-based scoping + agent picker, Daf Kesher ⇄ app sync bridge + daily cron, office-check hardening (4f). Weiser ledger backfilled into `agent-account`. | ✅ done |
 
 **What works today:** deploy at `main.d2aqfzo6esnq4n.amplifyapp.com`, OTP login,
 role-scoped dashboard / deals / per-agent ledger, deal creation with auto-billing,
 log-payment → auto-commission, Green Invoice 300 + receipt creation.
 
 **Known debt carried forward** (each addressed in a phase below):
-- Identity is read from the Monday "Daf Kesher" board (read-only). App-role
-  column doesn't exist → everyone resolves to `agent` unless `BOOTSTRAP_ADMIN_*`
-  matches. → **Phase 4**
-- `src/lib/auth/scope.ts` matches agents by **name string**, not ID; deals store
-  a typed name as identity (`agentId === agentName`). → **Phase 4**
+- ~~Identity read from Monday; app-role column missing~~ → **fixed Phase 4**
+  (auth reads the `agents` row's `role`; `BOOTSTRAP_ADMIN_*` still break-glass).
+- ~~`scope.ts` matches by name string; deals store a typed name~~ → **fixed
+  Phase 4c** (id-based; agent picker; old rows migrated).
+- ~~Deal write actions only `requireSession()`~~ → **fixed Phase 4c** (all
+  behind `requireManager()`).
 - Queries are **not office-scoped**: `listAll()` is a raw table scan; the
-  balances dashboard sums every row. → **Phase 5**
+  balances dashboard sums every row. Single-item pages don't check
+  `row.officeId`. → **Phase 5a / 5b**
 - Commission tiers (`commission-tiers.ts`) and Green Invoice creds are global
-  constants / env, not per-office. → **Phase 5**
-- Deal write actions (`submitIncome`, GI actions…) only `requireSession()` — no
-  per-deal ownership check. Effectively manager ops; gate them. → **Phase 4**
+  constants / env, not per-office. → **Phase 5c / 5d**
 - Free-text "log payment" amount on the deal page — should come from GI. → **Phase 6**
-- Weiser ledger: the 67 `agent-account` rows were lost in the
-  `ledger-entries → agent-account` table rename — `agent-ledger-agent-account`
-  is currently empty, so David's balance / the manager dashboard read ₪0 in
-  prod. `weiser-import-data.json` ledgerEntries repointed to his `agt_` id
-  (2026-09-10); re-run `import-weiser.mjs --write` to backfill. → housekeeping
 - Intermittent Amplify SSR platform error on server-action redirects
   (`ERR_SSL_WRONG_VERSION_NUMBER`) — does not block the flow.
 
@@ -140,6 +136,13 @@ Types in `src/lib/types.ts`. GSIs `byAgentId` / `byDealId`.
 - **`AgentLedgerEntry`**: wire the already-typed `attachments`
   (`AgentLedgerAttachment[]`) — the agent's חשבונית מס + קבלה on
   `payment_to_agent`, and expense docs.
+- **`AgentRecord`** (Phase 5a): `status` gains `onboarding`;
+  `commissionSchemeId`, `expenseChargeDate` (from a new Daf Kesher date
+  column), `officeFeeExVat?`, `licenseNumber?`; and the add form exposes the
+  sync-only `fullNameEnglish` / `firstNameHebrew` / `surname`.
+- **`Office`** (Phase 5c): `branding`, `settings.{vatRate, defaultLocale,
+  dealIntakeUrl, publicLinks[], commissionSchemes[], defaultCommissionSchemeId,
+  standardExpenses, greenInvoice{env,clientId,clientSecretEnc}}`.
 
 ---
 
@@ -194,36 +197,124 @@ Each phase is independently shippable and leaves the app working.
 renders, hard-delete refused. `scope.ts` scopes by id (kill the Monday token →
 team-leader scoping still works).
 
-### Phase 5 — Multi-tenancy hardening
+### Phase 5 — Multi-tenancy hardening + the office/agent data model
 
-**Goal:** true isolation. Office A's admin cannot reach office B's data by any
-path.
+**Goal:** true isolation (office A cannot reach office B's data by any path),
+and the per-office / per-agent config that a second office needs — commission
+schemes, expense prices, branding — moved off global constants onto records
+that an office admin can edit. Also the agent lifecycle + richer agent record.
 
-- **`offices` table**: `id`, `name`, `ownerAgentId`, `status` / `plan`,
-  `branding` (`logoUrl`, `primaryColor`, `accentColor`, `displayName`),
+Split into shippable slices. **5a + 5b are the isolation fix and the
+migration-avoiding model changes — do these next. 5c–5e wait until office #2 is
+actually near** (decision D8).
+
+#### 5a — office-scoped queries + land the data model
+
+- **`byOfficeId` GSI** on `deals` (HASH `officeId`, RANGE `createdAt`),
+  `agent-account` (RANGE `date` — also serves the Phase 7 report),
+  `billing` + `income` (RANGE `createdAt`). New `scripts/add-office-gsis.mjs`,
+  admin creds (the scoped app user has no `UpdateTable`); online backfill.
+  Also regularise the 4 core tables into `create-tables.mjs` (undocumented
+  which script first made them).
+- **Replace both `listAll()` scans** — `listDeals(officeId)`,
+  `listAgentBalances(officeId)` / `listAllLedgerEntries(officeId)` → office GSI
+  query. **Delete `listAll` from `dynamo-store.ts`** (or eslint-ban it).
+  Callers pass `session.officeId`.
+- **New fields, landed now so no re-migration later** (empty-ish 30-row agents
+  table + 14 deals — trivial today, painful after office #2):
+  - `AgentRecord.status`: add **`onboarding`** (`onboarding | active |
+    archived`). Login = "not archived". Onboarding agents are hidden from
+    deal-assignment pickers (already filter to `active`). Mostly a tracking
+    dimension, not an access change.
+  - `AgentRecord.commissionSchemeId` — which office scheme this agent is on;
+    defaults to the office default at creation, editable.
+  - `AgentRecord.expenseChargeDate` — when the agent starts paying monthly
+    expenses (NOT join date; can be months out). Synced from a **new Daf
+    Kesher date column** (Levi to add it; wire the id into `monday/columns.ts`
+    + `roster.ts`). Derived `firstChargeMonth` = round UP to next full month
+    (no partial months — Levi confirming the rule with the broker-owner).
+  - `AgentRecord.officeFeeExVat?` — per-agent office-fee override (post-July
+    joiners pay 350 not 300; manual override beats a fragile date rule).
+  - `AgentRecord.licenseNumber?`, and the add form gains the currently
+    sync-only optional fields: `fullNameEnglish`, `firstNameHebrew`,
+    `surname`. Required stays name + (phone|email) + role.
+  - `Office` type + `agent-ledger-offices` table (key `id`, no GSI) — see 5c
+    for the shape. Seed the `remax-jerusalem` row from current constants/env.
+
+#### 5b — office guards + write-time assertion
+
+- **`assertOffice(row, session)` helper** → `notFound()` on mismatch. Apply
+  after every `getDeal` / `getAgentById` at a page/action (`/deals/[id]`,
+  `/agents/[agentId]` currently unguarded). Generalises the Phase 4f fix.
+- **`update()` in `dynamo-store.ts`** gains `expectedOfficeId?` — it already
+  fetches `existing`, so throw on `existing.officeId !== expectedOfficeId`.
+  Per-entity `updateDeal` / `updateBilling` / `updateIncome` / `updateAgent`
+  thread `officeId`. `insert()` asserts `item.officeId` is non-empty.
+
+#### 5c — `offices` table + settings page
+
+- **`Office`**: `id`, `name`, `ownerAgentId`, `status`, `plan`,
+  `branding` (`displayName`, `logoUrl?`, `primaryColor?`, `accentColor?`),
   `settings`:
-  - `vatRate` (was the global `VAT_RATE` constant)
-  - `commissionTiers` + per-agent overrides (move `commission-tiers.ts` here)
-  - `greenInvoice` — **each office has its own Morning account**; `clientId` /
-    `clientSecret` / `env` move off env onto the office record, encrypted at rest
-  - `defaultLocale`, `dealIntakeUrl`, `publicLinks[]` (Phase — public page)
-- **`byOfficeId` GSI on every table.** Replace every `listAll()` scan with an
-  office-scoped query. **Delete the unscoped `listAll` helper** (or lint-ban it).
-- **Write-time assertion** in the store layer: `row.officeId === ctx.officeId`
-  or throw — defense in depth on top of query scoping.
-- `listAgentBalances`, deals list, ledger — all filtered to `session.officeId`.
-- Remove the last global Monday call (`listAgentNamesInDistrict`) → query the
-  `agents` table by `teamId` within office.
-- **Platform super-admin** — a `platformAdmin` flag (Levi, for support), outside
-  normal office scope, every cross-office access audited.
+  - `vatRate` — *nationally uniform in IL; leave `VAT_RATE = 0.18` a constant
+    with a "one place to change" comment unless a non-IL office onboards*
+    (decision A)
+  - `defaultLocale`, `dealIntakeUrl`, `publicLinks[]`
+  - **`commissionSchemes[]`** — `{ id, name, tiers: CommissionTierRule[] }`.
+    Arbitrary thresholds; the bracket-blend engine already handles any shape
+    (e.g. beginner `[{0,0.30},{250000,0.50}]`, flat `[{0,0.60}]`).
+    `defaultCommissionSchemeId`. New office seeded with a starter set.
+  - **`standardExpenses`** — unit prices: office fee 300, Yad2 55, מדלן 255,
+    Torah Tidbits 100. Feed the recurring office-fee charge and the
+    bulk-import pre-fill (Phase 6).
+  - **`greenInvoice`** — `{ env, clientId, clientSecretEnc }`. Each office its
+    own Morning account. Secret **AES-256-GCM at rest** with a new
+    `OFFICE_SECRETS_KEY` env var (same "key in env, ciphertext in DB" pattern
+    as `SESSION_SECRET`) — not KMS (decision C).
+- **`/admin/settings`** (admin-only) — CRUD the office record. The
+  commission-schemes sub-editor (repeatable scheme blocks, each with
+  repeatable threshold→rate rows) is the fiddliest widget; functional first,
+  visual polish is Phase 11.
+- **`agent-ledger-offices`** added to `create-tables.mjs` + `scripts/seed-office.mjs`.
 
-**Open decision D6:** can one customer own multiple offices (a franchise with
-branches) and want a combined view? Default: **no — office = tenant, keep it
-flat.** Add an `org` layer above `office` only when a real customer needs it.
+#### 5d — flip the globals to read the office record
 
-**Verification:** seed a second office + its admin. Log in as office-A admin →
-office-B agents / deals / balances are absent from every list, and a direct
-`getDeal(officeB_dealId)` throws. Commission math uses office-A's tier table.
+- **`tiersForAgent(agent, office)`** — look up `agent.commissionSchemeId` on
+  the office, return its tiers. Delete `commission-tiers.ts`'s hardcoded
+  `BY_ID` / `FLAT_60_NAMES`. Changing an agent's scheme affects only *future*
+  commission — posted ledger entries are historical facts; the YTD tier cursor
+  carries over.
+- **`green-invoice/client.ts`** `getConfig()` takes an office (or its GI
+  block) instead of `process.env`. Token cache keyed by `officeId` (currently
+  a module singleton — breaks with 2 accounts). Test against the GI sandbox
+  first; keep an env fallback for one release.
+- **VAT** (only if decision A flips) — `stripVat` / `addVat` /
+  `computeBillingAmount` take an explicit `rate`, default `0.18`; service +
+  report layer pass `office.settings.vatRate`.
+
+#### 5e — platform super-admin (D7)
+
+- `SessionPayload.platformAdmin?` — set at login from `PLATFORM_ADMIN_EMAILS`
+  env (Levi). Distinct from office-scoped `role: "admin"`.
+- Can `listOffices` and open any office's data via an **explicit** office
+  switch (`/platform` area or `?asOffice=`) — never implicit "see all". Every
+  cross-office read/write → `logAudit({ kind: "platform_access", ... })`
+  (audit sink exists). Functional support tool, no UI polish.
+
+**Decisions:**
+- **D6** — one customer, multiple offices? **No — office = tenant, flat.** Add
+  an `org` layer only when a real customer needs it.
+- **D8** — do 5c–5e now or defer? **Defer** until office #2 is on the horizon;
+  5a+5b (isolation + model) are the only urgent part.
+- **A** — per-office VAT? **No**, keep the constant (IL-uniform).
+- **B** — commission override location? **The `agents` row**
+  (`commissionSchemeId`), edited in the existing agent admin UI.
+- **C** — GI secret encryption? **env-key AES-256-GCM**, not KMS.
+
+**Verification:** seed a second office + its admin. Office-A admin sees no
+office-B agents / deals / balances in any list; `getDeal(officeB_dealId)` at a
+page 404s; a crafted server-action POST with office-B's id is refused with
+nothing written. Commission math uses office-A's schemes.
 
 ### Phase 6 — Green Invoice income + expense engine
 
@@ -252,9 +343,26 @@ activity, not typed numbers.
 - **Manual upload portal** (manager): upload a GI PDF → key amount / date /
   target → same row creation, `source: "manual"`, PDF to S3.
 - **Remove the free-text "log payment" amount field** from the deal page.
-- **Recurring expenses**: `recurring-expenses` config (משרד / מדלן / פרמי per
-  agent, from the `agents and recurring expenses` sheet) + a monthly scheduled
-  job that writes the `expense` rows.
+- **Agent monthly expenses — two mechanisms**, both writing `expense` rows to
+  `agent-account` (negative, dual VAT amounts, no `dealId`), both skipping any
+  agent whose `firstChargeMonth` (Phase 5, from `expenseChargeDate`) is after
+  the run month:
+  1. **Recurring / fixed** — `recurring-expenses` table (per ROADMAP §4):
+     per-agent `{ label, amountExVat, active, startMonth? }`. Office fee
+     (משרד), מדלן flat, פרמי. Seeded from `office.settings.standardExpenses`
+     at agent creation (office fee = the agent's `officeFeeExVat` override if
+     set, else the office default), editable. A **monthly cron** writes one
+     row per active line per eligible agent.
+  2. **Variable — bulk vendor import** (manager): one Excel/CSV per vendor per
+     month. Columns `agent | date | number | cost(pre-vat)`. Line =
+     `number × cost` pre-VAT (confirm unit-price vs line-total with Levi).
+     Vendors: Yad2, Torah Tidbits, ad-hoc. Upload → **parsed preview**: match
+     the English nicknames to `agents` rows (a stored nickname→agentId alias
+     map), flag unmatched for the manager to fix, then commit. Entry
+     description e.g. `"Torah Tidbits — 2 × ₪100 (2/9)"`.
+  - See `docs/mem/office-expenses-model.md` for the full spec + open questions
+    (no-partial-months rule, the July 300→350 office-fee cutoff).
+  - This system replaces the Monday "Expense" board (retired Phase 10).
 - **Money-flow rules** (from Levi):
   - full payment → חשבונית מס+קבלה (320). Partial payment, or a business pays →
     חשבונית מס (305) first, then קבלה (400) when the money lands.
@@ -476,6 +584,12 @@ the review queue.
 | D5 | Who can create an admin | Another admin only *(default lean; confirm)* |
 | D6 | One customer, multiple offices | **No — office = tenant, flat.** Add an org layer only when a real customer needs it. |
 | D7 | Platform super-admin scope | Read-all + impersonate, every access audited |
+| D8 | Build Phase 5c–5e now? | **Defer** — 5a+5b (isolation + data model) are the urgent part; the settings page / GI refactor / platform admin wait until office #2 is near |
+| A | Per-office VAT rate | **No** — `VAT_RATE = 0.18` stays a constant (nationally uniform in IL) |
+| B | Per-agent commission override lives where | On the `agents` row (`commissionSchemeId`), edited in the agent admin UI |
+| C | GI client-secret encryption at rest | env-key AES-256-GCM (`OFFICE_SECRETS_KEY`), not KMS |
+| E1 | No-partial-months expense rule | Round `expenseChargeDate` up to next full month *(Levi confirming with broker-owner)* |
+| E2 | Bulk-import `cost` column | Assumed unit price (line = qty × cost) *(confirm)*; July 300→350 office-fee cutoff date *(confirm)* |
 | — | Monday's future | **Full decommission** — every board including Daf Kesher. 2-way sync bridge, then off. |
 | — | Client signing | The hub does **not** sign clients. It ingests emailed copies of signed forms, Claude-parses them, Levi confirms, matches to deals. |
 | — | Pipeline model | Linked entities, **manual status first**, propagation rules added incrementally. |
