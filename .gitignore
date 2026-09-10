@@ -46,6 +46,10 @@ next-env.d.ts
 # raw Claude session transcripts kept locally for reference, not in history
 docs/archive/*.jsonl
 
+# Claude working memory — session-scoped notes, not curated project docs
+# (docs/reference/ IS tracked; docs/mem/ is not)
+docs/mem/
+
 # editor
 .vscode/
 .idea/

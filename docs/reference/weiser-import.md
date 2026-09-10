@@ -41,12 +41,18 @@ payment_by_agent = +K.
   `--write` to apply. Deterministic ids: weiser-… / bill-… / inc-… / led-w-….
   Run: `node --env-file=.env.local scripts/import-weiser.mjs [--write]`
 
-Status: written 2026-09-02. **Re-import pending** — JSON regenerated with the new
-`amountExVat` field on every ledger entry; Levi needs to run
-`node --env-file=.env.local scripts/import-weiser.mjs --write --overwrite`
-(the `--overwrite` flag drops the attribute_not_exists guard so existing rows
-are replaced). Until then the app uses the `entryExVat` fallback (amount/1.18),
-which is exact for 2026. Also there's now a "New deal" button on the agents'
+Status (2026-09-10): **the 67 ledger rows are NOT in the live DB.** They went
+into the old `agent-ledger-ledger-entries` table; the 2026-09-06 rename to
+`agent-ledger-agent-account` left the new table empty, so David's balance and
+the manager dashboard read ₪0 in prod. deals (14) / billing (14) / income (16)
+are fine and the 14 deals were migrated to his `agt_` id. The JSON's 67
+`ledgerEntries` were repointed `1593093187 → agt_2b51d344-088c-416f-a4f9-c5cbea6617ba`;
+`deals` in the JSON left on the old id (already imported+migrated, don't re-touch).
+Backfill: `node --env-file=.env.local scripts/import-weiser.mjs --write` (plain
+guard is fine — only the 67 missing rows insert). The JSON already carries
+`amountExVat` on every ledger entry, so no `--overwrite` needed.
+
+Also there's now a "New deal" button on the agents'
 `/deals` page → external intake form (DEAL_INTAKE_URL in office.ts,
 https://main.d398ynovmjstlh.amplifyapp.com/); managers still get internal /deals/new.
 Not yet done: commission-tier config not imported (no DynamoDB table for it);

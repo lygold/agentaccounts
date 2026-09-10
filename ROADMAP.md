@@ -88,8 +88,11 @@ log-payment → auto-commission, Green Invoice 300 + receipt creation.
 - Deal write actions (`submitIncome`, GI actions…) only `requireSession()` — no
   per-deal ownership check. Effectively manager ops; gate them. → **Phase 4**
 - Free-text "log payment" amount on the deal page — should come from GI. → **Phase 6**
-- Weiser import needs one re-run with `--overwrite` to populate `amountExVat`
-  (app uses the `entryExVat` fallback meanwhile — exact for 2026). → housekeeping
+- Weiser ledger: the 67 `agent-account` rows were lost in the
+  `ledger-entries → agent-account` table rename — `agent-ledger-agent-account`
+  is currently empty, so David's balance / the manager dashboard read ₪0 in
+  prod. `weiser-import-data.json` ledgerEntries repointed to his `agt_` id
+  (2026-09-10); re-run `import-weiser.mjs --write` to backfill. → housekeeping
 - Intermittent Amplify SSR platform error on server-action redirects
   (`ERR_SSL_WRONG_VERSION_NUMBER`) — does not block the flow.
 
@@ -169,13 +172,20 @@ Each phase is independently shippable and leaves the app working.
 - **Gate the ungated write actions** (`submitIncome`, GI client/300/receipt
   actions) behind `requireManager()`.
 - **Daf Kesher import → sync → cutover:**
-  1. `scripts/import-agents-from-monday.mjs` — one-time pull of the RE/MAX
-     Jerusalem roster into `agents`, setting `mondayItemId`.
-  2. Sync window: a scheduled job keeps name/phone/email in step (Monday → app
-     on a schedule; app → Monday on write via the Monday API — it supports item
-     create/update/archive).
+  1. ✅ `scripts/import-agents-from-monday.mjs` — roster pulled into `agents`
+     (30 agents, `mondayItemId` set). `scripts/migrate-deal-agent-ids.mjs` +
+     `backfill-deal-team.mjs` run — 14 deals repointed to `agt_` ids + team.
+  2. Sync window (now): inbound `POST /api/sync/agents` runs daily via
+     `.github/workflows/sync-agents.yml` (needs repo secret `SYNC_SECRET`;
+     also a button on `/admin/agents`). Outbound app→Monday on every admin
+     write (`mirrorAgentToMonday`), `MONDAY_SYNC_ENABLED=false` to disable.
+     Let it bake as long as Levi wants — no fixed week; watch the
+     `/admin/agents` mirror-failure banner and the sync result counts.
   3. Cutover: announce, freeze Monday edits, final sync, flip to `agents`-only.
      (`src/lib/monday/*` deletion happens in Phase 10 with the rest.)
+  - Only Daf Kesher is synced. The other Monday boards (Properties, Offers,
+    Signed Contracts, Referrals, Deals) each get their own bridge in
+    Phases 8–10, not here.
 
 **Open decisions — archive behaviour (D1–D5 below).**
 
@@ -484,11 +494,12 @@ the review queue.
 
 Runs across Phases 4 (Daf Kesher) and 10 (everything else).
 
-- [ ] `agents` table live, admin UI shipped (Phase 4)
-- [ ] Roster imported from Daf Kesher, `mondayItemId` set on each row
-- [ ] Sync job running both directions, verified for one full week
-- [ ] Auth (`findAgentByContact`, `roles.ts`) reads `agents`, not Monday
-- [ ] `scope.ts` matches by `agentId`; deals store real `agentId` + `teamId`
+- [x] `agents` table live, admin UI shipped (Phase 4)
+- [x] Roster imported from Daf Kesher, `mondayItemId` set on each row
+- [ ] Sync job running both directions — inbound cron live, baking (no fixed
+      end date; Levi calls the cutover)
+- [x] Auth (`findAgentByContact`, `roles.ts`) reads `agents`, not Monday
+- [x] `scope.ts` matches by `agentId`; deals store real `agentId` + `team`
 - [ ] sikkumPigisha retired (Phase 8) — nothing else reads Daf Kesher
 - [ ] Pipeline entities live (Phase 9) — Signed Contracts / Properties / Offers /
       Referrals boards no longer written

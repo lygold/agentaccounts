@@ -1,0 +1,42 @@
+name: Sync agents from Daf Kesher
+
+# Inbound roster sync (ROADMAP Phase 4d): pulls the Daf Kesher (Monday) agent
+# board into the app's `agents` table. Runs until Daf Kesher is retired
+# (Phase 10). This is the ONLY Monday board the app syncs today — Properties /
+# Offers / Signed Contracts / Referrals get their own bridges in Phases 9-10.
+#
+# Setup:
+#   - Repo secret  SYNC_SECRET  = the value from .env.local / Amplify env
+#   - (optional) Repo variable  APP_URL  to override the default host below
+#
+# Trigger it by hand anytime from the Actions tab ("Run workflow").
+
+on:
+  schedule:
+    - cron: "0 4 * * *" # 04:00 UTC daily (~06:00-07:00 Israel)
+  workflow_dispatch:
+
+concurrency:
+  group: sync-agents
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST /api/sync/agents
+        env:
+          SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
+          APP_URL: ${{ vars.APP_URL || 'https://main.d2aqfzo6esnq4n.amplifyapp.com' }}
+        run: |
+          if [ -z "$SYNC_SECRET" ]; then
+            echo "::error::SYNC_SECRET repo secret is not set"
+            exit 1
+          fi
+          code=$(curl -sS -o /tmp/body.json -w '%{http_code}' \
+            --retry 3 --retry-delay 10 --retry-all-errors --max-time 120 \
+            -X POST "$APP_URL/api/sync/agents" \
+            -H "Authorization: Bearer $SYNC_SECRET")
+          echo "HTTP $code"
+          cat /tmp/body.json; echo
+          test "$code" = "200"
