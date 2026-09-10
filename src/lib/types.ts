@@ -138,7 +138,7 @@ export interface RecurringExpenseConfig {
   active: boolean;
 }
 
-export type AgentStatus = "active" | "archived";
+export type AgentStatus = "onboarding" | "active" | "archived";
 
 /**
  * The office's own agent directory — the app's canonical identity store as
@@ -161,9 +161,26 @@ export interface AgentRecord {
   team: number | null;
   isTeamLeader: boolean;
   role: AppRole;
-  /** `archived` blocks login and hides the agent from pickers; their ledger
-   *  history stays readable. Hard delete only when nothing references them. */
+  /** `onboarding` — on the roster, being tracked, can log in, but excluded
+   *  from deal-assignment pickers. `active` — full. `archived` — blocks login,
+   *  hidden from pickers; ledger history stays readable. Hard delete only when
+   *  nothing references them. */
   status: AgentStatus;
+  /** Set when the agent moves onboarding → active. */
+  activatedAt: string | null;
+  /** Real-estate license number (מספר רישיון תיווך). */
+  licenseNumber: string | null;
+  /** When the agent starts paying monthly expenses — NOT the join date; can
+   *  be months out. ISO date (yyyy-mm-dd). Sourced from a Daf Kesher column
+   *  once Levi adds it; the monthly expense job rounds it UP to the next full
+   *  month (no partial months). See docs/mem/office-expenses-model.md. */
+  expenseChargeDate: string | null;
+  /** Per-agent office-fee override, ex-VAT. Null = use the office standard
+   *  (post-July joiners pay more). */
+  officeFeeExVat: number | null;
+  /** Which office commission scheme applies. Null = office default.
+   *  Unused until Phase 5c defines the schemes on the office record. */
+  commissionSchemeId: string | null;
   /** Daf Kesher pulse id this row was imported from, if any — null for
    *  agents created in-app. Kept for the migration bridge + reconciliation. */
   mondayItemId: string | null;

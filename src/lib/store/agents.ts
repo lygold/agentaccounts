@@ -46,6 +46,11 @@ function fromItem(item: Record<string, unknown>): AgentRecord {
     isTeamLeader: Boolean(i.isTeamLeader),
     role: (i.role ?? "agent") as AppRole,
     status: (i.status ?? "active") as AgentStatus,
+    activatedAt: i.activatedAt ?? null,
+    licenseNumber: i.licenseNumber ?? null,
+    expenseChargeDate: i.expenseChargeDate ?? null,
+    officeFeeExVat: i.officeFeeExVat ?? null,
+    commissionSchemeId: i.commissionSchemeId ?? null,
     mondayItemId: i.mondayItemId ?? null,
     createdAt: String(i.createdAt ?? ""),
     updatedAt: String(i.updatedAt ?? ""),
@@ -65,7 +70,8 @@ export async function getAgentById(id: string): Promise<AgentRecord | null> {
 /**
  * Look up an agent by phone or email for login. Returns null on no match or
  * an ambiguous multi-match (anti-enumeration — same convention the Daf
- * Kesher lookup used). Archived agents never match.
+ * Kesher lookup used). `archived` agents never match; `onboarding` agents
+ * can log in (they're being tracked, just not deal-active).
  */
 export async function findAgentByContact(contact: string): Promise<AgentRecord | null> {
   const value = canonicalizeContact(contact);
@@ -83,8 +89,10 @@ export async function findAgentByContact(contact: string): Promise<AgentRecord |
       Limit: 5,
     }),
   );
-  const active = (res.Items ?? []).map(fromItem).filter((a) => a.status === "active");
-  return active.length === 1 ? active[0] : null;
+  const canLogin = (res.Items ?? [])
+    .map(fromItem)
+    .filter((a) => a.status !== "archived");
+  return canLogin.length === 1 ? canLogin[0] : null;
 }
 
 export async function listAgentsByOffice(
@@ -141,6 +149,12 @@ export interface NewAgentInput {
   firstNameHebrew?: string | null;
   fullNameEnglish?: string | null;
   surname?: string | null;
+  /** Defaults to `active`. Pass `onboarding` for an agent still ramping up. */
+  status?: AgentStatus;
+  licenseNumber?: string | null;
+  expenseChargeDate?: string | null;
+  officeFeeExVat?: number | null;
+  commissionSchemeId?: string | null;
   mondayItemId?: string | null;
   /** For imports that need a deterministic id; defaults to a fresh `agt_…`. */
   id?: string;
@@ -148,6 +162,7 @@ export interface NewAgentInput {
 
 export async function createAgent(input: NewAgentInput): Promise<AgentRecord> {
   const now = new Date().toISOString();
+  const status = input.status ?? "active";
   const record: AgentRecord = {
     id: input.id ?? newAgentId(),
     officeId: input.officeId,
@@ -160,7 +175,12 @@ export async function createAgent(input: NewAgentInput): Promise<AgentRecord> {
     team: input.team,
     isTeamLeader: input.isTeamLeader ?? false,
     role: input.role,
-    status: "active",
+    status,
+    activatedAt: status === "active" ? now : null,
+    licenseNumber: input.licenseNumber ?? null,
+    expenseChargeDate: input.expenseChargeDate ?? null,
+    officeFeeExVat: input.officeFeeExVat ?? null,
+    commissionSchemeId: input.commissionSchemeId ?? null,
     mondayItemId: input.mondayItemId ?? null,
     createdAt: now,
     updatedAt: now,

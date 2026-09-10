@@ -10,8 +10,11 @@ import type { AgentRecord } from "../types";
  * column) — role stays app-owned.
  */
 
-const STATUS_ACTIVE = "Active";
-const STATUS_ARCHIVED = "Offboarding";
+const STATUS_LABEL: Record<AgentRecord["status"], string> = {
+  active: "Active",
+  onboarding: "Onboarding",
+  archived: "Offboarding",
+};
 
 function columnValues(agent: AgentRecord): Record<string, unknown> {
   const cv: Record<string, unknown> = {
@@ -20,9 +23,7 @@ function columnValues(agent: AgentRecord): Record<string, unknown> {
     [AGENTS_BOARD.surname]: agent.surname ?? "",
     [AGENTS_BOARD.fullNameEnglish]: agent.fullNameEnglish ?? "",
     [AGENTS_BOARD.isTeamLeader]: { label: agent.isTeamLeader ? "Yes" : "No" },
-    [AGENTS_BOARD.status]: {
-      label: agent.status === "archived" ? STATUS_ARCHIVED : STATUS_ACTIVE,
-    },
+    [AGENTS_BOARD.status]: { label: STATUS_LABEL[agent.status] },
   };
   if (agent.phone) {
     cv[AGENTS_BOARD.phone] = { phone: agent.phone, countryShortName: "IL" };

@@ -117,7 +117,7 @@ export async function syncAgentsFromMonday(
 
       if (cur) {
         const patch = diffMondayOwned(cur, m);
-        if (mondayArchived && cur.status === "active") patch.status = "archived";
+        if (mondayArchived && cur.status !== "archived") patch.status = "archived";
         if (Object.keys(patch).length === 0) {
           res.unchanged++;
         } else {
@@ -156,9 +156,15 @@ export async function syncAgentsFromMonday(
         team: m.team,
         isTeamLeader: m.isTeamLeader,
         role: initialRole(m),
+        // Onboarding on Daf Kesher → onboarding here (only at create; the
+        // onboarding → active move is an in-app admin action after that).
+        status: mondayArchived
+          ? "archived"
+          : m.mondayStatus === "Onboarding"
+            ? "onboarding"
+            : "active",
       };
-      const agent = await createAgent(input);
-      if (mondayArchived) await updateAgent(agent.id, { status: "archived" });
+      await createAgent(input);
       res.created++;
     } catch (e) {
       res.errors.push(

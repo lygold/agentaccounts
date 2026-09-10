@@ -48,6 +48,7 @@ export default async function AdminAgentsPage({
       ? [...list].sort((a, b) => a.name.localeCompare(b.name))
       : [...list].sort(compareByTeamThenName);
 
+  const onboarding = order(agents.filter((a) => a.status === "onboarding"));
   const active = order(agents.filter((a) => a.status === "active"));
   const archived = order(agents.filter((a) => a.status === "archived"));
 
@@ -133,6 +134,44 @@ export default async function AdminAgentsPage({
                 <input type="checkbox" name="isTeamLeader" className="h-4 w-4" />
                 <span className="text-sm">{t("isTeamLeader")}</span>
               </label>
+              <label className="flex items-center gap-2 pb-2.5">
+                <input type="checkbox" name="isOnboarding" className="h-4 w-4" />
+                <span className="text-sm">{t("isOnboarding")}</span>
+              </label>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Label htmlFor="fullNameEnglish">{t("fullNameEnglish")}</Label>
+                <Input id="fullNameEnglish" name="fullNameEnglish" dir="ltr" />
+              </div>
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Label htmlFor="firstNameHebrew">{t("firstNameHebrew")}</Label>
+                <Input id="firstNameHebrew" name="firstNameHebrew" />
+              </div>
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Label htmlFor="surname">{t("surname")}</Label>
+                <Input id="surname" name="surname" />
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Label htmlFor="licenseNumber">{t("licenseNumber")}</Label>
+                <Input id="licenseNumber" name="licenseNumber" dir="ltr" />
+              </div>
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Label htmlFor="expenseChargeDate">{t("expenseChargeDate")}</Label>
+                <Input id="expenseChargeDate" name="expenseChargeDate" type="date" />
+              </div>
+              <div className="flex w-32 flex-col gap-1.5">
+                <Label htmlFor="officeFeeExVat">{t("officeFeeExVat")}</Label>
+                <Input
+                  id="officeFeeExVat"
+                  name="officeFeeExVat"
+                  type="number"
+                  min="0"
+                  step="1"
+                />
+              </div>
             </div>
             <Button type="submit">{t("addSubmit")}</Button>
           </form>
@@ -144,12 +183,25 @@ export default async function AdminAgentsPage({
           <SortLink active={sortBy === "name"} sort="name" label={t("sortName")} />
         </div>
 
+        {onboarding.length > 0 && (
+          <div className="mb-8">
+            <AgentTable
+              heading={t("onboardingHeading", { count: onboarding.length })}
+              rows={onboarding}
+              tRole={tRole}
+              t={t}
+              rowAction="activate"
+              selfId={session.agentId}
+            />
+          </div>
+        )}
+
         <AgentTable
           heading={t("activeHeading", { count: active.length })}
           rows={active}
           tRole={tRole}
           t={t}
-          canArchive
+          rowAction="archive"
           selfId={session.agentId}
         />
 
@@ -160,7 +212,7 @@ export default async function AdminAgentsPage({
               rows={archived}
               tRole={tRole}
               t={t}
-              canArchive={false}
+              rowAction="restore"
               selfId={session.agentId}
             />
           </div>
@@ -200,14 +252,14 @@ function AgentTable({
   rows,
   tRole,
   t,
-  canArchive,
+  rowAction,
   selfId,
 }: {
   heading: string;
   rows: Row[];
   tRole: (k: string) => string;
   t: (k: string) => string;
-  canArchive: boolean;
+  rowAction: "archive" | "restore" | "activate";
   selfId: string;
 }) {
   return (
@@ -241,7 +293,7 @@ function AgentTable({
                 >
                   {t("edit")}
                 </Link>
-                {canArchive ? (
+                {rowAction === "archive" ? (
                   a.id !== selfId && (
                     <form
                       action={setAgentStatusAction.bind(null, a.id, "archived")}
@@ -260,7 +312,7 @@ function AgentTable({
                       type="submit"
                       className="text-secondary underline-offset-4 hover:underline"
                     >
-                      {t("restore")}
+                      {rowAction === "activate" ? t("activate") : t("restore")}
                     </button>
                   </form>
                 )}

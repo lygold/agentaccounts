@@ -25,6 +25,13 @@ function parseForm(formData: FormData) {
     role: formData.get("role"),
     team: formData.get("team") ?? "",
     isTeamLeader: formData.get("isTeamLeader") === "on",
+    isOnboarding: formData.get("isOnboarding") === "on",
+    fullNameEnglish: formData.get("fullNameEnglish") ?? "",
+    firstNameHebrew: formData.get("firstNameHebrew") ?? "",
+    surname: formData.get("surname") ?? "",
+    licenseNumber: formData.get("licenseNumber") ?? "",
+    expenseChargeDate: formData.get("expenseChargeDate") ?? "",
+    officeFeeExVat: formData.get("officeFeeExVat") ?? "",
   });
 }
 
@@ -67,6 +74,13 @@ export async function createAgentAction(formData: FormData) {
       role: d.role,
       team: d.team ?? null,
       isTeamLeader: d.isTeamLeader,
+      status: d.isOnboarding ? "onboarding" : "active",
+      fullNameEnglish: d.fullNameEnglish ?? null,
+      firstNameHebrew: d.firstNameHebrew ?? null,
+      surname: d.surname ?? null,
+      licenseNumber: d.licenseNumber ?? null,
+      expenseChargeDate: d.expenseChargeDate ?? null,
+      officeFeeExVat: d.officeFeeExVat ?? null,
     });
     await mirrorAgentToMonday(created); // never throws — dead-letters on failure
     redirect(LIST);
@@ -103,6 +117,12 @@ export async function updateAgentAction(id: string, formData: FormData) {
       role: d.role,
       team: d.team ?? null,
       isTeamLeader: d.isTeamLeader,
+      fullNameEnglish: d.fullNameEnglish ?? null,
+      firstNameHebrew: d.firstNameHebrew ?? null,
+      surname: d.surname ?? null,
+      licenseNumber: d.licenseNumber ?? null,
+      expenseChargeDate: d.expenseChargeDate ?? null,
+      officeFeeExVat: d.officeFeeExVat ?? null,
     });
     if (!updated) {
       redirect(`${LIST}?error=notfound`);
@@ -128,7 +148,12 @@ export async function setAgentStatusAction(id: string, status: AgentStatus) {
     if (!existing || existing.officeId !== session.officeId) {
       redirect(`${LIST}?error=notfound`);
     }
-    const updated = await setAgentStatus(id, status);
+    // Stamp activatedAt the first time an agent reaches `active` (onboarding
+    // → active, or a restore of an agent that was never activated).
+    const updated =
+      status === "active" && !existing.activatedAt
+        ? await updateAgent(id, { status, activatedAt: new Date().toISOString() })
+        : await setAgentStatus(id, status);
     if (!updated) {
       redirect(`${LIST}?error=notfound`);
     }

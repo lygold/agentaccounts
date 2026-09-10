@@ -42,7 +42,12 @@ export default async function EditAgentPage({
         >
           ← {t("title")}
         </Link>
-        <h1 className="mb-4 mt-2 text-2xl font-bold">{agent.name}</h1>
+        <h1 className="mb-4 mt-2 flex items-baseline gap-2 text-2xl font-bold">
+          {agent.name}
+          <span className="text-sm font-normal text-muted-foreground">
+            {t(`status.${agent.status}`)}
+          </span>
+        </h1>
 
         {error && (
           <Alert variant="destructive" className="mb-4">
@@ -113,6 +118,66 @@ export default async function EditAgentPage({
             />
             <span className="text-sm">{t("isTeamLeader")}</span>
           </label>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex flex-1 flex-col gap-1.5">
+              <Label htmlFor="fullNameEnglish">{t("fullNameEnglish")}</Label>
+              <Input
+                id="fullNameEnglish"
+                name="fullNameEnglish"
+                dir="ltr"
+                defaultValue={agent.fullNameEnglish ?? ""}
+              />
+            </div>
+            <div className="flex flex-1 flex-col gap-1.5">
+              <Label htmlFor="firstNameHebrew">{t("firstNameHebrew")}</Label>
+              <Input
+                id="firstNameHebrew"
+                name="firstNameHebrew"
+                defaultValue={agent.firstNameHebrew ?? ""}
+              />
+            </div>
+            <div className="flex flex-1 flex-col gap-1.5">
+              <Label htmlFor="surname">{t("surname")}</Label>
+              <Input
+                id="surname"
+                name="surname"
+                defaultValue={agent.surname ?? ""}
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex flex-1 flex-col gap-1.5">
+              <Label htmlFor="licenseNumber">{t("licenseNumber")}</Label>
+              <Input
+                id="licenseNumber"
+                name="licenseNumber"
+                dir="ltr"
+                defaultValue={agent.licenseNumber ?? ""}
+              />
+            </div>
+            <div className="flex flex-1 flex-col gap-1.5">
+              <Label htmlFor="expenseChargeDate">{t("expenseChargeDate")}</Label>
+              <Input
+                id="expenseChargeDate"
+                name="expenseChargeDate"
+                type="date"
+                defaultValue={agent.expenseChargeDate ?? ""}
+              />
+            </div>
+            <div className="flex w-32 flex-col gap-1.5">
+              <Label htmlFor="officeFeeExVat">{t("officeFeeExVat")}</Label>
+              <Input
+                id="officeFeeExVat"
+                name="officeFeeExVat"
+                type="number"
+                min="0"
+                step="1"
+                defaultValue={agent.officeFeeExVat ?? ""}
+              />
+            </div>
+          </div>
+
           <Button type="submit" size="lg">
             {t("saveSubmit")}
           </Button>
