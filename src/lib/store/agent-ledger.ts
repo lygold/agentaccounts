@@ -1,5 +1,5 @@
 import "server-only";
-import { insert, listAll, newId, queryByIndex } from "./dynamo-store";
+import { insert, newId, queryByIndex } from "./dynamo-store";
 import { TABLES } from "./dynamo-client";
 import { stripVat } from "../commission";
 import type { AgentLedgerEntry } from "../types";
@@ -14,8 +14,17 @@ export async function listLedgerEntriesForAgent(agentId: string): Promise<AgentL
   return entries.sort((a, b) => b.date.localeCompare(a.date));
 }
 
-export async function listAllLedgerEntries(): Promise<AgentLedgerEntry[]> {
-  const all = await listAll<AgentLedgerEntry>(TABLES.agentAccount());
+/** Every ledger entry in an office, newest first. Office-scoped query
+ *  (byOfficeId GSI) — never a full-table scan. */
+export async function listLedgerEntriesForOffice(
+  officeId: string,
+): Promise<AgentLedgerEntry[]> {
+  const all = await queryByIndex<AgentLedgerEntry>(
+    TABLES.agentAccount(),
+    "byOfficeId",
+    "officeId",
+    officeId,
+  );
   return all.sort((a, b) => b.date.localeCompare(a.date));
 }
 
@@ -38,13 +47,12 @@ export function entryExVat(e: AgentLedgerEntry): number {
   return e.amountExVat ?? stripVat(e.amount);
 }
 
-/** Every distinct agent seen across ledger entries, with their running
- *  balance — stand-in for a real agent directory until Phase 3's
- *  role-scoped views read agents directly from Daf Kesher instead. */
-export async function listAgentBalances(): Promise<
+/** Every distinct agent seen in an office's ledger entries, with their
+ *  running balance — powers the manager dashboard. Office-scoped. */
+export async function listAgentBalances(officeId: string): Promise<
   Array<{ agentId: string; agentName: string; balance: number }>
 > {
-  const entries = await listAllLedgerEntries();
+  const entries = await listLedgerEntriesForOffice(officeId);
   const byAgent = new Map<string, { agentName: string; balance: number }>();
   for (const e of entries) {
     const existing = byAgent.get(e.agentId) ?? { agentName: e.agentName, balance: 0 };

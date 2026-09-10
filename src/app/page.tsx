@@ -12,7 +12,10 @@ export default async function DashboardPage() {
   if (!isManager(session)) {
     redirect(`/agents/${encodeURIComponent(session.agentId)}`);
   }
-  const [balances, t] = await Promise.all([listAgentBalances(), getTranslations("Dashboard")]);
+  const [balances, t] = await Promise.all([
+    listAgentBalances(session.officeId),
+    getTranslations("Dashboard"),
+  ]);
 
   return (
     <div>

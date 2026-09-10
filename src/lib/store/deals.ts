@@ -1,10 +1,12 @@
 import "server-only";
-import { getById, insert, listAll, newId, queryByIndex, update } from "./dynamo-store";
+import { getById, insert, newId, queryByIndex, update } from "./dynamo-store";
 import { TABLES } from "./dynamo-client";
 import type { Deal } from "../types";
 
-export async function listDeals(): Promise<Deal[]> {
-  const deals = await listAll<Deal>(TABLES.deals());
+/** Every deal in an office, newest first. Office-scoped query (byOfficeId GSI)
+ *  — never a full-table scan. */
+export async function listDeals(officeId: string): Promise<Deal[]> {
+  const deals = await queryByIndex<Deal>(TABLES.deals(), "byOfficeId", "officeId", officeId);
   return deals.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 

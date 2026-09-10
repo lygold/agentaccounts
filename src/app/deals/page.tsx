@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 export default async function DealsPage() {
   const session = await requireSession();
   const [allDeals, allowed, t, tStage, tPaymentStatus] = await Promise.all([
-    listDeals(),
+    listDeals(session.officeId),
     allowedAgentIds(session),
     getTranslations("Deals"),
     getTranslations("Enums.stage"),

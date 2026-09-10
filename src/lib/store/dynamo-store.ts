@@ -1,32 +1,17 @@
 import "server-only";
 import { randomUUID } from "crypto";
-import { GetCommand, PutCommand, QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { getDynamoDoc } from "./dynamo-client";
 
 /**
- * Generic DynamoDB CRUD helpers — same shape as the Phase 1 file-store.ts
- * helpers they replace (listAll/getById/insert/update/newId), so the
- * per-entity store modules barely change other than the import and table
- * name. queryByIndex is new — backs the by-agent/by-deal GSI lookups that
- * file-store.ts used to do via client-side filtering.
+ * Generic DynamoDB CRUD helpers — getById / insert / update / queryByIndex /
+ * newId. There is deliberately NO `listAll` scan: every list in this app is
+ * office-scoped and goes through `queryByIndex(..., "byOfficeId", ...)`
+ * (Phase 5a). If you need "everything", you need an index.
  */
 
 export function newId(): string {
   return randomUUID();
-}
-
-export async function listAll<T>(tableName: string): Promise<T[]> {
-  const doc = getDynamoDoc();
-  let items: T[] = [];
-  let lastKey: Record<string, unknown> | undefined;
-  do {
-    const res = await doc.send(
-      new ScanCommand({ TableName: tableName, ExclusiveStartKey: lastKey }),
-    );
-    items = items.concat((res.Items ?? []) as T[]);
-    lastKey = res.LastEvaluatedKey;
-  } while (lastKey);
-  return items;
 }
 
 export async function getById<T>(tableName: string, id: string): Promise<T | null> {
