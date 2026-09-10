@@ -6,7 +6,9 @@ import { getDeal } from "@/lib/store/deals";
 import { listBillingForDeal } from "@/lib/store/billing";
 import { listIncomeForDeal, totalReceivedForDeal } from "@/lib/store/income";
 import { listLedgerEntriesForAgent, entryExVat } from "@/lib/store/agent-ledger";
+import { getGiDocument } from "@/lib/store/gi-documents";
 import { computeBillingAmount, computeDealValue } from "@/lib/commission";
+import { potentialCommission } from "@/lib/commission-auto";
 import type { GreenInvoiceClient } from "@/lib/green-invoice/clients";
 import { Nav } from "@/components/nav";
 import { Input } from "@/components/ui/input";
@@ -17,6 +19,7 @@ import {
   confirmGreenInvoiceClient,
   createTransactionAccountForDeal,
   searchGreenInvoiceClientForDeal,
+  sendTransactionAccountForDeal,
   submitIncome,
 } from "../actions";
 
@@ -59,6 +62,14 @@ export default async function DealDetailPage({
     .reduce((sum, e) => sum + entryExVat(e), 0);
   const recognisedSoFar = billed > 0 ? (received / billed) * dealValue : 0;
   const commissionRate = recognisedSoFar > 0 ? commissionPosted / recognisedSoFar : 0;
+
+  // The 300's gi-documents row (send history) + the agent's projected
+  // commission for the whole deal at today's %.
+  const [giDoc, potential] = await Promise.all([
+    billing?.greenInvoiceRef ? getGiDocument(billing.greenInvoiceRef) : Promise.resolve(null),
+    potentialCommission(deal),
+  ]);
+  const potentialRate = dealValue > 0 ? potential / dealValue : 0;
 
   let candidates: GreenInvoiceClient[] = [];
   if (giCandidates) {
@@ -144,14 +155,43 @@ export default async function DealDetailPage({
               </form>
             )
           ) : !billing?.greenInvoiceRef ? (
-            <form action={createTransactionAccountForDeal.bind(null, deal.id)}>
-              <p className="mb-3 text-sm text-muted-foreground">{t("giReadyFor300")}</p>
-              <Button type="submit">{t("giCreate300")}</Button>
+            <form
+              action={createTransactionAccountForDeal.bind(null, deal.id)}
+              className="flex flex-col gap-3"
+            >
+              <p className="text-sm text-muted-foreground">{t("giReadyFor300")}</p>
+              <SendChecks t={t} />
+              <Button type="submit" className="self-start">
+                {t("giCreate300")}
+              </Button>
             </form>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              {t("giCreated300", { ref: billing.greenInvoiceRef })}
-            </p>
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-muted-foreground">
+                {t("giCreated300", { ref: giDoc?.giNumber ?? billing.greenInvoiceRef })}
+              </p>
+              {giDoc?.distributions && giDoc.distributions.length > 0 && (
+                <ul className="space-y-0.5 text-xs text-muted-foreground">
+                  {giDoc.distributions.map((d, i) => (
+                    <li key={i}>
+                      {t("giSentTo", {
+                        who: d.to.map((w) => t(`giRecipient.${w}`)).join(" + "),
+                        date: new Date(d.at).toLocaleDateString(),
+                      })}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <form
+                action={sendTransactionAccountForDeal.bind(null, deal.id)}
+                className="flex flex-col gap-3 border-t pt-3"
+              >
+                <SendChecks t={t} />
+                <Button type="submit" variant="outline" size="sm" className="self-start">
+                  {t("giSend")}
+                </Button>
+              </form>
+            </div>
           )}
         </section>
         )}
@@ -195,6 +235,16 @@ export default async function DealDetailPage({
         <section className="rounded-lg border p-4">
           <h2 className="mb-2 font-semibold">{t("commissionTitle")}</h2>
           <dl className="grid grid-cols-2 gap-y-1 text-sm">
+            <dt className="text-muted-foreground">
+              {t("commissionPotential", { percent: deal.commissionPercent })}
+            </dt>
+            <dd>
+              ₪{potential.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              <span className="text-muted-foreground">
+                {" "}
+                ({(potentialRate * 100).toFixed(1)}%)
+              </span>
+            </dd>
             <dt className="text-muted-foreground">{t("commissionEffectiveRate")}</dt>
             <dd>{(commissionRate * 100).toFixed(1)}%</dd>
             <dt className="text-muted-foreground">{t("commissionPosted")}</dt>
@@ -209,6 +259,23 @@ export default async function DealDetailPage({
           </p>
         )}
       </main>
+    </div>
+  );
+}
+
+/** The "send to agent / send to client" checkbox pair, used both when
+ *  creating the 300 and when re-sending it. */
+function SendChecks({ t }: { t: (k: string) => string }) {
+  return (
+    <div className="flex flex-wrap gap-4 text-sm">
+      <label className="flex items-center gap-2">
+        <input type="checkbox" name="toAgent" className="h-4 w-4" />
+        {t("giSendAgent")}
+      </label>
+      <label className="flex items-center gap-2">
+        <input type="checkbox" name="toClient" className="h-4 w-4" />
+        {t("giSendClient")}
+      </label>
     </div>
   );
 }

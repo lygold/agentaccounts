@@ -33,11 +33,13 @@ export async function priorYtdDealValue(
   agentId: string,
   beforeDate: string,
   excludeIncomeId?: string,
+  excludeDealId?: string,
 ): Promise<number> {
   const year = yearOf(beforeDate);
   const deals = await listDealsByAgent(agentId);
   let total = 0;
   for (const deal of deals) {
+    if (deal.id === excludeDealId) continue;
     for (const row of await listIncomeForDeal(deal.id)) {
       if (row.id === excludeIncomeId) continue;
       if (yearOf(row.receivedDate) !== year) continue;
@@ -46,6 +48,21 @@ export async function priorYtdDealValue(
     }
   }
   return total;
+}
+
+/**
+ * What the agent would earn if this deal's full value pays out, at the
+ * current commission %, bracket-blended on top of their YTD from every OTHER
+ * deal this year. Pre-VAT. Shown on the deal page before any payment lands.
+ */
+export async function potentialCommission(deal: Deal): Promise<number> {
+  const yearEnd = `${new Date().getFullYear()}-12-31`;
+  const priorYtd = await priorYtdDealValue(deal.agentId, yearEnd, undefined, deal.id);
+  return computeMarginalCommission(
+    priorYtd,
+    computeDealValue(deal),
+    tiersForAgent(deal.agentId, deal.agentName),
+  );
 }
 
 /**

@@ -130,6 +130,9 @@ export interface GiDocumentRecord {
   expenseEntryIds?: string[];
   /** Who created this row. */
   origin: "app" | "webhook";
+  /** Each time the document was emailed from the app (the 300 to agent /
+   *  client, repeatedly). */
+  distributions?: Array<{ at: string; recipients: string[]; to: string[] }>;
   createdAt: string;
   updatedAt: string;
 }

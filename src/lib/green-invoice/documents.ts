@@ -106,6 +106,25 @@ async function createDocument(input: CreateDocumentInput): Promise<GreenInvoiceD
   });
 }
 
+/**
+ * Email an existing document's PDF to one or more addresses. Repeatable —
+ * Levi sends the 300 to the agent before signing, to the client after, etc.
+ * `POST /documents/{id}/distribute` with `{ recipients: [...] }`, verified
+ * live against the sandbox 2026-09-10 (returns 200 `{}`; GI rejects
+ * non-deliverable domains like example.com).
+ */
+export async function distributeDocument(
+  documentId: string,
+  recipients: string[],
+): Promise<void> {
+  const clean = [...new Set(recipients.map((r) => r.trim()).filter(Boolean))];
+  if (clean.length === 0) return;
+  await greenInvoiceFetch(`/documents/${documentId}/distribute`, {
+    method: "POST",
+    body: JSON.stringify({ recipients: clean }),
+  });
+}
+
 /** חשבון עסקה (300) — the first document in the chain, manually triggered
  *  from the deal's billing screen. Remarks text is role-specific per the
  *  deal's side (seller/buyer/renter/landlord). */

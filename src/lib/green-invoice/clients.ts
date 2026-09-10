@@ -14,6 +14,17 @@ interface SearchResponse {
   items: GreenInvoiceClient[];
 }
 
+/** Fetch one client by id — used to resolve the email to send documents to. */
+export async function getGreenInvoiceClient(
+  id: string,
+): Promise<GreenInvoiceClient | null> {
+  try {
+    return await greenInvoiceFetch<GreenInvoiceClient>(`/clients/${id}`);
+  } catch {
+    return null;
+  }
+}
+
 export async function searchGreenInvoiceClients(name: string): Promise<GreenInvoiceClient[]> {
   const data = await greenInvoiceFetch<SearchResponse>("/clients/search", {
     method: "POST",

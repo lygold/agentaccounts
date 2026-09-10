@@ -2,15 +2,18 @@ import "server-only";
 import type { Deal, DealSide, DealType } from "../types";
 import { createDeal, getDeal, updateDeal } from "../store/deals";
 import { createBilling, listBillingForDeal, updateBilling } from "../store/billing";
-import { putGiDocument } from "../store/gi-documents";
+import { appendDistribution, putGiDocument } from "../store/gi-documents";
+import { getAgentById } from "../store/agents";
 import { computeBillingAmount } from "../commission";
 import {
   createGreenInvoiceClient,
+  getGreenInvoiceClient,
   resolveGreenInvoiceClient,
   type ClientResolution,
 } from "../green-invoice/clients";
 import {
   createTransactionAccount,
+  distributeDocument,
   type GreenInvoiceDocument,
 } from "../green-invoice/documents";
 
@@ -108,6 +111,7 @@ export async function setGiClientForDeal(
 export async function createDealTransactionAccount(
   dealId: string,
   officeId: string,
+  send?: SendTargets,
 ): Promise<GreenInvoiceDocument | null> {
   const deal = await getDeal(dealId);
   if (!deal || deal.officeId !== officeId || !deal.greenInvoiceClientId) return null;
@@ -136,9 +140,57 @@ export async function createDealTransactionAccount(
     dealId: deal.id,
     origin: "app",
   });
+
+  if (send && (send.toAgent || send.toClient)) {
+    await sendTransactionAccount(dealId, officeId, send);
+  }
   return doc;
 }
 
-// createIncomeReceipt was removed in Phase 6: the app only ever creates 300s;
-// Levi/Ariyel issue the 305/320/400 in Green Invoice, and the GI webhook
-// (/api/green-invoice/webhook) turns those into income + commission.
+export interface SendTargets {
+  toAgent: boolean;
+  toClient: boolean;
+}
+
+/**
+ * Email a deal's חשבון עסקה (300) to the agent and/or the client. Repeatable
+ * — send to the agent before signing, the client after, both later. Records
+ * each send on the 300's gi-documents row. Returns which recipients actually
+ * got it (an unchecked box, or a missing email, is silently skipped).
+ */
+export async function sendTransactionAccount(
+  dealId: string,
+  officeId: string,
+  targets: SendTargets,
+): Promise<{ sentTo: string[] } | null> {
+  const deal = await getDeal(dealId);
+  if (!deal || deal.officeId !== officeId) return null;
+  const billing = (await listBillingForDeal(dealId))[0];
+  if (!billing?.greenInvoiceRef) return null;
+
+  const recipients: string[] = [];
+  const to: string[] = [];
+  if (targets.toAgent) {
+    const agent = await getAgentById(deal.agentId);
+    if (agent?.email) {
+      recipients.push(agent.email);
+      to.push("agent");
+    }
+  }
+  if (targets.toClient && deal.greenInvoiceClientId) {
+    const email = (await getGreenInvoiceClient(deal.greenInvoiceClientId))?.emails?.[0];
+    if (email) {
+      recipients.push(email);
+      to.push("client");
+    }
+  }
+  if (recipients.length === 0) return { sentTo: [] };
+
+  await distributeDocument(billing.greenInvoiceRef, recipients);
+  await appendDistribution(billing.greenInvoiceRef, {
+    at: new Date().toISOString(),
+    recipients,
+    to,
+  });
+  return { sentTo: to };
+}

@@ -36,6 +36,19 @@ export async function putGiDocument(
   return record;
 }
 
+/** Append a "document emailed" entry to a gi-documents row. */
+export async function appendDistribution(
+  giDocId: string,
+  entry: { at: string; recipients: string[]; to: string[] },
+): Promise<void> {
+  const existing = await getGiDocument(giDocId);
+  if (!existing) return;
+  await putGiDocument({
+    ...existing,
+    distributions: [...(existing.distributions ?? []), entry],
+  });
+}
+
 /** Every GI document recorded against a deal, oldest first. */
 export async function listGiDocumentsForDeal(
   dealId: string,

@@ -8,6 +8,7 @@ import {
   createDealTransactionAccount,
   createDealWithBilling,
   resolveGiClientForDeal,
+  sendTransactionAccount,
   setGiClientForDeal,
 } from "@/lib/services/deals";
 import { recordDealPayment } from "@/lib/services/payments";
@@ -126,15 +127,42 @@ export async function confirmGreenInvoiceClient(dealId: string, formData: FormDa
   }
 }
 
-/** Manually-triggered — creates the חשבון עסקה (300) for this deal's billing. */
-export async function createTransactionAccountForDeal(dealId: string) {
+function sendTargets(formData: FormData) {
+  return {
+    toAgent: formData.get("toAgent") === "on",
+    toClient: formData.get("toClient") === "on",
+  };
+}
+
+/** Creates the חשבון עסקה (300) for this deal's billing, optionally emailing
+ *  it to the agent and/or the client (the form's checkboxes). */
+export async function createTransactionAccountForDeal(
+  dealId: string,
+  formData: FormData,
+) {
   try {
     const session = await requireManager();
-    await createDealTransactionAccount(dealId, session.officeId);
+    await createDealTransactionAccount(dealId, session.officeId, sendTargets(formData));
     redirect(`/deals/${dealId}`);
   } catch (e) {
     if (isNextJsRedirect(e)) throw e;
     console.error("createTransactionAccountForDeal failed:", e);
+    redirect(`/deals/${dealId}?error=save`);
+  }
+}
+
+/** Re-send an existing 300 to the agent and/or client — repeatable. */
+export async function sendTransactionAccountForDeal(
+  dealId: string,
+  formData: FormData,
+) {
+  try {
+    const session = await requireManager();
+    await sendTransactionAccount(dealId, session.officeId, sendTargets(formData));
+    redirect(`/deals/${dealId}`);
+  } catch (e) {
+    if (isNextJsRedirect(e)) throw e;
+    console.error("sendTransactionAccountForDeal failed:", e);
     redirect(`/deals/${dealId}?error=save`);
   }
 }
