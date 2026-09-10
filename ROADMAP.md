@@ -357,25 +357,28 @@ activity, not typed numbers.
   target → same row creation, `source: "manual"`, PDF to S3. — later.
 - **The free-text "log payment" amount field** stays for now as a labelled
   manual fallback (Levi, 2026-09-10) — not removed.
-- **Agent monthly expenses — two mechanisms**, both writing `expense` rows to
-  `agent-account` (negative, dual VAT amounts, no `dealId`), both skipping any
-  agent whose `firstChargeMonth` (Phase 5, from `expenseChargeDate`) is after
-  the run month:
-  1. **Recurring / fixed** — `recurring-expenses` table (per ROADMAP §4):
-     per-agent `{ label, amountExVat, active, startMonth? }`. Office fee
-     (משרד), מדלן flat, פרמי. Seeded from `office.settings.standardExpenses`
-     at agent creation (office fee = the agent's `officeFeeExVat` override if
-     set, else the office default), editable. A **monthly cron** writes one
-     row per active line per eligible agent.
-  2. **Variable — bulk vendor import** (manager): one Excel/CSV per vendor per
-     month. Columns `agent | date | number | cost(pre-vat)`. Line =
-     `number × cost` pre-VAT (confirm unit-price vs line-total with Levi).
-     Vendors: Yad2, Torah Tidbits, ad-hoc. Upload → **parsed preview**: match
-     the English nicknames to `agents` rows (a stored nickname→agentId alias
-     map), flag unmatched for the manager to fix, then commit. Entry
-     description e.g. `"Torah Tidbits — 2 × ₪100 (2/9)"`.
-  - See `docs/mem/office-expenses-model.md` for the full spec + open questions
-    (no-partial-months rule, the July 300→350 office-fee cutoff).
+- ✅ **Agent monthly expenses — two mechanisms** (`42b5b81`, `b528698`), both
+  writing `expense` rows to `agent-account` (negative, dual VAT, no `dealId`),
+  both honouring `isChargeableInMonth` (blank/past `expenseChargeDate` =
+  chargeable now; mid-month rounds up — `src/lib/expense-schedule.ts`):
+  1. **Recurring / fixed** — `agent-ledger-recurring-expenses` table (key `id`,
+     GSIs byAgentId/byOfficeId). `seedOfficeFee` adds one "דמי משרד" row per
+     agent at creation (amount = `officeFeeExVat` override or
+     `STANDARD_EXPENSES` = 300; `office-defaults.ts`, → `office.settings` in 5c).
+     מדלן / פרמי added in `/admin/agents/[id]` (list + add + pause).
+     `runMonthlyExpenses` (idempotent, entry id `rex-<row>-<month>`) via
+     `POST /api/expenses/run-monthly` + `expenses-monthly.yml` (daily 20–24th).
+  2. **Variable — bulk import** — `/admin/expenses/import`: paste/CSV per vendor
+     per month (`agent · date · number · cost` pre-VAT), preview with
+     `matchAgent` (alias → exact → fuzzy), fix + commit. Idempotent per
+     (vendor, agent, date, qty, cost). Redis: batch (1h) + nickname→agentId
+     alias hash. Description `"Yad2 — 6 × ₪55 (15/9)"`.
+  - Still to do: **`billAgentExpenses`** — bundle an agent's unbilled `expense`
+    rows into a GI 300 (`{agent-expenses}` target) → webhook's agent-expenses
+    branch marks them paid + posts `payment_by_agent`. GI retainers retired
+    (Levi: no retainer line-editing API — the hub assembles, GI charges the card).
+  - See `docs/mem/office-expenses-model.md`. Open: the July 300→350 cutoff;
+    whether an API-created GI doc can trigger the saved-card charge.
   - This system replaces the Monday "Expense" board (retired Phase 10).
 - **Money-flow rules** (from Levi):
   - full payment → חשבונית מס+קבלה (320). Partial payment, or a business pays →
