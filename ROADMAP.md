@@ -325,22 +325,28 @@ activity, not typed numbers.
 - **GI production cutover** — real per-office `clientId` / `clientSecret`, prod
   base URL. (Token endpoint is on a different domain than the resource API —
   `api.morning.co` vs `api.greeninvoice.co.il` — this is correct, not a typo.)
-- **`gi-documents` table**: `id`, `officeId`, `giId`, `type` (300/305/320/400),
-  `giClientId`, `amount`, `target` (`{kind:"deal", dealId}` or
-  `{kind:"agent-expenses", agentId, expenseEntryIds:[]}`), `linkedDocId`,
-  `s3Key`. GSI `byDealId`, `byGiClientId`.
-- **חשבון עסקה (300) stays a button** — for a deal (client commission, built) and,
-  new, for an **agent** (`billAgentExpenses` bundles the agent's outstanding
-  `expense` rows into one 300). Each 300 recorded in `gi-documents` with its
-  target.
-- **`/api/green-invoice/webhook`** — verify signature; on a receipt
-  (305/320/400) resolve its linked 300 → `gi-documents` → target:
-  - target = **deal** → create `income` (`source: "webhook"`) → auto-post
-    commission (`commissionForPayment`, built) → advance the deal's payment
-    lifecycle.
-  - target = **agent-expenses** → mark those `expenseEntryIds` paid → create a
-    `payment_by_agent` covering them.
-  - Scheduled poll of GI's documents list as a fallback for missed webhooks.
+- ✅ **`gi-documents` table** wired (`store/gi-documents.ts`, keyed by the GI
+  doc id; flat `targetKind`/`dealId`/`agentId`/`expenseEntryIds`; `byDealId`
+  GSI). `Income` gained `source` / `giDocId` / `paymentMethod`.
+- **חשבון עסקה (300) stays a button** — ✅ for a deal (records the
+  `gi-documents` 300 with its `{deal}` target). New: for an **agent**
+  (`billAgentExpenses` bundles outstanding `expense` rows into one 300 with an
+  `{agent-expenses}` target) — pending, with the expense engine.
+- ✅ **`/api/green-invoice/webhook`** (`5a3afe2`) — HMAC-SHA256(secret, body)
+  verify → Redis idempotency on the GI doc id → `processGiDocument`
+  (`green-invoice/webhook-handler.ts`, shared with the poll):
+  - **300** ignore · **305** record + mark invoiced · **320/400** walk
+    `linkedDocuments` to the 300 (320→300, 400→305→300, GI-API fallback) →
+    `gi-documents` target → `income` per `transactions[]` → `recordDealPayment`
+    (commission + `paymentStatus` roll-forward).
+  - target = **agent-expenses** → recorded but not yet acted on (needs the
+    expense engine: mark `expenseEntryIds` paid + a `payment_by_agent`).
+  - ✅ **poll fallback**: `/api/green-invoice/poll` + `gi-poll.yml` (daily,
+    bearer `SYNC_SECRET`).
+  - Deploy needs: `DYNAMODB_TABLE_GI_DOCUMENTS` + `GREEN_INVOICE_WEBHOOK_SECRET`
+    in the Amplify console. End-to-end sandbox test still pending.
+  - The app's "Create receipt" button + `createIncomeReceipt` were **removed** —
+    Levi/Ariyel issue 305/320/400 in GI, the webhook reacts.
 - **Manual upload portal** (manager): upload a GI PDF → key amount / date /
   target → same row creation, `source: "manual"`, PDF to S3.
 - **Remove the free-text "log payment" amount field** from the deal page.
