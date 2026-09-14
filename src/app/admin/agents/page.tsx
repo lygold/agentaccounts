@@ -60,6 +60,9 @@ export default async function AdminAgentsPage({
           <h1 className="text-2xl font-bold">{t("title")}</h1>
           <div className="flex items-center gap-2">
             <Button asChild variant="outline" size="sm">
+              <Link href="/admin/finance">{t("finance")}</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
               <Link href="/admin/expenses/import">{t("importExpenses")}</Link>
             </Button>
             <form action={syncFromMondayAction}>

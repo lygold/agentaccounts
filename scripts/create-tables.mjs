@@ -90,6 +90,37 @@ const TABLES = [
       ["byOfficeId", "officeId"],
     ],
   },
+  {
+    // Non-agent office costs (Phase 7): CC fees, עירייה, cleaning, pension,
+    // loan, ad vendors. GSI is date-range queryable per office (the daily
+    // report reads "this office, this date").
+    name: "agent-ledger-office-expenses",
+    attrs: { id: S, officeId: S, date: S },
+    gsis: [["byOfficeId", "officeId", "date"]],
+  },
+  {
+    // Bank statement lines, imported (not typed) — Phase 7 §2 + the cash-flow
+    // reconciliation. Key is a fresh id per line; byOfficeId+date for the
+    // daily report and for de-duping an import (reference+date+amount).
+    name: "agent-ledger-bank-transactions",
+    attrs: { id: S, officeId: S, date: S },
+    gsis: [["byOfficeId", "officeId", "date"]],
+  },
+  {
+    // One row per office per day — the settled end-of-day balance. Key is
+    // deterministic (`${officeId}:${date}`) so re-importing a day overwrites
+    // rather than duplicating; no GSI needed (always fetched by that id).
+    name: "agent-ledger-bank-balances",
+    attrs: { id: S },
+    gsis: [],
+  },
+  {
+    // Manual entry (Phase 7 §3): deals where the client pays RE/MAX Israel,
+    // which issues the tax doc and remits to the office.
+    name: "agent-ledger-remax-israel-receipts",
+    attrs: { id: S, officeId: S, date: S },
+    gsis: [["byOfficeId", "officeId", "date"]],
+  },
 ];
 
 function buildInput(t) {
@@ -101,11 +132,18 @@ function buildInput(t) {
       AttributeType: type,
     })),
     KeySchema: [{ AttributeName: "id", KeyType: "HASH" }],
-    GlobalSecondaryIndexes: t.gsis.map(([indexName, keyAttr]) => ({
-      IndexName: indexName,
-      KeySchema: [{ AttributeName: keyAttr, KeyType: "HASH" }],
-      Projection: { ProjectionType: "ALL" },
-    })),
+    ...(t.gsis.length > 0
+      ? {
+          GlobalSecondaryIndexes: t.gsis.map(([indexName, hashAttr, rangeAttr]) => ({
+            IndexName: indexName,
+            KeySchema: [
+              { AttributeName: hashAttr, KeyType: "HASH" },
+              ...(rangeAttr ? [{ AttributeName: rangeAttr, KeyType: "RANGE" }] : []),
+            ],
+            Projection: { ProjectionType: "ALL" },
+          })),
+        }
+      : {}),
   };
 }
 

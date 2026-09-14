@@ -58,6 +58,24 @@ export const TABLES = {
       "DYNAMODB_TABLE_RECURRING_EXPENSES",
       process.env.DYNAMODB_TABLE_RECURRING_EXPENSES,
     ),
+  /** Non-agent office costs (Phase 7). */
+  officeExpenses: () =>
+    requireTableName("DYNAMODB_TABLE_OFFICE_EXPENSES", process.env.DYNAMODB_TABLE_OFFICE_EXPENSES),
+  /** Imported bank statement lines (Phase 7). */
+  bankTransactions: () =>
+    requireTableName(
+      "DYNAMODB_TABLE_BANK_TRANSACTIONS",
+      process.env.DYNAMODB_TABLE_BANK_TRANSACTIONS,
+    ),
+  /** One settled balance per office per day (Phase 7). */
+  bankBalances: () =>
+    requireTableName("DYNAMODB_TABLE_BANK_BALANCES", process.env.DYNAMODB_TABLE_BANK_BALANCES),
+  /** Manual RE/MAX Israel receipt entries (Phase 7). */
+  remaxIsraelReceipts: () =>
+    requireTableName(
+      "DYNAMODB_TABLE_REMAX_ISRAEL_RECEIPTS",
+      process.env.DYNAMODB_TABLE_REMAX_ISRAEL_RECEIPTS,
+    ),
 };
 
 /** Value is passed in via a *static* `process.env.X` read (not a dynamic

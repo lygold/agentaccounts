@@ -279,3 +279,75 @@ export interface CommissionTierOverride {
   /** Overrides the tier table entirely — a permanent flat rate. */
   flatAgentRate: number;
 }
+
+// --- Phase 7: daily report / office finances --------------------------------
+
+export type OfficeExpenseCategory =
+  | "cc_fees"
+  | "municipal"
+  | "cleaning"
+  | "pension"
+  | "loan"
+  | "ad_vendor"
+  | "other";
+
+/** A non-agent office cost (CC fees, עיריית ירושלים, cleaning, pension, loan,
+ *  ad vendors) — the pieces of the daily report the ledger doesn't cover
+ *  because every `AgentLedgerEntry` requires an `agentId`. Manual entry. */
+export interface OfficeExpense {
+  id: string;
+  officeId: string;
+  category: OfficeExpenseCategory;
+  description: string;
+  /** VAT-inclusive, positive. */
+  amount: number;
+  date: string; // yyyy-mm-dd
+  createdAt: string;
+}
+
+/** One line from an imported bank statement (Bank Leumi "תנועות בחשבון" xlsx
+ *  export — docs/mem/bank-export-format.md). Feeds report §2 + the cash-flow
+ *  reconciliation. Not typed — imported. */
+export interface BankTransaction {
+  id: string;
+  officeId: string;
+  date: string; // ערך value date, yyyy-mm-dd
+  description: string;
+  credit: number; // זכות, 0 if none
+  debit: number; // חובה, 0 if none
+  reference: string; // אסמכתא
+  typeCode: string; // סוג פעולה
+  /** The statement's running balance after this line, when the export gave
+   *  one for this row (blank on same-day intermediate rows). */
+  balanceAfter: number | null;
+  createdAt: string;
+}
+
+/** The settled end-of-day balance for one office/date. Id is
+ *  `${officeId}:${date}` — re-importing a day overwrites, never duplicates. */
+export interface BankBalance {
+  id: string;
+  officeId: string;
+  date: string;
+  balance: number;
+  createdAt: string;
+}
+
+/** Manual entry (report §3): a deal where the client pays RE/MAX Israel
+ *  directly, which issues the tax document and remits to the office. */
+export interface RemaxIsraelReceipt {
+  id: string;
+  officeId: string;
+  date: string;
+  clientName: string;
+  agentId: string;
+  agentName: string;
+  /** The gross RE/MAX Israel billed. */
+  grossAmount: number;
+  /** What the office actually received. */
+  receivedAmount: number;
+  /** RE/MAX Israel's own invoice number (~221xxx) — outside the office's GI. */
+  invoiceNumber: string;
+  notes?: string;
+  createdAt: string;
+}
