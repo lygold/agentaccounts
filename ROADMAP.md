@@ -407,26 +407,27 @@ sandbox → webhook creates the `income` row, auto-posts commission (check both
 **Goal:** auto-generate the daily accounting PDF; retire the manual cash-flow
 Excel (`copy תזרים מוזמנים 2026.xlsx`).
 
-- **`office-expenses`** — non-agent office costs (agentId optional + `category`,
-  or its own table): CC fees, עיריית ירושלים, cleaning service, keren
-  hishtalmut / pension, loan principal + interest, ad vendors. Admin entry form.
-- **`bank-transactions` + daily `bank-balances`** — fed by importing the bank's
-  CSV/OFX, not typed. Covers section 2 of the report and the cash-flow Excel's
-  full reconciliation.
-- **`remax-israel-receipts`** — manual entry form: office, client, RE/MAX-Israel
-  gross, amount received, invoice # (~221xxx, outside the office GI), agent,
-  notes. For deals where the client pays RE/MAX Israel, which issues the tax doc
-  and remits to the office.
-- **Agent standing view** — per agent: income − expenses = net, plus a per-deal
-  payment-lifecycle strip (client paid? / commission owed / invoice requested /
-  my חשבונית מס uploaded / Ariyel paid / my קבלה uploaded).
-- **`/reports/daily?date=`** — the 3 stacked sections of today's PDF:
-  1. Agent table — every agent with הוצאות / הכנסות / יתרה תזרימית, plus
-     interleaved "waiting for חשבונית" rows for deals not yet invoiced. Totals row.
-  2. בנק — one-line snapshot: prior-day balance, standing-order debits
-     (הורא.קבע), credits.
-  3. רימקס ישראל — the receipts table above.
-  Ariyel gets a "payments to make" checklist view.
+- ✅ **`office-expenses`** table + admin form (`/admin/finance`) — 7 categories
+  (CC fees, עירייה, cleaning, pension, loan, ad vendor, other).
+- ✅ **`bank-transactions` + `bank-balances`** — paste-import (`/admin/finance`)
+  of the Bank Leumi "תנועות בחשבון" export (`src/lib/bank-import.ts`,
+  docs/mem/bank-export-format.md), de-duped per office, settled daily balance
+  derived per date. Not CSV/OFX-automatic yet — Levi pastes the export.
+- ✅ **`remax-israel-receipts`** — manual entry form on `/admin/finance`
+  (client, agent, gross, received, invoice #, notes).
+- ⏳ **Agent standing view** — the full per-deal payment-lifecycle strip
+  (invoice requested / חשבונית מס uploaded / Ariyel paid / קבלה uploaded)
+  needs a `Deal` lifecycle field that doesn't exist yet. **V1 proxy shipped**:
+  `/reports/daily` interleaves each agent's `due`/`partial_payment` deals.
+- ✅ **`/reports/daily?date=`** (`a6d73f9`) — the 3 sections:
+  1. Agent table — every non-archived agent, today's הוצאות/הכנסות (ledger
+     movement) + cumulative יתרה תזרימית, outstanding-deal rows interleaved,
+     totals row. **Verified**: reproduces David Weiser's reconciled
+     ₪23,286.36 exactly.
+  2. בנק — prior-day balance, today's credits/debits, closing balance.
+  3. רימקס ישראל — the day's receipts table.
+  Prev/next-day nav. Not yet built: Ariyel's "payments to make" checklist view,
+  PDF export (renders as a page today).
 - **WhatsApp notifications** (WABA) — the handoff list, each a message:
   offer accepted · deal marked signed · client payment received (→ agent, send
   your invoice) · agent invoice received (→ Ariyel) · Ariyel paid (→ agent,
