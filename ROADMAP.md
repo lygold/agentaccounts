@@ -373,10 +373,12 @@ activity, not typed numbers.
      `matchAgent` (alias → exact → fuzzy), fix + commit. Idempotent per
      (vendor, agent, date, qty, cost). Redis: batch (1h) + nickname→agentId
      alias hash. Description `"Yad2 — 6 × ₪55 (15/9)"`.
-  - Still to do: **`billAgentExpenses`** — bundle an agent's unbilled `expense`
-    rows into a GI 300 (`{agent-expenses}` target) → webhook's agent-expenses
-    branch marks them paid + posts `payment_by_agent`. GI retainers retired
-    (Levi: no retainer line-editing API — the hub assembles, GI charges the card).
+  - ✅ **`billAgentExpenses`** (`3db804b`) — bundles unbilled `expense` rows into
+    one multi-line 300 (`{agent-expenses}` target, GI client resolved by name
+    + cached on `agent.greenInvoiceClientId`); the webhook's agent-expenses
+    branch posts a `payment_by_agent` once Levi issues the 320/400. "Bill now"
+    on `/admin/agents/[id]`. GI retainers retired (no retainer line-editing
+    API — the hub assembles, GI still charges the card).
   - See `docs/mem/office-expenses-model.md`. Open: the July 300→350 cutoff;
     whether an API-created GI doc can trigger the saved-card charge.
   - This system replaces the Monday "Expense" board (retired Phase 10).
