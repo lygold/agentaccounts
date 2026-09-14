@@ -27,15 +27,18 @@ Feb = O–Y, ...), every bank line: CC fees, עיריית ירושלים, cleani
 keren hishtalmut/pension, loan principal+interest, client payments in, agent
 payouts, referral fees both directions, running balance per day.
 
-**Maps to app today:** sections 1 & 3 are mostly buildable from existing
-`AgentLedgerEntry` / `Deal` / `Billing` / `Income`. **Missing:** (a) non-agent
-office expenses — every ledger entry currently requires an agentId; need an
-`OfficeExpense` type or make agentId optional + add a category; (b) bank
-tracking — need `BankTransaction` + daily `BankBalance`, best fed by importing
-the bank's CSV/OFX rather than typing.
+**Built (2026-09-14, ROADMAP Phase 7, commit `a6d73f9`):** all three sections
+live at `/reports/daily?date=`. `OfficeExpense`, `BankTransaction`,
+`BankBalance`, `RemaxIsraelReceipt` types + tables; entry forms on
+`/admin/finance`. Bank import is **paste**, not CSV/OFX-automatic — Levi
+copies the Bank Leumi "תנועות בחשבון" export rows in (see
+[[bank-export-format]]). **Verified**: the agent-table balance calc reproduces
+David Weiser's reconciled ₪23,286.36 exactly against the real ledger.
 
-**Suggested sequencing:** 1) agent picker ([[deals-identity-gap]]), 2)
-OfficeExpense + admin form (quick win, covers the "A/C repair" case), 3)
-`/daily-report?date=` route rendering sections 1+3, 4) bank import + section 2.
+**Not yet built:** the full per-deal payment-lifecycle strip (invoice
+requested / חשבונית מס uploaded / Ariyel paid / קבלה uploaded) — needs a
+`Deal` lifecycle field; today's report interleaves `due`/`partial_payment`
+deals as a plainer proxy. Also: Ariyel's "payments to make" checklist view,
+PDF export, WhatsApp notifications (ROADMAP Phase 7's WABA handoff list).
 
 See [[reference-paths]] for file locations.
