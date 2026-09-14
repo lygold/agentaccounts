@@ -647,6 +647,18 @@ the review queue.
 - **Secretary ad-publishing tools.**
 - **Gold club (מועדון הזהב) / quarterly targets** — not modelled.
 - **Full pre-2026 historical backfill.**
+- **Agent-facing "deals needing my attention" view** (Levi, 2026-09-14, while
+  testing Phase 8): an agent should be able to open something that answers
+  "which of my deals need me to go chase someone" — e.g. N deals still
+  `potential` (follow up with the lawyers/clients to get to signing), N
+  deals `due`/`overdue` on payment (follow up with the client, or a
+  colleague agent, about why it hasn't been paid). `/deals` already lists
+  an agent's own deals with stage + paymentStatus shown inline (scoped via
+  `filterDealsByIds` — agent sees own, team leader own+team, manager/admin
+  all), but nothing groups/filters toward "what needs action today," and
+  there's no guidance on WHO to chase for a given stuck deal. Not designed
+  yet — needs Levi's input on what "needs my attention" should actually
+  group by/surface before building.
 
 ---
 
