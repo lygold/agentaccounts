@@ -495,24 +495,44 @@ unmodified.
   - New env vars, added to `next.config.ts`'s `SERVER_ENV_KEYS` and
     `.env.local`, **still needs adding to the Amplify console**:
     `MONDAY_PROPERTIES_BOARD_ID=1633691694`, `MONDAY_DEALS_BOARD_ID=1946512255`.
-  - Still Monday-only: `review/actions.ts`'s `submitDeal()` calls the ported
-    `createDealItem` (Deals_Raw_Data) and nothing else yet — no agentLedger
-    `Deal`/`Billing` row exists until 8d.
+- ✅ **8d — submit path** (`7737bc4`) — `submitDeal()` now creates
+  agentLedger's own `Deal`(s) + opening `Billing` FIRST (`src/lib/wizard/submit.ts`
+  maps the draft onto `NewDealInput`), one per represented side
+  (`representation: "both"` → two Deals, owner + buyer, each billed
+  separately — a colleague named on the other-side step never gets an
+  auto-created Deal, since the wizard only ever captures their name/phone/
+  email as free text, no agentId). The Monday `createDealItem` mirror
+  (unchanged column mapping) still runs right after and keeps driving
+  Levi's Make.com PDF scenario exactly as before; its `mondayItemId` is
+  linked back onto the new Deal(s) afterward.
+  - **An agent-submitted wizard never lands a deal in `signed` stage**:
+    `NewDealInput.forceStage: "potential"` overrides the normal
+    signingDate-driven inference. **Gap, not built here**: there's
+    currently no UI anywhere in agentLedger (old quick-form deals
+    included) to flip a deal's stage after creation — Levi doing that
+    "manually" today means a direct DB edit, not a button. Worth a small
+    follow-up if this blocks testing.
+  - `referralPercent` (agentLedger's "% of the commission" contract) is
+    derived from both sides' pre-VAT shekel amounts, not a raw ratio of the
+    wizard's entered figures — correct even when the main commission and
+    the referral used independent VAT-mode toggles and/or different units.
+  - Per-side idempotency: each Deal's id is saved to the draft
+    (`submittedDeals`, keyed by side) the instant it's created, so a retry
+    after a failed Monday mirror — or after only one side of a "both"
+    submission succeeded — never re-creates (double-bills) a side that's
+    already there.
+  - Deleted the old quick-form's now-dead `submitNewDeal`
+    (`src/app/deals/actions.ts`) — `/deals/new` has been the wizard's
+    landing page since 8b.
+  - **sikkumPigisha itself is completely untouched and keeps working** —
+    separate repo/deploy, still writing straight to Monday. Levi keeps
+    using it for real intake until he's ready to cut over (8f); the two
+    intake paths coexist with zero interaction until then.
 - **8c — AI extraction (upload step)**: `claude-extract.ts` + the
   mammoth/pdf-parse text extraction, `ANTHROPIC_API_KEY` added (found in
   sikkumPigisha's `.env.local`, needs adding here + Amplify). Known bugs
   carried over as TODOs, not silently fixed: ignores `representation` when
   flagging missing fields; over-infers "both sides" on meeting-summary docs.
-- **8d — submit path**: validate → `services/createDeal` (DynamoDB, real
-  source) → billing opens → `mirrorDealToMonday()` (new, adapted from the
-  already-ported `wizard/monday/deals.ts` `createDealItem`) keeps writing
-  Deals_Raw_Data + `pdfStatus` so Make fires unmodified — call it FROM the
-  new path, don't duplicate its column-mapping logic.
-  - **An agent-submitted wizard never lands a deal in `signed` stage**,
-    regardless of the `signingDate` field — stays `potential` until Levi
-    manually marks it signed (the existing fraud-gate decision; the merge
-    must not accidentally trust the wizard's own field for this).
-  - Delete the old quick-form's now-dead `submitNewDeal` (`src/app/deals/actions.ts`).
 - **8f — cutover**: point sikkumPigisha's Amplify domain at `/sikkum`;
   decommission the repo/deploy after a verification window.
 - Rebuild the summary-of-terms PDF in-app (Google Docs API right after
