@@ -4,6 +4,7 @@ import { getRedis, RedisKeys } from "@/lib/redis";
 import { getDeal } from "@/lib/store/deals";
 import { getGiDocument, putGiDocument } from "@/lib/store/gi-documents";
 import { recordDealPayment } from "@/lib/services/payments";
+import { recordAgentExpensePayment } from "@/lib/services/expenses";
 import { greenInvoiceFetch } from "@/lib/green-invoice/client";
 import { processGiDocument, type GiWebhookDoc } from "@/lib/green-invoice/webhook-handler";
 
@@ -73,6 +74,7 @@ export async function POST(request: Request) {
       putGiDocument,
       getDeal,
       recordDealPayment,
+      recordAgentExpensePayment,
       fetchGiDocument: (id) =>
         greenInvoiceFetch(`/documents/${id}`) as Promise<{
           linkedDocuments?: Array<{ id: string; type: number }>;

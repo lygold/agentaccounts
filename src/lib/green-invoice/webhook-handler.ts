@@ -46,6 +46,13 @@ export interface HandlerDeps {
     giDocId?: string;
     paymentMethod?: string;
   }) => Promise<unknown>;
+  recordAgentExpensePayment: (input: {
+    officeId: string;
+    agentId: string;
+    amount: number;
+    date: string;
+    giDocId: string;
+  }) => Promise<unknown>;
   fetchGiDocument: (
     id: string,
   ) => Promise<{ linkedDocuments?: Array<{ id: string; type: number }> }>;
@@ -124,26 +131,10 @@ export async function processGiDocument(
     origin: "webhook",
   });
 
-  if (target.targetKind !== "deal" || !target.dealId) {
-    // agent-expenses target — wired in the Phase 6 agent-expense-billing work.
-    console.log(
-      `[gi-webhook] ${type} #${doc.number} → target ${target.targetKind} (not yet handled)`,
-    );
-    return;
-  }
-
   if (type === 305) {
     console.log(
-      `[gi-webhook] 305 #${doc.number} → deal ${target.dealId} invoiced ₪${doc.total} (awaiting payment)`,
+      `[gi-webhook] 305 #${doc.number} → ${target.targetKind} invoiced ₪${doc.total} (awaiting payment)`,
     );
-    return;
-  }
-
-  // 320 / 400 — money received. One income row per payment transaction;
-  // recordDealPayment posts commission and rolls paymentStatus forward.
-  const deal = await deps.getDeal(target.dealId);
-  if (!deal) {
-    console.warn(`[gi-webhook] deal ${target.dealId} no longer exists`);
     return;
   }
 
@@ -151,6 +142,36 @@ export async function processGiDocument(
     doc.transactions && doc.transactions.length > 0
       ? doc.transactions
       : [{ id: doc.id, price: doc.total, date: today() }];
+  const totalPaid = txns.reduce((sum, t) => sum + t.price, 0);
+
+  if (target.targetKind === "agent-expenses" && target.agentId) {
+    // 320 / 400 against an agent-expenses 300 — the agent paid their bill.
+    // One payment_by_agent credit settles the already-posted expense entries.
+    await deps.recordAgentExpensePayment({
+      officeId: target.officeId,
+      agentId: target.agentId,
+      amount: totalPaid,
+      date: (txns[0]?.date ?? "").slice(0, 10) || today(),
+      giDocId: doc.id,
+    });
+    console.log(
+      `[gi-webhook] ${type} #${doc.number} → agent ${target.agentId} settled ₪${totalPaid}`,
+    );
+    return;
+  }
+
+  if (target.targetKind !== "deal" || !target.dealId) {
+    console.log(`[gi-webhook] ${type} #${doc.number} → unhandled target ${target.targetKind}`);
+    return;
+  }
+
+  // 320 / 400 on a deal — money received. One income row per payment
+  // transaction; recordDealPayment posts commission and rolls paymentStatus.
+  const deal = await deps.getDeal(target.dealId);
+  if (!deal) {
+    console.warn(`[gi-webhook] deal ${target.dealId} no longer exists`);
+    return;
+  }
 
   for (const txn of txns) {
     await deps.recordDealPayment({

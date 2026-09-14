@@ -67,6 +67,34 @@ export async function createTransactionAccount(opts: {
 }
 
 /**
+ * חשבון עסקה (300) billing an AGENT for their own expenses — one line per
+ * unbilled `expense` ledger entry (already pre-VAT, already negative; pass
+ * the absolute value). `billAgentExpenses` (services/expenses.ts) is the
+ * only caller.
+ */
+export async function createAgentExpenseAccount(opts: {
+  clientId: string;
+  lines: Array<{ description: string; amountExVat: number }>;
+}): Promise<GreenInvoiceDocument> {
+  return greenInvoiceFetch<GreenInvoiceDocument>("/documents", {
+    method: "POST",
+    body: JSON.stringify({
+      type: DOCUMENT_TYPE.transactionAccount,
+      lang: "he",
+      currency: "ILS",
+      client: { id: opts.clientId },
+      income: opts.lines.map((l) => ({
+        description: l.description,
+        quantity: 1,
+        price: l.amountExVat,
+        currency: "ILS",
+        vatType: 0,
+      })),
+    }),
+  });
+}
+
+/**
  * Email an existing document's PDF to one or more addresses. Repeatable —
  * Levi sends the 300 to the agent before signing, to the client after, etc.
  * `POST /documents/{id}/distribute` with `{ recipients: [...] }`, verified

@@ -172,6 +172,10 @@ export interface AgentLedgerEntry {
   dealId?: string;
   /** payment_to_agent entries should carry exactly 2: tax invoice + Kabbala. */
   attachments?: AgentLedgerAttachment[];
+  /** Set on an `expense` entry once it's bundled into an agent-expenses 300
+   *  (`billAgentExpenses`) — excludes it from being bundled again while that
+   *  bill is outstanding. The GI doc id. */
+  billedGiDocId?: string;
   date: string;
   createdAt: string;
 }
@@ -251,6 +255,9 @@ export interface AgentRecord {
    *  to the agent for the bulk expense import. */
   yad2Number: string | null;
   madlanNumber: string | null;
+  /** The GI client billed for this agent's own expenses (`billAgentExpenses`),
+   *  resolved + cached the first time they're billed. */
+  greenInvoiceClientId: string | null;
   /** Daf Kesher pulse id this row was imported from, if any — null for
    *  agents created in-app. Kept for the migration bridge + reconciliation. */
   mondayItemId: string | null;

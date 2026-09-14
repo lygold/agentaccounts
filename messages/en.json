@@ -206,7 +206,8 @@
       "self": "You can't archive your own account.",
       "notfound": "That agent no longer exists.",
       "save": "Something went wrong. Try again.",
-      "sync": "Sync from Daf Kesher failed. Try again."
+      "sync": "Sync from Daf Kesher failed. Try again.",
+      "nothingtobill": "No unbilled expenses for this agent."
     },
     "team": "Team",
     "teamShort": "Team ",
@@ -221,6 +222,11 @@
     "recurringAmount": "₪ ex-VAT / month",
     "recurringRowAmount": "₪{amount} + VAT",
     "recurringAdd": "Add",
+    "billedSuccess": "חשבון עסקה #{ref} created for the agent's expenses.",
+    "billTitle": "Bill for expenses",
+    "billNone": "Nothing unbilled.",
+    "billOutstanding": "{count} unbilled entries — ₪{amount} ex-VAT.",
+    "billNow": "Bill now (create 300)",
     "sortBy": "Sort:",
     "sortTeam": "by team",
     "sortName": "by name",

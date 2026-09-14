@@ -12,7 +12,7 @@ import {
   updateAgent,
 } from "@/lib/store/agents";
 import { mirrorAgentToMonday, syncAgentsFromMonday } from "@/lib/sync/agents";
-import { seedOfficeFee } from "@/lib/services/expenses";
+import { billAgentExpenses, seedOfficeFee } from "@/lib/services/expenses";
 import {
   createRecurringExpense,
   listRecurringExpensesForAgent,
@@ -213,6 +213,20 @@ export async function toggleRecurringExpenseAction(agentId: string, expenseId: s
   } catch (e) {
     if (isNextJsRedirect(e)) throw e;
     console.error("toggleRecurringExpenseAction failed:", e);
+    redirect(`${back}?error=save`);
+  }
+}
+
+/** Bundle an agent's unbilled expenses into a חשבון עסקה (300). */
+export async function billAgentExpensesAction(agentId: string) {
+  const back = `${LIST}/${agentId}`;
+  try {
+    const session = await requireAdmin();
+    const doc = await billAgentExpenses(agentId, session.officeId);
+    redirect(doc ? `${back}?billed=${doc.number}` : `${back}?error=nothingtobill`);
+  } catch (e) {
+    if (isNextJsRedirect(e)) throw e;
+    console.error("billAgentExpensesAction failed:", e);
     redirect(`${back}?error=save`);
   }
 }

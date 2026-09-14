@@ -5,6 +5,7 @@ import { AlertCircle } from "lucide-react";
 import { requireSession, isAdmin } from "@/lib/auth/session-cookie";
 import { getAgentById } from "@/lib/store/agents";
 import { listRecurringExpensesForAgent } from "@/lib/store/recurring-expenses";
+import { listLedgerEntriesForAgent } from "@/lib/store/agent-ledger";
 import { isChargeableInMonth, currentMonth } from "@/lib/expense-schedule";
 import { Nav } from "@/components/nav";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   addRecurringExpenseAction,
+  billAgentExpensesAction,
   toggleRecurringExpenseAction,
   updateAgentAction,
 } from "../actions";
@@ -24,11 +26,11 @@ export default async function EditAgentPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; billed?: string }>;
 }) {
   const session = await requireSession();
   if (!isAdmin(session)) redirect("/");
-  const [{ id }, { error }, t, tRole] = await Promise.all([
+  const [{ id }, { error, billed }, t, tRole] = await Promise.all([
     params,
     searchParams,
     getTranslations("Admin"),
@@ -37,6 +39,11 @@ export default async function EditAgentPage({
 
   const agent = await getAgentById(id);
   if (!agent || agent.officeId !== session.officeId) notFound();
+
+  const unbilled = (await listLedgerEntriesForAgent(id)).filter(
+    (e) => e.type === "expense" && !e.billedGiDocId,
+  );
+  const unbilledTotal = unbilled.reduce((sum, e) => sum + Math.abs(e.amountExVat), 0);
 
   const recurring = await listRecurringExpensesForAgent(id);
   const chargingNow = isChargeableInMonth(agent.expenseChargeDate, currentMonth());
@@ -62,6 +69,11 @@ export default async function EditAgentPage({
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" aria-hidden />
             <AlertDescription>{t(`error.${error}`)}</AlertDescription>
+          </Alert>
+        )}
+        {billed && (
+          <Alert className="mb-4">
+            <AlertDescription>{t("billedSuccess", { ref: billed })}</AlertDescription>
           </Alert>
         )}
 
@@ -276,6 +288,27 @@ export default async function EditAgentPage({
               {t("recurringAdd")}
             </Button>
           </form>
+        </section>
+
+        <section className="mt-4 flex items-center justify-between gap-3 rounded-lg border p-4">
+          <div>
+            <h2 className="font-semibold">{t("billTitle")}</h2>
+            <p className="text-sm text-muted-foreground">
+              {unbilled.length === 0
+                ? t("billNone")
+                : t("billOutstanding", {
+                    count: unbilled.length,
+                    amount: unbilledTotal.toLocaleString(),
+                  })}
+            </p>
+          </div>
+          {unbilled.length > 0 && (
+            <form action={billAgentExpensesAction.bind(null, agent.id)}>
+              <Button type="submit" variant="outline" size="sm">
+                {t("billNow")}
+              </Button>
+            </form>
+          )}
         </section>
       </main>
     </div>

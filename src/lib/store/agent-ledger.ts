@@ -1,6 +1,6 @@
 import "server-only";
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
-import { insert, newId, queryByIndex } from "./dynamo-store";
+import { insert, newId, queryByIndex, update } from "./dynamo-store";
 import { getDynamoDoc, TABLES } from "./dynamo-client";
 import { stripVat } from "../commission";
 import type { AgentLedgerEntry } from "../types";
@@ -110,5 +110,16 @@ export async function createLedgerEntryIfAbsent(
   } catch (e) {
     if ((e as { name?: string }).name === "ConditionalCheckFailedException") return null;
     throw e;
+  }
+}
+
+/** Stamp `expense` entries as bundled into an agent-expenses GI 300, so
+ *  `billAgentExpenses` doesn't bundle them again while it's outstanding. */
+export async function markLedgerEntriesBilled(
+  ids: string[],
+  giDocId: string,
+): Promise<void> {
+  for (const id of ids) {
+    await update<AgentLedgerEntry>(TABLES.agentAccount(), id, { billedGiDocId: giDocId });
   }
 }

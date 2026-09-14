@@ -1,16 +1,27 @@
 import "server-only";
-import { addVat } from "../commission";
+import { addVat, stripVat } from "../commission";
 import { currentMonth, isChargeableInMonth } from "../expense-schedule";
 import { DEFAULT_OFFICE_ID } from "../office";
 import { STANDARD_EXPENSES } from "../office-defaults";
-import { listAgentsByOffice } from "../store/agents";
-import { createLedgerEntryIfAbsent } from "../store/agent-ledger";
+import { getAgentById, listAgentsByOffice, updateAgent } from "../store/agents";
+import {
+  createLedgerEntry,
+  createLedgerEntryIfAbsent,
+  listLedgerEntriesForAgent,
+  markLedgerEntriesBilled,
+} from "../store/agent-ledger";
+import { putGiDocument } from "../store/gi-documents";
 import {
   createRecurringExpense,
   listRecurringExpensesForAgent,
   listRecurringExpensesForOffice,
 } from "../store/recurring-expenses";
-import type { AgentRecord, RecurringExpense } from "../types";
+import { resolveGreenInvoiceClient } from "../green-invoice/clients";
+import {
+  createAgentExpenseAccount,
+  type GreenInvoiceDocument,
+} from "../green-invoice/documents";
+import type { AgentLedgerEntry, AgentRecord, RecurringExpense } from "../types";
 
 /**
  * Agent monthly expenses (Phase 6). The FIXED charges (office fee, מדלן, פרמי)
@@ -154,4 +165,91 @@ export async function commitExpenseImport(
     else skipped++;
   }
   return { created, skipped };
+}
+
+// --- billing an agent for their own expenses --------------------------------
+
+/**
+ * Bundle an agent's unbilled `expense` entries into one חשבון עסקה (300),
+ * addressed to a GI client representing the agent (resolved by name once,
+ * then cached on `agent.greenInvoiceClientId`). Levi charges the card and
+ * issues the receipt in GI; the webhook's agent-expenses branch
+ * (`recordAgentExpensePayment`) closes the loop. Returns null when there's
+ * nothing unbilled, the agent doesn't exist, or the GI client name is
+ * ambiguous (needs a manual pick — not built; retry after Levi resolves it
+ * in GI directly).
+ */
+export async function billAgentExpenses(
+  agentId: string,
+  officeId: string,
+): Promise<GreenInvoiceDocument | null> {
+  const agent = await getAgentById(agentId);
+  if (!agent || agent.officeId !== officeId) return null;
+
+  const unbilled = (await listLedgerEntriesForAgent(agentId)).filter(
+    (e) => e.type === "expense" && !e.billedGiDocId,
+  );
+  if (unbilled.length === 0) return null;
+
+  let clientId = agent.greenInvoiceClientId;
+  if (!clientId) {
+    const resolution = await resolveGreenInvoiceClient(agent.name);
+    if (resolution.status !== "resolved") return null;
+    clientId = resolution.clientId;
+    await updateAgent(agentId, { greenInvoiceClientId: clientId });
+  }
+
+  const doc = await createAgentExpenseAccount({
+    clientId,
+    lines: unbilled.map((e) => ({
+      description: e.description,
+      amountExVat: Math.abs(e.amountExVat),
+    })),
+  });
+
+  const totalIncl = unbilled.reduce((sum, e) => sum + Math.abs(e.amount), 0);
+  await putGiDocument({
+    id: doc.id,
+    officeId,
+    giType: 300,
+    giNumber: Number(doc.number),
+    giClientId: clientId,
+    amount: totalIncl,
+    linkedGiId: null,
+    targetKind: "agent-expenses",
+    agentId,
+    expenseEntryIds: unbilled.map((e) => e.id),
+    origin: "app",
+  });
+  await markLedgerEntriesBilled(
+    unbilled.map((e) => e.id),
+    doc.id,
+  );
+  return doc;
+}
+
+/**
+ * The agent-expenses side of the GI webhook (`green-invoice/webhook-handler.ts`):
+ * a 320/400 against an agent-expenses 300 means the agent paid their bill.
+ * One `payment_by_agent` credit for the total — it settles the `expense`
+ * entries already on the ledger; there's nothing further to mark on them.
+ */
+export async function recordAgentExpensePayment(input: {
+  officeId: string;
+  agentId: string;
+  amount: number;
+  date: string;
+  giDocId: string;
+}): Promise<AgentLedgerEntry> {
+  const agent = await getAgentById(input.agentId);
+  return createLedgerEntry({
+    officeId: input.officeId,
+    agentId: input.agentId,
+    agentName: agent?.name ?? "",
+    type: "payment_by_agent",
+    amount: input.amount,
+    amountExVat: stripVat(input.amount),
+    description: `Agent settled expenses — GI doc ${input.giDocId.slice(0, 8)}`,
+    date: input.date,
+  });
 }
