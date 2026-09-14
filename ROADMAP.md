@@ -443,32 +443,64 @@ PDF in the accounting Drive folder — spot-check David Weiser's line
 
 **Goal:** deal intake lives in the hub. sikkumPigisha gone.
 
-- Move `sikkumPigisha/app/src/app/form/(wizard)/*` →
-  `app/src/app/deals/new/(wizard)/*`; rewire imports to agentLedger's shared
-  libs. Bring `claude-extract.ts`, `extract/text.ts`, the upload step,
-  `wizard.ts` / `draft.ts` / `validation.ts`, and the
-  party / persons / commission-form / phone-input / wizard-chrome components.
-- **One wizard per deal** (Levi). Two-sided deals keep the wizard's existing
-  `representation` + `otherSideRepresentedBy` model; one-sided deals need contact
-  detail for the represented side only (already how `validation.ts` works) — and
-  the office is "less interested" in the other side.
-- Landlords/renters are handled exactly as sellers/buyers (already in
-  `DealSide`).
-- Wizard submit → `services/createDeal` → DynamoDB (source) → `mirrorOut` to
-  Deals_Raw_Data during the bridge so the existing Make PDF scenario keeps firing.
-- Prefill the wizard from the linked accepted offer + property + signed-contract
-  (Phase 9 entities).
-- Redirect sikkumPigisha's Amplify URL → `/deals/new`. Its users re-login once.
-- Add the wizard rich fields to `Deal` (see §4).
-- **Agent "mark signed" fraud gate** — deferred. For now **Levi marks a deal
-  signed** (agents have lied about this). Later: require an uploaded
-  signed-contract page, or a co-sign, before the agent can self-advance and
-  produce their own חשבון עסקה.
+**Hard constraint (Levi, 2026-09-14): the wizard already works and is
+QA'd — port it faithfully.** Step order, validation rules, and field
+behavior are untouched; only the data-layer calls change (Monday reads →
+agentLedger's `agents` table, Monday-only submit → DynamoDB + mirror).
+
+**Key finding:** sikkumPigisha has no database of its own — every step's
+draft lives in Redis, and the final submit writes `create_item` straight onto
+the **Deals_Raw_Data** Monday board. Levi's Make scenario watches that
+board's `pdfStatus` column to build the Google Docs PDF + email it. So this
+phase is the same shape as the Phase 4d Daf Kesher bridge: DynamoDB becomes
+the source, Monday becomes a mirror that keeps the Make scenario firing
+unmodified.
+
+- ✅ **`/sikkum` one-click deep link** (`5c37789`) — an agent with no ledger
+  session hits `/sikkum`, `middleware.ts`'s `DEEP_LINKS` map sends them to
+  `/login?next=/deals/new`; OTP success lands them straight on the wizard
+  (`safeNextPath` in `action-utils.ts` guards against an open redirect).
+  Already logged in → `/sikkum` skips login entirely. No second auth system.
+- **8a — foundation**: deps (`@anthropic-ai/sdk`, `react-hook-form`,
+  `@hookform/resolvers`, `libphonenumber-js`, `mammoth`, `pdf-parse`); extend
+  `Deal` with the wizard's rich fields (§4); a `WizardDraft` type + Redis
+  store keyed by **agentId** (real agentLedger session, no separate OTP/draftId).
+- **8b — port the 18 step routes + shared components** (`party-form`,
+  `persons-form`, `commission-form`, `phone-input`, `wizard-chrome`,
+  `did-you-mean`, `person-suggestions`, `wizard-choice`, `wizard-step-error`,
+  `wizard-submit-button`) into `app/src/app/deals/new/(wizard)/*`. The
+  owner-agent/buyer-agent steps (naming a colleague) move from Daf Kesher
+  lookups to `listAgentsByOffice` + `SearchableSelect`. `validation.ts` ports
+  near-unchanged.
+- **8c — AI extraction (upload step)**: `claude-extract.ts` + the
+  mammoth/pdf-parse text extraction, `ANTHROPIC_API_KEY` added. Known bugs
+  carried over as TODOs, not silently fixed: ignores `representation` when
+  flagging missing fields; over-infers "both sides" on meeting-summary docs.
+- **8d — submit path**: validate → `services/createDeal` (DynamoDB, real
+  source) → billing opens → `mirrorDealToMonday()` (new, adapted from
+  sikkumPigisha's `monday/deals.ts` column-mapping) creates the Deals_Raw_Data
+  item + sets `pdfStatus` so Make fires unmodified. Property/Offer/Contacts
+  writes (`setPropertyListingStatus`, `setOfferStatus`, `writeBackClients`)
+  port as direct Monday calls, unchanged — those boards don't have
+  agentLedger tables until Phase 9.
+  - **An agent-submitted wizard never lands a deal in `signed` stage**,
+    regardless of the `signingDate` field — stays `potential` until Levi
+    manually marks it signed (the existing fraud-gate decision; the merge
+    must not accidentally trust the wizard's own field for this).
+  - **The wizard becomes the one intake path**, replacing the manager-only
+    quick `/deals/new` form — not living alongside it. Managers use the same
+    wizard.
+- **8e — prefill** from a picked property/offer (`property-match.ts` /
+  `offer-match.ts`) — ports as-is, still Monday-backed until Phase 9.
+- **8f — cutover**: point sikkumPigisha's Amplify domain at `/sikkum`;
+  decommission the repo/deploy after a verification window.
 - Rebuild the summary-of-terms PDF in-app (Google Docs API right after
   `createDeal`) — or keep the Make scenario until Phase 10.
 
-**Verification:** run the wizard end-to-end in the deployed hub → a deal is
-created, billing opens, the PDF is produced. sikkumPigisha's URL redirects.
+**Verification:** run the wizard end-to-end in the deployed hub as an agent
+(via `/sikkum`, cold) → a deal is created, billing opens, the PDF is
+produced, Deals_Raw_Data shows the mirrored item. sikkumPigisha's domain
+redirects.
 
 ### Phase 9 — Pipeline entities
 
