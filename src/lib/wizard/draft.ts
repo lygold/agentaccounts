@@ -86,6 +86,10 @@ export interface WizardDraft {
   /** Furthest wizard step the user has reached. Used to bound back/forward
    *  navigation — they can revisit completed steps but can't skip ahead. */
   furthestStep: WizardStep;
+  /** Not part of sikkumPigisha's own Draft — stamped by saveDraft() on every
+   *  write. Lets /deals/new decide whether to resume silently (touched
+   *  recently) or ask first (see RESUME_PROMPT_AFTER_MS). */
+  updatedAt?: string;
   /** Doc-output language (page 4). Drives template selection on PDF gen. */
   language?: DocLanguage;
   dealType?: DealType;
@@ -147,6 +151,14 @@ export function emptyDraft(): WizardDraft {
   return { furthestStep: "language" };
 }
 
+/** How long a draft can sit untouched before /deals/new asks "continue or
+ *  start fresh?" instead of silently resuming — the draft itself survives
+ *  much longer (SESSION_TTL_SECONDS, 12h), so a same-session return within
+ *  a few minutes shouldn't interrupt with a prompt, but a return the next
+ *  day should confirm rather than silently drop them back into an old,
+ *  possibly half-forgotten deal. */
+export const RESUME_PROMPT_AFTER_MS = 60 * 60 * 1000; // 1 hour
+
 export async function loadDraft(agentId: string): Promise<WizardDraft> {
   const raw = await getRedis().get<WizardDraft | string>(RedisKeys.wizardDraft(agentId));
   if (!raw) return emptyDraft();
@@ -163,7 +175,8 @@ export async function loadDraft(agentId: string): Promise<WizardDraft> {
 }
 
 export async function saveDraft(agentId: string, draft: WizardDraft): Promise<void> {
-  await getRedis().set(RedisKeys.wizardDraft(agentId), JSON.stringify(draft), {
+  const stamped: WizardDraft = { ...draft, updatedAt: new Date().toISOString() };
+  await getRedis().set(RedisKeys.wizardDraft(agentId), JSON.stringify(stamped), {
     ex: SESSION_TTL_SECONDS,
   });
 }

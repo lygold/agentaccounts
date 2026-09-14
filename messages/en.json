@@ -3,6 +3,13 @@
     "title": "Agent Ledger",
     "description": "Internal agent income, expense, and payment tracking — RE/MAX Jerusalem"
   },
+  "ResumeDraftPrompt": {
+    "title": "You have an unfinished deal summary",
+    "body": "You started filling in a deal summary and didn't finish. Continue where you left off, or start a new one?",
+    "bodyWithDate": "You started filling in a deal summary and didn't finish (last updated: {date}). Continue where you left off, or start a new one?",
+    "continue": "Continue where I left off",
+    "startFresh": "Start a new one"
+  },
   "Nav": {
     "dashboard": "Dashboard",
     "myLedger": "My ledger",
