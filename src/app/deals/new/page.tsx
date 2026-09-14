@@ -19,10 +19,9 @@ import { continueDraft, startFreshDraft } from "./resume-actions";
  * that — 12h, tied to the session — so this is purely about not surprising
  * someone who comes back the next day).
  *
- * TODO(8c): once the AI-extraction upload step lands, a brand-new draft
- * (furthestStep still at its default) should land on /deals/new/upload
- * instead of /deals/new/language — change the one line below, nothing else
- * reads this decision.
+ * A brand-new draft (furthestStep still at its default, "language") lands
+ * on /deals/new/upload — the AI-extraction offer — rather than jumping
+ * straight into the manual steps.
  */
 export default async function NewDealEntryPage() {
   const session = await requireSession();
@@ -32,7 +31,10 @@ export default async function NewDealEntryPage() {
   const ageMs = draft.updatedAt ? Date.now() - new Date(draft.updatedAt).getTime() : Infinity;
   const stale = !Number.isFinite(ageMs) || ageMs > RESUME_PROMPT_AFTER_MS;
 
-  if (!hasProgress || !stale) {
+  if (!hasProgress) {
+    redirect("/deals/new/upload");
+  }
+  if (!stale) {
     redirect(stepHref(draft.furthestStep));
   }
 

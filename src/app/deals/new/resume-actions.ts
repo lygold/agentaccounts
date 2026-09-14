@@ -5,6 +5,8 @@ import { requireSession } from "@/lib/auth/session-cookie";
 import { emptyDraft, loadDraft, saveDraft } from "@/lib/wizard/draft";
 import { stepHref } from "@/lib/wizard/steps";
 
+const FRESH_DRAFT_ENTRY = "/deals/new/upload";
+
 /** "Continue where I left off" — the resume-prompt page's default action. */
 export async function continueDraft() {
   const session = await requireSession();
@@ -12,9 +14,10 @@ export async function continueDraft() {
   redirect(stepHref(draft.furthestStep));
 }
 
-/** "Start a new one" — wipes the stale draft and begins from the first step. */
+/** "Start a new one" — wipes the stale draft and begins from the upload
+ *  offer, same entry point a genuinely first-time draft gets. */
 export async function startFreshDraft() {
   const session = await requireSession();
   await saveDraft(session.agentId, emptyDraft());
-  redirect(stepHref(emptyDraft().furthestStep));
+  redirect(FRESH_DRAFT_ENTRY);
 }

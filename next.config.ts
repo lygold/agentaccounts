@@ -54,6 +54,7 @@ const SERVER_ENV_KEYS = [
   "BOOTSTRAP_ADMIN_PHONE",
   "BOOTSTRAP_ADMIN_EMAIL",
   "OFFICE_ID",
+  "ANTHROPIC_API_KEY",
 ] as const;
 
 const bakedServerEnv: Record<string, string> = {};

@@ -3,6 +3,18 @@
     "title": "Agent Ledger",
     "description": "Internal agent income, expense, and payment tracking — RE/MAX Jerusalem"
   },
+  "UploadStep": {
+    "title": "Upload a document",
+    "subtitle": "Upload an existing meeting summary and we'll fill in the form automatically. You can edit any field afterward.",
+    "chooseFile": "Click to choose a file",
+    "fileTypes": "PDF, Word (.docx), or an image",
+    "processing": "Processing document...",
+    "submit": "Fill in the form automatically",
+    "skip": "Skip — I'll fill it in manually",
+    "noFileSelected": "No file selected.",
+    "fileTooLarge": "The file is too large — 5MB maximum.",
+    "extractFailed": "We couldn't read the document. Try again or skip to fill it in manually."
+  },
   "ResumeDraftPrompt": {
     "title": "You have an unfinished deal summary",
     "body": "You started filling in a deal summary and didn't finish. Continue where you left off, or start a new one?",
