@@ -528,11 +528,33 @@ unmodified.
     separate repo/deploy, still writing straight to Monday. Levi keeps
     using it for real intake until he's ready to cut over (8f); the two
     intake paths coexist with zero interaction until then.
-- **8c — AI extraction (upload step)**: `claude-extract.ts` + the
-  mammoth/pdf-parse text extraction, `ANTHROPIC_API_KEY` added (found in
-  sikkumPigisha's `.env.local`, needs adding here + Amplify). Known bugs
-  carried over as TODOs, not silently fixed: ignores `representation` when
-  flagging missing fields; over-infers "both sides" on meeting-summary docs.
+- ✅ **8c — AI extraction (upload step)** (`aea59be`) — `claude-extract.ts` +
+  `extract/text.ts` (mammoth/pdf-parse, falls back to Claude vision for
+  images/scanned PDFs) ported verbatim, including its own two known-bug
+  TODOs from Levi's 2026-08-16 report against sikkumPigisha (ignores
+  `representation` when flagging missing fields; over-infers "both sides"
+  on meeting-summary docs) — not silently fixed. `/deals/new/upload` is now
+  the true entry point for a fresh draft (was a TODO left in 8b);
+  extraction jumps `furthestStep` straight to `review` so the agent
+  verifies everything at once. `ANTHROPIC_API_KEY` added to
+  `next.config.ts` + `amplify.yml`'s build-time passthrough (was already in
+  the Amplify console but the build wasn't capturing it — same class of
+  gap as the two Monday board-id vars). Model string
+  (`claude-sonnet-4-6`) carried over unchanged, matching what sikkumPigisha
+  already runs in production — worth asking Levi if he wants it bumped to
+  claude-sonnet-5, not assumed.
+- ✅ **Found live-testing 8a-8e, fixed same day**: a "potential" (unsigned)
+  deal was showing a payment status ("waiting for payment") when nothing
+  is actually owed yet — `createDealWithBilling` created a real Billing row
+  regardless of stage. Fixed (`ed9cdd8`): `Deal.paymentStatus` is now
+  optional/unset until signed; a new `markDealSigned()` (services/deals.ts)
+  is the ONLY place Billing gets created for a wizard-originated deal —
+  triggered by a new manager-only "mark as signed" button on `/deals/[id]`,
+  which is the actual fraud-gate control point (an agent's own wizard
+  submission can never reach it). Also added (`810f2a3`): `/deals/new`
+  asks "continue or start fresh?" instead of silently resuming a draft
+  that's sat untouched over an hour (the draft itself survives 12h, tied
+  to session length).
 - **8f — cutover**: point sikkumPigisha's Amplify domain at `/sikkum`;
   decommission the repo/deploy after a verification window.
 - Rebuild the summary-of-terms PDF in-app (Google Docs API right after
