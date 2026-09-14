@@ -1,5 +1,5 @@
 import "server-only";
-import type { Deal, DealSide, DealType } from "../types";
+import type { Deal, DealSide, DealStage, DealType, DocLanguage, PdfStatus } from "../types";
 import { createDeal, getDeal, updateDeal } from "../store/deals";
 import { createBilling, listBillingForDeal, updateBilling } from "../store/billing";
 import { appendDistribution, putGiDocument } from "../store/gi-documents";
@@ -38,18 +38,33 @@ export interface NewDealInput {
   referralPercent?: number;
   sikkumDate?: string;
   signingDate?: string;
+  /** Overrides the default signingDate-driven stage inference below —
+   *  the /sikkum wizard (Phase 8) always passes "potential" here regardless
+   *  of signingDate: an agent-submitted deal never self-advances to
+   *  "signed" (the fraud gate — see ROADMAP §Phase 8). */
+  forceStage?: DealStage;
+  /** Which required fields the submitting flow left blank — see Deal's own
+   *  `incompleteFields` doc comment. */
+  incompleteFields?: string[];
+  docLanguage?: DocLanguage;
+  otherSideRepresentedBy?: "colleague" | "external";
+  pdfStatus?: PdfStatus;
+  propertyId?: string;
+  offerId?: string;
 }
 
 /**
  * Create a deal and its opening billing record. The client is billed the
  * full gross (VAT-inclusive, referral NOT subtracted — an internal split
- * concern). Stage is "signed" when a signing date is given, else "potential".
+ * concern). Stage is "signed" when a signing date is given, else "potential"
+ * — unless `forceStage` overrides that inference.
  */
 export async function createDealWithBilling(input: NewDealInput): Promise<Deal> {
+  const { forceStage, ...dealFields } = input;
   const deal = await createDeal({
-    ...input,
+    ...dealFields,
     team: input.team ?? null,
-    stage: input.signingDate ? "signed" : "potential",
+    stage: forceStage ?? (input.signingDate ? "signed" : "potential"),
     paymentStatus: "due",
   });
   await createBilling({

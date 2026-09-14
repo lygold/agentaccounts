@@ -133,6 +133,13 @@ export interface WizardDraft {
   /** Internal notes to the office — not published in the PDF.
    *  Commission changes, referrals, anything the office needs to know. */
   officeNotes?: string;
+  /** Not part of sikkumPigisha's own Draft — set by review/actions.ts
+   *  (Phase 8d) right after each side's agentLedger Deal is created, keyed
+   *  per side (not a flat list) so a retry — after a failed Monday mirror,
+   *  or after only one side of a "both" submission succeeded — only
+   *  (re)creates whatever's still missing, never a side that's already
+   *  billed. Values are ids into agentLedger's own `deals` table. */
+  submittedDeals?: { owner?: string; buyer?: string };
 }
 
 /** Empty draft used the first time an agent lands on the wizard. */

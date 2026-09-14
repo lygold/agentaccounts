@@ -2,11 +2,9 @@
 
 import { redirect } from "next/navigation";
 import { requireManager } from "@/lib/auth/session-cookie";
-import { getAgentById } from "@/lib/store/agents";
-import { DealSchema, IncomeEntrySchema } from "@/lib/form-parse";
+import { IncomeEntrySchema } from "@/lib/form-parse";
 import {
   createDealTransactionAccount,
-  createDealWithBilling,
   resolveGiClientForDeal,
   sendTransactionAccount,
   setGiClientForDeal,
@@ -14,52 +12,10 @@ import {
 import { recordDealPayment } from "@/lib/services/payments";
 import { isNextJsRedirect } from "@/lib/action-utils";
 
-export async function submitNewDeal(formData: FormData) {
-  try {
-    const session = await requireManager();
-    const parsed = DealSchema.safeParse({
-      agentId: formData.get("agentId"),
-      dealType: formData.get("dealType"),
-      side: formData.get("side"),
-      clientName: formData.get("clientName"),
-      propertyAddress: formData.get("propertyAddress") || undefined,
-      salePrice: formData.get("salePrice"),
-      commissionPercent: formData.get("commissionPercent"),
-      hasReferral: formData.get("hasReferral") === "on",
-      referralPercent: formData.get("referralPercent") || undefined,
-      sikkumDate: formData.get("sikkumDate") || undefined,
-      signingDate: formData.get("signingDate") || undefined,
-    });
-    if (!parsed.success) return;
-
-    const agent = await getAgentById(parsed.data.agentId);
-    if (!agent || agent.officeId !== session.officeId || agent.status !== "active") {
-      redirect("/deals/new?error=agent");
-    }
-    const deal = await createDealWithBilling({
-      officeId: session.officeId,
-      agentId: agent.id,
-      agentName: agent.name,
-      team: agent.team,
-      dealType: parsed.data.dealType,
-      side: parsed.data.side,
-      clientName: parsed.data.clientName,
-      propertyAddress: parsed.data.propertyAddress,
-      salePrice: parsed.data.salePrice,
-      commissionPercent: parsed.data.commissionPercent,
-      hasReferral: parsed.data.hasReferral,
-      referralPercent: parsed.data.referralPercent,
-      sikkumDate: parsed.data.sikkumDate,
-      signingDate: parsed.data.signingDate,
-    });
-
-    redirect(`/deals/${deal.id}`);
-  } catch (e) {
-    if (isNextJsRedirect(e)) throw e;
-    console.error("submitNewDeal failed:", e);
-    redirect("/deals?error=save");
-  }
-}
+// submitNewDeal (the old manager-only quick form) was removed in Phase 8d —
+// /deals/new is now the wizard's landing page for everyone, agents and
+// managers alike. See src/lib/wizard/submit.ts for how a deal is created
+// today.
 
 /**
  * Log a client payment against a deal — auto-posts the agent's commission
