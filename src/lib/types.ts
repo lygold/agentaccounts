@@ -24,6 +24,16 @@ export type DealStage = "potential" | "signed" | "cancelled";
  *  → paid), with overdue/dead_debt as explicit admin/manager flags. */
 export type PaymentStatus = "due" | "partial_payment" | "paid" | "overdue" | "dead_debt";
 
+/** Doc-output language, from the wizard's language step — drives which
+ *  Google Docs template the Make PDF scenario picks. */
+export type DocLanguage = "hebrew" | "english";
+
+/** Wizard-mirror status column mirrored to Monday's Deals_Raw_Data
+ *  `pdfStatus` — the existing Make.com scenario watches that column to
+ *  build + email the summary-of-terms PDF. Kept on Deal only for admin
+ *  visibility; Monday's column is what Make actually reads. */
+export type PdfStatus = "building_pdf" | "manual_steps_necessary";
+
 export interface Deal {
   id: string;
   /** Which office this deal belongs to — see src/lib/office.ts. Single
@@ -61,6 +71,21 @@ export interface Deal {
    *  re-searching Green Invoice's client list on every document created
    *  against this deal. */
   greenInvoiceClientId?: string;
+  /** Set when this deal was created via the /sikkum wizard (Phase 8),
+   *  absent for the older manager quick-form / migrated rows. */
+  docLanguage?: DocLanguage;
+  /** Only meaningful when the wizard's `representation` wasn't "both" — who
+   *  represents the side this deal's agent doesn't. See wizard Draft. */
+  otherSideRepresentedBy?: "colleague" | "external";
+  pdfStatus?: PdfStatus;
+  /** The Deals_Raw_Data item this deal is mirrored to during the Monday
+   *  bridge (Phase 8-9) — lets mirrorDealToMonday() update in place on a
+   *  resubmit instead of creating a duplicate item. */
+  mondayItemId?: string;
+  /** Properties/Offers board pulse ids the wizard prefilled from, when the
+   *  agent picked an existing listing/offer rather than typing manually. */
+  propertyId?: string;
+  offerId?: string;
   createdAt: string;
   updatedAt: string;
 }

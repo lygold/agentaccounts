@@ -33,4 +33,9 @@ export const RedisKeys = {
   /** Hash: normalised "<vendor>:<nickname>" → agentId, so a fixed match
    *  sticks for next month's import. */
   expenseImportAliases: "al:expense:import:aliases",
+  /** The /sikkum deal wizard's in-progress draft, one per agent (keyed by
+   *  our own session agentId — no separate draftId/JWT like sikkumPigisha
+   *  had, since the agent is already authenticated into the real hub
+   *  session by the time they reach the wizard). */
+  wizardDraft: (agentId: string) => `al:wizard:draft:${agentId}`,
 };
