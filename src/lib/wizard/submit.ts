@@ -6,9 +6,9 @@ import type { CommissionInput, PersonInput, WizardDraft } from "./draft";
 import type { ValidationIssue } from "./validation";
 import type { WizardStep } from "./steps";
 import {
-  computeExpectedBillPreVat,
   computeNormalizedCommissionPercent,
   computeReferralNormalizedPercent,
+  VAT_RATE,
 } from "./commission";
 
 /**
@@ -103,12 +103,22 @@ function propertyAddressText(draft: WizardDraft): string | undefined {
 }
 
 /**
- * "% of THIS commission" (agentLedger's Deal.referralPercent contract) from
- * the wizard's own normalized, price-relative figures — computed via the
- * two sides' pre-VAT shekel amounts rather than a direct ratio of the raw
- * entered numbers, so it comes out right even when the main commission and
- * the referral used different units (%/₪) or different VAT-mode toggles
- * (each has its own, independent of the other — see commission.ts).
+ * "% of THIS commission" (agentLedger's Deal.referralPercent contract).
+ *
+ * Percentage-unit referral ("25% of the commission, VAT included"): the
+ * main commission's own amount and VAT mode cancel out exactly — per
+ * commission.ts's computeReferralNormalizedPercent, the referral's
+ * normalized percentage is always `mainPct * referral.amount/100`,
+ * optionally `/(1+VAT_RATE)` — a plain scalar of mainPct, regardless of
+ * mainPct's own value. So the answer is just `referral.amount`, divided by
+ * 1+VAT_RATE when VAT-included — no price, no main-commission figure
+ * needed at all.
+ *
+ * Flat-shekel referral ("₪5,000, VAT included") is the one case that
+ * genuinely can't shortcut this way — a flat fee's share of the commission
+ * depends on how big the commission itself is, so it needs both sides'
+ * actual normalized percentages (which is where `price` comes in, same as
+ * anywhere else a shekel-unit figure gets normalized).
  */
 function referralPercentOfCommission(
   commission: CommissionInput,
@@ -116,18 +126,19 @@ function referralPercentOfCommission(
 ): number | undefined {
   const referral = commission.referral;
   if (!referral) return undefined;
-  const mainPct = computeNormalizedCommissionPercent(commission, price);
-  const mainBill = computeExpectedBillPreVat(mainPct, price);
-  const referralPct = computeReferralNormalizedPercent(mainPct, referral, price);
-  const referralBill = computeExpectedBillPreVat(referralPct, price);
-  if (mainBill && referralBill !== null) {
-    return (referralBill / mainBill) * 100;
+
+  if (referral.unit === "percentage") {
+    return referral.vatMode === "included"
+      ? referral.amount / (1 + VAT_RATE)
+      : referral.amount;
   }
-  // No price to derive shekel amounts from — a straight percentage referral
-  // already IS "% of the commission" by definition; a shekel-flat referral
-  // has no meaningful fallback without a price, so it's left unset (same as
-  // the wizard's own UI, which can't show an expected bill either without one).
-  return referral.unit === "percentage" ? referral.amount : undefined;
+
+  const mainPct = computeNormalizedCommissionPercent(commission, price);
+  const referralPct = computeReferralNormalizedPercent(mainPct, referral, price);
+  if (mainPct && referralPct !== null) {
+    return (referralPct / mainPct) * 100;
+  }
+  return undefined;
 }
 
 async function buildAndCreateDeal(opts: {
