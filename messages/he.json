@@ -300,5 +300,271 @@
     "syncResult": "סונכרן מדף קשר: {created} נוספו, {updated} עודכנו, {archived} הועברו לארכיון, {linked} קושרו.",
     "syncErrors": "{count} שורות נכשלו — בדקו את יומני השרת.",
     "mirrorFails": "{count} שינויי סוכן לא נכתבו בחזרה לדף קשר — בדקו את יומני השרת."
+  },
+  "WizardChrome": {
+    "greeting": "שלום {name}",
+    "stepOf": "שלב {current} מתוך {total}",
+    "back": "חזרה",
+    "backToSummary": "חזרה לסיכום"
+  },
+  "StepTitles": {
+    "language": "שפת מסמך",
+    "deal-type": "מכירה או השכרה",
+    "signing-date": "תאריך חתימה צפוי",
+    "representation": "ייצוג",
+    "other-side": "הצד השני",
+    "property": "פרטי נכס",
+    "price-terms": "מחיר ותנאים",
+    "owners": "פרטי בעלים",
+    "owner-commission": "עמלה — בעלים",
+    "owner-lawyer": "עו״ד של בעלים",
+    "owner-agent": "מתווך של בעלים",
+    "buyers": "פרטי קונים",
+    "buyer-commission": "עמלה — קונים",
+    "buyer-lawyer": "עו״ד של קונים",
+    "buyer-agent": "מתווך של קונים",
+    "notes": "הערות נוספות",
+    "office-notes": "הערות למשרד",
+    "review": "סיכום ובדיקה"
+  },
+  "WizardStepError": {
+    "prefix": "שגיאה — ",
+    "saveWhy": "לא הצלחנו לשמור את הנתונים — ייתכן שהיתה בעיה זמנית בשרת.",
+    "saveAction": "נסו ללחוץ שוב על המשך. אם הבעיה חוזרת, צרו קשר עם המשרד.",
+    "sessionWhy": "פג תוקף ההתחברות שלכם.",
+    "sessionAction": "חזרו לדף הראשי והיכנסו מחדש."
+  },
+  "LanguageStep": {
+    "prompt": "באיזו שפה תרצו שהסיכום יופק?",
+    "importantTitle": "חשוב:",
+    "englishNote": "אם תבחרו באנגלית — הקלידו את כל תשובותיכם באנגלית למסמך מלא באנגלית",
+    "hebrewNote": "אם תבחרו בעברית — הקלידו את כל תשובותיכם בעברית למסמך מלא בעברית"
+  },
+  "DealTypeStep": {
+    "prompt": "איזה סוג עסקה אתם מדווחים?",
+    "sale": "מכירה",
+    "saleHint": "מכירת נכס",
+    "rental": "השכרה",
+    "rentalHint": "השכרת נכס"
+  },
+  "Sides": {
+    "ownerSale": "בעלים",
+    "buyerSale": "קונה",
+    "ownerRental": "משכיר",
+    "buyerRental": "שוכר"
+  },
+  "RepresentationStep": {
+    "prompt": "את מי אתם מייצגים בעסקה?",
+    "both": "שניהם",
+    "bothHint": "שני הצדדים"
+  },
+  "OtherSideStep": {
+    "prompt": "מי מייצג את ה{label} בעסקה? זה עוזר למשרד לעקוב אחרי שני הצדדים גם כשכל אחד מהם מטופל על ידי סוכן/ת אחר/ת.",
+    "colleague": "סוכן/ת מהמשרד",
+    "external": "גורם חיצוני"
+  },
+  "Common": {
+    "continue": "המשך",
+    "sending": "שולח...",
+    "stillSending": "עדיין שולח, עוד רגע...",
+    "requiredNotePrefix": "שדות עם",
+    "requiredNoteSuffix": "נדרשים כדי לקבל את המסמך אוטומטית.",
+    "nameLabel": "שם מלא",
+    "phoneLabel": "טלפון",
+    "emailLabel": "אימייל",
+    "teudatZehutLabel": "תעודת זהות",
+    "hebrew": "עברית",
+    "english": "אנגלית",
+    "twoPersonCapNote": "מקסימום שני אנשים בטופס זה. עבור יותר מ-2, שלחו את הפרטים ל-levi@remaxjerusalem.com",
+    "saveFailed": "שמירת הנתונים נכשלה. נסו שוב — אם הבעיה חוזרת, צרו קשר עם המשרד."
+  },
+  "SigningDateStep": {
+    "internalNote": "לשימוש פנימי במשרד בלבד — לא יופיע במסמך.",
+    "label": "תאריך חתימה צפוי"
+  },
+  "NotesStep": {
+    "label": "הערות נוספות",
+    "placeholder": "כל פרט נוסף שחשוב לציין בעסקה — תנאים מיוחדים, מועדים, וכו'."
+  },
+  "OfficeNotesStep": {
+    "label": "הערות למשרד (פנימי בלבד)",
+    "description": "הערות אלו לא יופיעו במסמך — הן מיועדות לשימוש פנימי במשרד בלבד. לדוגמה: שינוי בעמלה, הפניות, מידע נוסף לצוות.",
+    "placeholder": "שינוי בעמלה, הפניות, או כל מידע אחר שחשוב שהמשרד ידע..."
+  },
+  "PriceTermsStep": {
+    "priceLabel": "מחיר הנכס",
+    "pricePlaceholder": "לדוגמה: 2500000",
+    "autofillNote": "מולא אוטומטית מהנכס. ניתן לשנות.",
+    "paymentTermsLabel": "תנאי תשלום",
+    "paymentTermsPlaceholder": "לדוגמה: 20% במעמד החתימה, יתרה בקבלת מפתח...",
+    "vacatingDateLabel": "תאריך פינוי הדירה"
+  },
+  "PartyForm": {
+    "pickAgent": "בחרו סוכן/ת מהמשרד",
+    "searchPlaceholder": "חיפוש לפי שם...",
+    "noAgentsFound": "לא נמצאו סוכנים תואמים",
+    "agentNotListed": "הסוכן/ת לא מופיע/ה — מילוי ידני",
+    "backToList": "חזרה לבחירה מהרשימה",
+    "contactRequiredHint": "(טלפון או אימייל)",
+    "contactNotePrefix": "טלפון",
+    "contactNoteOr": "או",
+    "contactNoteSuffix": "אימייל נדרשים — מספיק לציין אחד מהם."
+  },
+  "PhoneInput": {
+    "countryCodeLabel": "קידומת מדינה"
+  },
+  "OwnerLawyerStep": {
+    "intro": "פרטי עורך הדין מצד הבעלים"
+  },
+  "OwnerAgentStep": {
+    "introAuto": "פרטי המתווך מצד הבעלים — מולא אוטומטית מפרטיכם, ניתן לשנות",
+    "intro": "פרטי המתווך מצד הבעלים"
+  },
+  "BuyerLawyerStep": {
+    "introRental": "פרטי עורך הדין מצד השוכר (לא חובה בעסקת השכרה)",
+    "intro": "פרטי עורך הדין מצד הקונה"
+  },
+  "BuyerAgentStep": {
+    "introAuto": "פרטי המתווך מצד הקונה — מולא אוטומטית מפרטיכם, ניתן לשנות",
+    "intro": "פרטי המתווך מצד הקונה"
+  },
+  "PersonsForm": {
+    "pickerTitle": "בחרו מהלקוחות הקיימים שלכם",
+    "pickerHint": "מוצגים קודם לקוחות הקשורים לכתובת: {address}",
+    "searchPlaceholder": "חיפוש לפי שם...",
+    "noClientsFound": "לא נמצאו לקוחות",
+    "pickerFootnote": "בחירת לקוח ממלאת את השדות למטה — ניתן לערוך לאחר מכן.",
+    "emptyState": "לא נמצאו לקוחות קיימים על שמכם בלוח — ניתן למלא ידנית למטה.",
+    "removeAria": "הסר",
+    "foreignIdNote": "עבור זרים/דרכון, ציינו את המספר בשדה \"הערות למשרד\".",
+    "commLangNote": "תקשורת (לשימוש פנימי בלבד) — לדוגמה, באיזו שפה תרצו שהחשבונית עסקה יופקו (כאשר יגיע הזמן)",
+    "canContinueWithoutNote": "ניתן להמשיך גם בלעדיהם."
+  },
+  "PersonSuggestions": {
+    "pairLabel": "{name1} ו{name2}",
+    "offerSourceNote": "מהצעת מחיר — יש להשלים טלפון/אימייל בעצמכם",
+    "noneOfThese": "אף אחד מאלה — המשך ידני"
+  },
+  "DidYouMean": {
+    "confirmPrompt": "האם התכוונתם ל: <b>{label}</b>?",
+    "yes": "כן, זה הנכון",
+    "no": "לא, המשך ידני"
+  },
+  "OwnersStep": {
+    "titleOwner": "בעלים",
+    "titleLandlord": "משכיר",
+    "suggestionsTitle": "מצאנו בעלים אפשריים לנכס הזה:",
+    "teudatZehutAutofillNotice": "תעודת הזהות מולאה אוטומטית מרישום קודם — ניתן לערוך",
+    "addAnother": "+ הוסף {title} נוסף",
+    "commLangPrompt": "שפת תקשורת — צד {title}"
+  },
+  "BuyersStep": {
+    "titleBuyer": "קונה",
+    "titleRenter": "שוכר",
+    "suggestionsTitle": "מצאנו קונים אפשריים לנכס הזה:",
+    "addAnother": "+ הוסף {title} נוסף",
+    "commLangPrompt": "שפת תקשורת — צד {title}"
+  },
+  "PropertyStep": {
+    "pickerLabel": "בחרו נכס מהרשימה שלכם",
+    "noProperties": "לא נמצאו נכסים על שמכם בלוח. עברו למילוי ידני.",
+    "searchPlaceholder": "חיפוש לפי כתובת או שם בעלים...",
+    "noMatches": "לא נמצאו נכסים תואמים",
+    "notListed": "הנכס שלי לא מופיע — מילוי ידני",
+    "backToList": "חזרה לבחירה מהרשימה",
+    "neighbourhoodLabel": "שכונה",
+    "streetLabel": "רחוב",
+    "buildingNumberLabel": "מספר בית",
+    "apartmentNumberLabel": "מספר דירה",
+    "gushChelkaLabel": "גוש/חלקה",
+    "roomsLabel": "חדרים",
+    "sizeSqmLabel": "מ\"ר",
+    "requiredNoteSuffix": "נדרשים כדי לקבל את המסמך אוטומטית. ניתן להמשיך גם בלעדיהם, אך המסמך לא יישלח באופן אוטומטי."
+  },
+  "ReviewStep": {
+    "mondayError": "שליחה ל-Monday נכשלה. נסו שוב, או צרו קשר עם המשרד אם הבעיה חוזרת.",
+    "completeMessage": "כל השדות הנדרשים מולאו. לאחר השליחה, המסמך יופק ויישלח אליכם אוטומטית.",
+    "incompleteMessage": "{count} שדות נדרשים חסרים — ניתן לשלוח אך המסמך לא יישלח אוטומטית. המשרד יוצר איתכם קשר להשלמת הפרטים.",
+    "submitComplete": "שלח והפק מסמך",
+    "submitIncomplete": "שלח גם בלי השדות החסרים",
+    "editTitle": "לחצו לעריכה",
+    "sendingToMonday": "שולח ל-Monday, רגע...",
+    "rowLanguage": "שפת מסמך",
+    "rowDealType": "סוג עסקה",
+    "rowSigningDate": "תאריך חתימה צפוי",
+    "rowRepresentation": "ייצוג",
+    "representationOwner": "בעלים",
+    "representationBuyer": "קונה",
+    "representationBoth": "שניהם",
+    "rowAddress": "כתובת",
+    "apartmentPrefix": "דירה {number}",
+    "rowRoomsSize": "חדרים / מ״ר",
+    "rowPrice": "מחיר",
+    "rowPaymentTerms": "תנאי תשלום",
+    "rowVacatingDate": "תאריך פינוי",
+    "rowOwners": "בעלים",
+    "rowOwnerCommission": "עמלה — בעלים",
+    "rowOwnerLawyer": "עו״ד בעלים",
+    "rowOwnerAgent": "מתווך בעלים",
+    "rowBuyers": "קונים",
+    "rowBuyerCommission": "עמלה — קונים",
+    "rowBuyerLawyer": "עו״ד קונים",
+    "rowBuyerAgent": "מתווך קונים",
+    "rowNotes": "הערות",
+    "rowOfficeNotes": "הערות למשרד",
+    "commissionWithReferral": "+ הפניה"
+  },
+  "ValidationIssues": {
+    "docLanguageMissing": "שפת המסמך לא נבחרה",
+    "dealTypeMissing": "סוג העסקה לא נבחר",
+    "representationMissing": "ייצוג לא נבחר",
+    "streetMissing": "רחוב חסר",
+    "buildingNumberMissing": "מספר בית חסר",
+    "apartmentNumberMissing": "מספר דירה חסר",
+    "neighbourhoodMissing": "שכונה חסרה",
+    "priceMissing": "מחיר חסר",
+    "ownerNameMissing": "שם בעל הנכס חסר",
+    "ownerContactMissing": "טלפון או אימייל של בעל הנכס חסר",
+    "ownerIdMissing": "תעודת זהות של בעל הנכס חסרה",
+    "ownerLawyerNameMissing": "שם עורך הדין של הבעלים חסר",
+    "ownerLawyerContactMissing": "טלפון או אימייל של עורך הדין של הבעלים חסר",
+    "ownerAgentNameMissing": "שם המתווך של הבעלים חסר",
+    "ownerAgentContactMissing": "טלפון או אימייל של המתווך של הבעלים חסר",
+    "buyerNameMissing": "שם הקונה/שוכר חסר",
+    "buyerContactMissing": "טלפון או אימייל של הקונה/שוכר חסר",
+    "buyerIdMissing": "תעודת זהות של הקונה חסרה",
+    "buyerLawyerNameMissing": "שם עורך הדין של הקונה חסר",
+    "buyerLawyerContactMissing": "טלפון או אימייל של עורך הדין של הקונה חסר",
+    "buyerAgentNameMissing": "שם המתווך של הקונה חסר",
+    "buyerAgentContactMissing": "טלפון או אימייל של המתווך של הקונה חסר"
+  },
+  "DoneStep": {
+    "thanksNamed": "תודה, {name}!",
+    "thanksPlain": "תודה!",
+    "completeMessage": "המסמך בדרך אליכם. הסיכום יישלח לאימייל שלכם בדקות הקרובות. אם לא הגיע בתוך 10 דקות — בדקו את תיקיית הספאם או צרו קשר עם המשרד.",
+    "incompleteMessage": "חלק מהשדות הנדרשים חסרים, ולכן המסמך לא יישלח אוטומטית. נציג המשרד יוצר איתכם קשר בקרוב להשלמת הפרטים.",
+    "continueAsAgent": "המשך בתור {name} — סיכום נוסף",
+    "done": "סיימתי"
+  },
+  "CommissionForm": {
+    "bannerTitle": "מידע פנימי בלבד",
+    "bannerBody": "הנתונים בעמוד זה לעולם לא יופיעו במסמך המופק — הם לשימוש המשרד בלבד.",
+    "commissionLabel": "עמלה",
+    "unitPercentage": "אחוזים (%)",
+    "unitShekel": "סכום קבוע (₪)",
+    "unitMonths": "חודשי שכירות",
+    "vatModeLabel": "מע\"מ",
+    "vatPlus": "בתוספת מע\"מ",
+    "vatIncluded": "כולל מע\"מ",
+    "expectedBillLabel": "סכום צפוי לחיוב (לפני מע\"מ)",
+    "expectedBillValue": "{amount} (לפני מע\"מ) — {percent}% מהמחיר",
+    "prefillNote": "מולא אוטומטית מנתוני הנכס/הלקוח. ניתן לשנות.",
+    "referralPrompt": "האם יש הפניה על עסקה זו?",
+    "referralYes": "כן",
+    "referralNo": "לא",
+    "referralAgentNameLabel": "שם הסוכן המפנה",
+    "referralOfficeNameLabel": "שם המשרד המפנה",
+    "referralPhoneLabel": "טלפון הסוכן המפנה",
+    "referralCommissionLabel": "עמלת הפניה"
   }
 }

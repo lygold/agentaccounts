@@ -81,3 +81,19 @@ export function getAgentsBoardId(): string {
   if (!id) throw new MondayConfigError("MONDAY_AGENTS_BOARD_ID is not set");
   return id;
 }
+
+/** Properties Raw Data (listings) — used by the /sikkum wizard's property
+ *  picker/prefill (Phase 8). Same board sikkumPigisha reads. */
+export function getPropertiesBoardId(): string {
+  const id = process.env.MONDAY_PROPERTIES_BOARD_ID;
+  if (!id) throw new MondayConfigError("MONDAY_PROPERTIES_BOARD_ID is not set");
+  return id;
+}
+
+/** Deals_Raw_Data — the wizard's submit target during the Monday mirror
+ *  bridge (Phase 8d), watched by the existing Make.com PDF scenario. */
+export function getDealsBoardId(): string {
+  const id = process.env.MONDAY_DEALS_BOARD_ID;
+  if (!id) throw new MondayConfigError("MONDAY_DEALS_BOARD_ID is not set");
+  return id;
+}

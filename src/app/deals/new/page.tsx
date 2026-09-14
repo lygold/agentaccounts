@@ -1,131 +1,23 @@
 import { redirect } from "next/navigation";
-import { getTranslations } from "next-intl/server";
-import { AlertCircle } from "lucide-react";
-import { requireSession, isManager } from "@/lib/auth/session-cookie";
-import { listAgentsByOffice } from "@/lib/store/agents";
-import { Nav } from "@/components/nav";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { SearchableSelect } from "@/components/ui/searchable-select";
-import { submitNewDeal } from "../actions";
+import { requireSession } from "@/lib/auth/session-cookie";
+import { loadDraft } from "@/lib/wizard/draft";
+import { stepHref } from "@/lib/wizard/steps";
 
-export default async function NewDealPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string }>;
-}) {
+/**
+ * /deals/new is now the wizard's landing spot (Phase 8) — it replaces the
+ * old manager-only quick form outright, it doesn't sit alongside it.
+ * Managers use the same wizard agents do; there is no separate fast path.
+ *
+ * Bare /deals/new has no step of its own — it resumes an in-progress draft
+ * where the agent left off, or starts a fresh one at the first step.
+ *
+ * TODO(8c): once the AI-extraction upload step lands, a brand-new draft
+ * (furthestStep still at its default) should land on /deals/new/upload
+ * instead of /deals/new/language — change the one line below, nothing else
+ * reads this decision.
+ */
+export default async function NewDealEntryPage() {
   const session = await requireSession();
-  if (!isManager(session)) redirect("/deals");
-  const [{ error }, agents, t, tDealType, tSide] = await Promise.all([
-    searchParams,
-    listAgentsByOffice(session.officeId),
-    getTranslations("NewDeal"),
-    getTranslations("Enums.dealType"),
-    getTranslations("Enums.side"),
-  ]);
-
-  return (
-    <div>
-      <Nav />
-      <main className="mx-auto max-w-lg p-6">
-        <h1 className="mb-4 text-2xl font-bold">{t("title")}</h1>
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" aria-hidden />
-            <AlertDescription>{t(`error.${error}`)}</AlertDescription>
-          </Alert>
-        )}
-        <form action={submitNewDeal} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="agentId">{t("agent")}</Label>
-            <SearchableSelect
-              id="agentId"
-              name="agentId"
-              required
-              placeholder={t("agentPlaceholder")}
-              options={agents.map((a) => ({
-                value: a.id,
-                label: a.name,
-                hint: a.team != null ? `${t("teamShort")}${a.team}` : undefined,
-              }))}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="dealType">{t("dealType")}</Label>
-            <select
-              id="dealType"
-              name="dealType"
-              defaultValue="sale"
-              className="h-11 rounded-md border border-input bg-background px-3"
-            >
-              <option value="sale">{tDealType("sale")}</option>
-              <option value="rental">{tDealType("rental")}</option>
-            </select>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="side">{t("side")}</Label>
-            <select
-              id="side"
-              name="side"
-              defaultValue="seller"
-              className="h-11 rounded-md border border-input bg-background px-3"
-            >
-              <option value="seller">{tSide("seller")}</option>
-              <option value="buyer">{tSide("buyer")}</option>
-              <option value="landlord">{tSide("landlord")}</option>
-              <option value="renter">{tSide("renter")}</option>
-            </select>
-          </div>
-          <Field label={t("clientName")} name="clientName" required />
-          <Field label={t("propertyAddress")} name="propertyAddress" />
-          <Field label={t("salePrice")} name="salePrice" type="number" required />
-          <Field
-            label={t("commissionPercent")}
-            name="commissionPercent"
-            type="number"
-            step="0.01"
-            required
-          />
-          <div className="flex items-center gap-2">
-            <input type="checkbox" id="hasReferral" name="hasReferral" className="h-4 w-4" />
-            <Label htmlFor="hasReferral">{t("hasReferral")}</Label>
-          </div>
-          <Field
-            label={t("referralPercent")}
-            name="referralPercent"
-            type="number"
-            step="0.01"
-          />
-          <Field label={t("sikkumDate")} name="sikkumDate" type="date" />
-          <Field label={t("signingDate")} name="signingDate" type="date" />
-          <Button type="submit" size="lg">
-            {t("submit")}
-          </Button>
-        </form>
-      </main>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  name,
-  type = "text",
-  step,
-  required,
-}: {
-  label: string;
-  name: string;
-  type?: string;
-  step?: string;
-  required?: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={name}>{label}</Label>
-      <Input id={name} name={name} type={type} step={step} required={required} />
-    </div>
-  );
+  const draft = await loadDraft(session.agentId);
+  redirect(stepHref(draft.furthestStep));
 }

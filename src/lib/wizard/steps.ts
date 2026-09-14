@@ -73,7 +73,7 @@ export function prevStep(s: WizardStep): WizardStep | null {
 }
 
 export function stepHref(s: WizardStep): string {
-  return `/form/${s}`;
+  return `/deals/new/${s}`;
 }
 
 /**

@@ -300,5 +300,271 @@
     "syncResult": "Synced from Daf Kesher: {created} added, {updated} updated, {archived} archived, {linked} linked.",
     "syncErrors": "{count} row(s) failed — check the server logs.",
     "mirrorFails": "{count} agent change(s) failed to write back to Daf Kesher — check the server logs."
+  },
+  "WizardChrome": {
+    "greeting": "Hi {name}",
+    "stepOf": "Step {current} of {total}",
+    "back": "Back",
+    "backToSummary": "Back to summary"
+  },
+  "StepTitles": {
+    "language": "Document Language",
+    "deal-type": "Sale or Rental",
+    "signing-date": "Expected Signing Date",
+    "representation": "Representation",
+    "other-side": "The Other Side",
+    "property": "Property Details",
+    "price-terms": "Price & Terms",
+    "owners": "Owner Details",
+    "owner-commission": "Commission — Owner",
+    "owner-lawyer": "Owner's Lawyer",
+    "owner-agent": "Owner's Agent",
+    "buyers": "Buyer Details",
+    "buyer-commission": "Commission — Buyer",
+    "buyer-lawyer": "Buyer's Lawyer",
+    "buyer-agent": "Buyer's Agent",
+    "notes": "Additional Notes",
+    "office-notes": "Notes for the Office",
+    "review": "Review & Submit"
+  },
+  "WizardStepError": {
+    "prefix": "Error — ",
+    "saveWhy": "We couldn't save your data — there may have been a temporary server issue.",
+    "saveAction": "Try clicking Continue again. If it keeps happening, contact the office.",
+    "sessionWhy": "Your session has expired.",
+    "sessionAction": "Go back to the main page and log in again."
+  },
+  "LanguageStep": {
+    "prompt": "In which language would you like the summary to be produced?",
+    "importantTitle": "Important:",
+    "englishNote": "If you choose English — type all your answers in English for a fully English document",
+    "hebrewNote": "If you choose Hebrew — type all your answers in Hebrew for a fully Hebrew document"
+  },
+  "DealTypeStep": {
+    "prompt": "What type of deal are you reporting?",
+    "sale": "Sale",
+    "saleHint": "Property sale",
+    "rental": "Rental",
+    "rentalHint": "Property rental"
+  },
+  "Sides": {
+    "ownerSale": "Owner",
+    "buyerSale": "Buyer",
+    "ownerRental": "Landlord",
+    "buyerRental": "Renter"
+  },
+  "RepresentationStep": {
+    "prompt": "Who are you representing in this deal?",
+    "both": "Both",
+    "bothHint": "Both sides"
+  },
+  "OtherSideStep": {
+    "prompt": "Who represents the {label} in this deal? This helps the office track both sides even when each is handled by a different agent.",
+    "colleague": "An agent from the office",
+    "external": "An external party"
+  },
+  "Common": {
+    "continue": "Continue",
+    "sending": "Sending...",
+    "stillSending": "Still sending, one more moment...",
+    "requiredNotePrefix": "Fields marked with",
+    "requiredNoteSuffix": "are required to receive the document automatically.",
+    "nameLabel": "Full name",
+    "phoneLabel": "Phone",
+    "emailLabel": "Email",
+    "teudatZehutLabel": "Teudat Zehut (ID)",
+    "hebrew": "Hebrew",
+    "english": "English",
+    "twoPersonCapNote": "Maximum two people on this form. For more than 2, send the details to levi@remaxjerusalem.com",
+    "saveFailed": "We couldn't save your data. Try again — if it keeps happening, contact the office."
+  },
+  "SigningDateStep": {
+    "internalNote": "For internal office use only — won't appear in the document.",
+    "label": "Expected signing date"
+  },
+  "NotesStep": {
+    "label": "Additional notes",
+    "placeholder": "Anything else worth noting about the deal — special conditions, dates, etc."
+  },
+  "OfficeNotesStep": {
+    "label": "Notes for the office (internal only)",
+    "description": "These notes won't appear in the document — they're for internal office use only. E.g. a commission change, referrals, extra info for the team.",
+    "placeholder": "Commission change, referrals, or anything else the office should know..."
+  },
+  "PriceTermsStep": {
+    "priceLabel": "Property price",
+    "pricePlaceholder": "e.g. 2,500,000",
+    "autofillNote": "Auto-filled from the property. You can change it.",
+    "paymentTermsLabel": "Payment terms",
+    "paymentTermsPlaceholder": "e.g. 20% at signing, remainder on key handover...",
+    "vacatingDateLabel": "Property vacating date"
+  },
+  "PartyForm": {
+    "pickAgent": "Pick an agent from the office",
+    "searchPlaceholder": "Search by name...",
+    "noAgentsFound": "No matching agents found",
+    "agentNotListed": "The agent isn't listed — fill in manually",
+    "backToList": "Back to the list",
+    "contactRequiredHint": "(phone or email)",
+    "contactNotePrefix": "Phone",
+    "contactNoteOr": "or",
+    "contactNoteSuffix": "email is required — one of them is enough."
+  },
+  "PhoneInput": {
+    "countryCodeLabel": "Country code"
+  },
+  "OwnerLawyerStep": {
+    "intro": "Owner's lawyer details"
+  },
+  "OwnerAgentStep": {
+    "introAuto": "Owner's agent details — auto-filled from your own details, you can change it",
+    "intro": "Owner's agent details"
+  },
+  "BuyerLawyerStep": {
+    "introRental": "Renter's lawyer details (not required for a rental deal)",
+    "intro": "Buyer's lawyer details"
+  },
+  "BuyerAgentStep": {
+    "introAuto": "Buyer's agent details — auto-filled from your own details, you can change it",
+    "intro": "Buyer's agent details"
+  },
+  "PersonsForm": {
+    "pickerTitle": "Pick from your existing clients",
+    "pickerHint": "Clients linked to this address are shown first: {address}",
+    "searchPlaceholder": "Search by name...",
+    "noClientsFound": "No clients found",
+    "pickerFootnote": "Picking a client fills in the fields below — you can still edit them.",
+    "emptyState": "No existing clients found under your name on the board — you can fill it in manually below.",
+    "removeAria": "Remove",
+    "foreignIdNote": "For foreigners/passport, note the number in the \"Notes for the office\" field.",
+    "commLangNote": "Communication (for internal use only) — e.g. which language you'd like transaction invoices produced in (when that time comes)",
+    "canContinueWithoutNote": "You can continue without them too."
+  },
+  "PersonSuggestions": {
+    "pairLabel": "{name1} and {name2}",
+    "offerSourceNote": "From a price offer — fill in phone/email yourself",
+    "noneOfThese": "None of these — continue manually"
+  },
+  "DidYouMean": {
+    "confirmPrompt": "Did you mean: <b>{label}</b>?",
+    "yes": "Yes, that's right",
+    "no": "No, continue manually"
+  },
+  "OwnersStep": {
+    "titleOwner": "Owner",
+    "titleLandlord": "Landlord",
+    "suggestionsTitle": "We found possible owners for this property:",
+    "teudatZehutAutofillNotice": "The ID number was auto-filled from a previous record — you can edit it",
+    "addAnother": "+ Add another {title}",
+    "commLangPrompt": "Communication language — {title} side"
+  },
+  "BuyersStep": {
+    "titleBuyer": "Buyer",
+    "titleRenter": "Renter",
+    "suggestionsTitle": "We found possible buyers for this property:",
+    "addAnother": "+ Add another {title}",
+    "commLangPrompt": "Communication language — {title} side"
+  },
+  "PropertyStep": {
+    "pickerLabel": "Pick a property from your list",
+    "noProperties": "No properties found under your name on the board. Switch to manual entry.",
+    "searchPlaceholder": "Search by address or owner name...",
+    "noMatches": "No matching properties found",
+    "notListed": "My property isn't listed — fill in manually",
+    "backToList": "Back to the list",
+    "neighbourhoodLabel": "Neighbourhood",
+    "streetLabel": "Street",
+    "buildingNumberLabel": "Building number",
+    "apartmentNumberLabel": "Apartment number",
+    "gushChelkaLabel": "Gush/Chelka",
+    "roomsLabel": "Rooms",
+    "sizeSqmLabel": "Size (sqm)",
+    "requiredNoteSuffix": "are required to receive the document automatically. You can continue without them too, but the document won't be sent automatically."
+  },
+  "ReviewStep": {
+    "mondayError": "Sending to Monday failed. Try again, or contact the office if it keeps happening.",
+    "completeMessage": "All required fields are filled in. After sending, the document will be produced and sent to you automatically.",
+    "incompleteMessage": "{count} required fields are missing — you can still send, but the document won't be sent automatically. The office will contact you to complete the details.",
+    "submitComplete": "Send and produce document",
+    "submitIncomplete": "Send anyway, without the missing fields",
+    "editTitle": "Click to edit",
+    "sendingToMonday": "Sending to Monday, one moment...",
+    "rowLanguage": "Document language",
+    "rowDealType": "Deal type",
+    "rowSigningDate": "Expected signing date",
+    "rowRepresentation": "Representation",
+    "representationOwner": "Owner",
+    "representationBuyer": "Buyer",
+    "representationBoth": "Both",
+    "rowAddress": "Address",
+    "apartmentPrefix": "Apt {number}",
+    "rowRoomsSize": "Rooms / sqm",
+    "rowPrice": "Price",
+    "rowPaymentTerms": "Payment terms",
+    "rowVacatingDate": "Vacating date",
+    "rowOwners": "Owners",
+    "rowOwnerCommission": "Commission — Owner",
+    "rowOwnerLawyer": "Owner's lawyer",
+    "rowOwnerAgent": "Owner's agent",
+    "rowBuyers": "Buyers",
+    "rowBuyerCommission": "Commission — Buyer",
+    "rowBuyerLawyer": "Buyer's lawyer",
+    "rowBuyerAgent": "Buyer's agent",
+    "rowNotes": "Notes",
+    "rowOfficeNotes": "Notes for the office",
+    "commissionWithReferral": "+ referral"
+  },
+  "ValidationIssues": {
+    "docLanguageMissing": "Document language not selected",
+    "dealTypeMissing": "Deal type not selected",
+    "representationMissing": "Representation not selected",
+    "streetMissing": "Street missing",
+    "buildingNumberMissing": "Building number missing",
+    "apartmentNumberMissing": "Apartment number missing",
+    "neighbourhoodMissing": "Neighbourhood missing",
+    "priceMissing": "Price missing",
+    "ownerNameMissing": "Owner's name missing",
+    "ownerContactMissing": "Owner's phone or email missing",
+    "ownerIdMissing": "Owner's ID number missing",
+    "ownerLawyerNameMissing": "Owner's lawyer's name missing",
+    "ownerLawyerContactMissing": "Owner's lawyer's phone or email missing",
+    "ownerAgentNameMissing": "Owner's agent's name missing",
+    "ownerAgentContactMissing": "Owner's agent's phone or email missing",
+    "buyerNameMissing": "Buyer/renter's name missing",
+    "buyerContactMissing": "Buyer/renter's phone or email missing",
+    "buyerIdMissing": "Buyer's ID number missing",
+    "buyerLawyerNameMissing": "Buyer's lawyer's name missing",
+    "buyerLawyerContactMissing": "Buyer's lawyer's phone or email missing",
+    "buyerAgentNameMissing": "Buyer's agent's name missing",
+    "buyerAgentContactMissing": "Buyer's agent's phone or email missing"
+  },
+  "DoneStep": {
+    "thanksNamed": "Thanks, {name}!",
+    "thanksPlain": "Thanks!",
+    "completeMessage": "The document is on its way. The summary will be sent to your email within a few minutes. If it doesn't arrive within 10 minutes, check your spam folder or contact the office.",
+    "incompleteMessage": "Some required fields are missing, so the document won't be sent automatically. Someone from the office will contact you shortly to complete the details.",
+    "continueAsAgent": "Continue as {name} — another summary",
+    "done": "Done"
+  },
+  "CommissionForm": {
+    "bannerTitle": "Internal use only",
+    "bannerBody": "Nothing on this page ever appears in the produced document — it's for office use only.",
+    "commissionLabel": "Commission",
+    "unitPercentage": "Percent (%)",
+    "unitShekel": "Fixed amount (₪)",
+    "unitMonths": "Months of rent",
+    "vatModeLabel": "VAT",
+    "vatPlus": "Plus VAT",
+    "vatIncluded": "VAT included",
+    "expectedBillLabel": "Expected bill (pre-VAT)",
+    "expectedBillValue": "{amount} (pre-VAT) — {percent}% of price",
+    "prefillNote": "Auto-filled from listing/client data. You can edit it.",
+    "referralPrompt": "Is there a referral on this deal?",
+    "referralYes": "Yes",
+    "referralNo": "No",
+    "referralAgentNameLabel": "Referring agent's name",
+    "referralOfficeNameLabel": "Referring office name",
+    "referralPhoneLabel": "Referring agent's phone",
+    "referralCommissionLabel": "Referral commission"
   }
 }

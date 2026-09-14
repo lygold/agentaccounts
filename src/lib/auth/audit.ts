@@ -5,7 +5,10 @@ export type AuditEvent =
   | { kind: "otp_request"; contact: string; matched: boolean; ip: string }
   | { kind: "otp_verify_ok"; agentId: string; role: string; ip: string }
   | { kind: "otp_verify_fail"; contact: string; attempt: number; ip: string }
-  | { kind: "otp_locked"; contact: string; ip: string };
+  | { kind: "otp_locked"; contact: string; ip: string }
+  /** /sikkum wizard final submit (Phase 8) — ported from sikkumPigisha's
+   *  own audit.ts, which logged the same event around its Monday create_item. */
+  | { kind: "deal_submit"; agentId: string; mondayItemId: string; ready: boolean };
 
 /** Append-only per-UTC-date Redis list, capped and expired — see
  *  sikkumPigisha's src/lib/auth/audit.ts for the identical pattern. */
