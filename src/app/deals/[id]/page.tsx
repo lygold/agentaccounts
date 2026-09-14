@@ -18,6 +18,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   confirmGreenInvoiceClient,
   createTransactionAccountForDeal,
+  markDealSignedAction,
   searchGreenInvoiceClientForDeal,
   sendTransactionAccountForDeal,
   submitIncome,
@@ -39,13 +40,15 @@ export default async function DealDetailPage({
   if (!(await canSeeDeal(session, deal))) notFound();
   const canEdit = isManager(session);
 
-  const [billingRows, incomeRows, received, t, tSide] = await Promise.all([
+  const [billingRows, incomeRows, received, t, tSide, tStage] = await Promise.all([
     listBillingForDeal(id),
     listIncomeForDeal(id),
     totalReceivedForDeal(id),
     getTranslations("DealDetail"),
     getTranslations("Enums.side"),
+    getTranslations("Enums.stage"),
   ]);
+  const isSigned = deal.stage === "signed";
   const billing = billingRows[0];
 
   const billed = computeBillingAmount(deal);
@@ -84,16 +87,48 @@ export default async function DealDetailPage({
     <div>
       <Nav />
       <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-        <div>
-          <h1 className="text-2xl font-bold">{deal.clientName}</h1>
-          <p className="text-muted-foreground">
-            {deal.agentName} · {deal.propertyAddress ?? "—"} · {tSide(deal.side)}
-          </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold">{deal.clientName}</h1>
+            <p className="text-muted-foreground">
+              {deal.agentName} · {deal.propertyAddress ?? "—"} · {tSide(deal.side)}
+            </p>
+          </div>
+          <span
+            className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
+              isSigned ? "bg-secondary/10 text-secondary" : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {tStage(deal.stage)}
+          </span>
         </div>
 
         {error && (
           <Alert variant="destructive">
             <AlertDescription>{t("errorBanner")}</AlertDescription>
+          </Alert>
+        )}
+
+        {canEdit && deal.stage === "potential" && (
+          <Alert>
+            <AlertDescription className="flex flex-col gap-3">
+              <span>{t("notSignedYet")}</span>
+              <form
+                action={markDealSignedAction.bind(null, deal.id)}
+                className="flex flex-wrap items-end gap-3"
+              >
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="signingDate">{t("signingDateLabel")}</Label>
+                  <Input
+                    id="signingDate"
+                    name="signingDate"
+                    type="date"
+                    defaultValue={deal.signingDate}
+                  />
+                </div>
+                <Button type="submit">{t("markSigned")}</Button>
+              </form>
+            </AlertDescription>
           </Alert>
         )}
 
@@ -215,7 +250,7 @@ export default async function DealDetailPage({
               ))}
             </ul>
           )}
-          {canEdit && (
+          {canEdit && isSigned && (
             <form action={submitIncome.bind(null, deal.id)} className="flex flex-col gap-3">
               <div className="flex gap-3">
                 <div className="flex flex-1 flex-col gap-1.5">
@@ -229,6 +264,9 @@ export default async function DealDetailPage({
               </div>
               <Button type="submit">{t("logPayment")}</Button>
             </form>
+          )}
+          {canEdit && !isSigned && incomeRows.length === 0 && (
+            <p className="text-sm text-muted-foreground">{t("noPaymentBeforeSigning")}</p>
           )}
         </section>
 

@@ -54,7 +54,8 @@ export default async function DealsPage() {
                   </div>
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {tStage(d.stage)} · {tPaymentStatus(d.paymentStatus)}
+                  {tStage(d.stage)}
+                  {d.paymentStatus ? ` · ${tPaymentStatus(d.paymentStatus)}` : ""}
                 </span>
               </Link>
             ))}

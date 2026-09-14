@@ -5,6 +5,7 @@ import { requireManager } from "@/lib/auth/session-cookie";
 import { IncomeEntrySchema } from "@/lib/form-parse";
 import {
   createDealTransactionAccount,
+  markDealSigned,
   resolveGiClientForDeal,
   sendTransactionAccount,
   setGiClientForDeal,
@@ -16,6 +17,30 @@ import { isNextJsRedirect } from "@/lib/action-utils";
 // /deals/new is now the wizard's landing page for everyone, agents and
 // managers alike. See src/lib/wizard/submit.ts for how a deal is created
 // today.
+
+/**
+ * Move a deal from "potential" to "signed" — opens its Billing record for
+ * the first time (see services/deals.ts markDealSigned). This is the fraud
+ * gate the /sikkum wizard can't bypass on its own: an agent's submission
+ * always lands as "potential"; only a manager marking it signed here moves
+ * it forward.
+ */
+export async function markDealSignedAction(dealId: string, formData: FormData) {
+  try {
+    const session = await requireManager();
+    const signingDate = formData.get("signingDate");
+    await markDealSigned(
+      dealId,
+      session.officeId,
+      typeof signingDate === "string" && signingDate ? signingDate : undefined,
+    );
+    redirect(`/deals/${dealId}`);
+  } catch (e) {
+    if (isNextJsRedirect(e)) throw e;
+    console.error("markDealSignedAction failed:", e);
+    redirect(`/deals/${dealId}?error=save`);
+  }
+}
 
 /**
  * Log a client payment against a deal — auto-posts the agent's commission

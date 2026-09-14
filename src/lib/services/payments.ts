@@ -35,6 +35,9 @@ export async function recordDealPayment(
 ): Promise<{ income: Income; commission: AgentLedgerEntry | null } | null> {
   const deal = await getDeal(input.dealId);
   if (!deal || deal.officeId !== input.officeId) return null;
+  // Nothing is owed on a deal that hasn't been signed yet — no Billing row
+  // exists for it either (see services/deals.ts markDealSigned).
+  if (deal.stage !== "signed") return null;
 
   const income = await createIncome({
     officeId: input.officeId,

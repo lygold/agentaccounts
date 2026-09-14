@@ -120,7 +120,10 @@ export default async function DailyReportPage({
                         <td className="p-2 pl-6" colSpan={4}>
                           {t("outstandingDeal", {
                             client: d.clientName,
-                            status: tPS(d.paymentStatus),
+                            // Filtered to due/partial_payment above, so this
+                            // is always set — potential deals (paymentStatus
+                            // undefined) never reach outstandingDeals.
+                            status: tPS(d.paymentStatus!),
                           })}
                         </td>
                       </tr>

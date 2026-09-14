@@ -85,6 +85,10 @@
   },
   "DealDetail": {
     "errorBanner": "Something failed — check the server logs (e.g. Green Invoice credentials may not be set yet in .env.local).",
+    "notSignedYet": "This deal is still potential — nothing is billed until it's marked signed.",
+    "signingDateLabel": "Signing date",
+    "markSigned": "Mark as signed",
+    "noPaymentBeforeSigning": "A payment can't be logged before the deal is signed.",
     "figuresTitle": "Figures",
     "salePrice": "Sale price",
     "commission": "Commission",

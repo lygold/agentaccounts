@@ -54,26 +54,70 @@ export interface NewDealInput {
 }
 
 /**
- * Create a deal and its opening billing record. The client is billed the
- * full gross (VAT-inclusive, referral NOT subtracted — an internal split
- * concern). Stage is "signed" when a signing date is given, else "potential"
- * — unless `forceStage` overrides that inference.
+ * Create a deal. Stage is "signed" when a signing date is given, else
+ * "potential" — unless `forceStage` overrides that inference.
+ *
+ * Billing only exists for a signed deal — a "potential" deal hasn't closed,
+ * so there is nothing to owe yet (see markDealSigned, below, for the only
+ * other place a Billing row gets created). A deal created straight into
+ * "signed" gets its opening Billing record immediately, same as always.
  */
 export async function createDealWithBilling(input: NewDealInput): Promise<Deal> {
   const { forceStage, ...dealFields } = input;
+  const stage = forceStage ?? (input.signingDate ? "signed" : "potential");
   const deal = await createDeal({
     ...dealFields,
     team: input.team ?? null,
-    stage: forceStage ?? (input.signingDate ? "signed" : "potential"),
-    paymentStatus: "due",
+    stage,
+    paymentStatus: stage === "signed" ? "due" : undefined,
   });
+  if (stage === "signed") {
+    await createBilling({
+      officeId: input.officeId,
+      dealId: deal.id,
+      amount: computeBillingAmount(deal),
+      issuedDate: new Date().toISOString().slice(0, 10),
+    });
+  }
+  return deal;
+}
+
+/**
+ * Move a deal from "potential" to "signed" — the moment it actually becomes
+ * a real, billable transaction. Opens the Billing record here (not at
+ * createDealWithBilling time for a potential deal — see its own doc
+ * comment) and sets paymentStatus to "due" for the first time.
+ *
+ * No-op (returns null) if the deal doesn't exist, belongs to another
+ * office, or isn't currently "potential" (already signed / cancelled —
+ * nothing to do; this never re-bills an already-billed deal).
+ */
+export async function markDealSigned(
+  dealId: string,
+  officeId: string,
+  signingDate?: string,
+): Promise<Deal | null> {
+  const deal = await getDeal(dealId);
+  if (!deal || deal.officeId !== officeId || deal.stage !== "potential") return null;
+
+  const updated = await updateDeal(
+    dealId,
+    {
+      stage: "signed",
+      paymentStatus: "due",
+      signingDate: signingDate || deal.signingDate || new Date().toISOString().slice(0, 10),
+    },
+    officeId,
+  );
+  if (!updated) return null;
+
   await createBilling({
-    officeId: input.officeId,
-    dealId: deal.id,
-    amount: computeBillingAmount(deal),
+    officeId,
+    dealId,
+    amount: computeBillingAmount(updated),
     issuedDate: new Date().toISOString().slice(0, 10),
   });
-  return deal;
+  return updated;
 }
 
 /**

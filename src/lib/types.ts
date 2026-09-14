@@ -60,7 +60,11 @@ export interface Deal {
   sikkumDate?: string;
   signingDate?: string;
   stage: DealStage;
-  paymentStatus: PaymentStatus;
+  /** Absent while `stage: "potential"` — there is nothing to owe on a deal
+   *  that hasn't been signed, so no Billing row exists yet either (see
+   *  services/deals.ts markDealSigned, the only place that both creates
+   *  Billing and sets this). Always set once `stage: "signed"`. */
+  paymentStatus?: PaymentStatus;
   /** Free text, agent-editable on their own deals. */
   notes?: string;
   /** Which required fields sikkumPigisha left blank — surfaced to the
