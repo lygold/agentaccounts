@@ -23,6 +23,7 @@ function OtpForm() {
   const t = useTranslations("Otp");
   const params = useSearchParams();
   const contact = params.get("c") ?? "";
+  const next = params.get("next") ?? "";
 
   const [state, formAction, pending] = useActionState<
     AuthActionResult | null,
@@ -34,6 +35,7 @@ function OtpForm() {
       <h1 className="text-2xl font-bold">{t("title")}</h1>
       <form action={formAction} className="flex flex-col gap-4" noValidate>
         <input type="hidden" name="contact" value={contact} />
+        {next && <input type="hidden" name="next" value={next} />}
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="code">{t("codeLabel")}</Label>
@@ -66,7 +68,7 @@ function OtpForm() {
       </form>
 
       <Link
-        href="/login"
+        href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"}
         className="text-sm text-muted-foreground underline-offset-4 hover:underline"
       >
         {t("resend")}

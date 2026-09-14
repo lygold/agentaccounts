@@ -19,7 +19,7 @@ import {
 import { otpSendLimiter, otpVerifyLimiter } from "./rate-limit";
 import { logAudit } from "./audit";
 import { setSessionCookie } from "./session-cookie";
-import { isNextJsRedirect } from "../action-utils";
+import { isNextJsRedirect, safeNextPath } from "../action-utils";
 
 const MAX_BAD_ATTEMPTS = 5;
 
@@ -67,6 +67,8 @@ export async function requestOtp(
   const contactInput = parsed.data.contact;
   const key = canonicalizeContact(contactInput);
   const ip = await getClientIp();
+  const next = safeNextPath(formData.get("next") as string | null);
+  const nextParam = next ? `&next=${encodeURIComponent(next)}` : "";
 
   if (await isContactLocked(key)) {
     await logAudit({ kind: "otp_locked", contact: key, ip });
@@ -115,7 +117,7 @@ export async function requestOtp(
     }
   }
 
-  redirect(`/login/otp?c=${encodeURIComponent(key)}`);
+  redirect(`/login/otp?c=${encodeURIComponent(key)}${nextParam}`);
 }
 
 /** Page 2. Verifies the OTP, mints a role-carrying session, redirects in. */
@@ -190,5 +192,8 @@ export async function verifyOtp(
     return { ok: false, message: "Something went wrong. Try again." };
   }
 
-  redirect("/");
+  // /sikkum → /login?next=/deals/new lands the agent straight in the deal
+  // wizard instead of the dashboard. safeNextPath rejects anything that
+  // isn't an internal path, so this can't become an open redirect.
+  redirect(safeNextPath(formData.get("next") as string | null) ?? "/");
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { Suspense, useActionState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { AlertCircle } from "lucide-react";
 import { requestOtp, type AuthActionResult } from "@/lib/auth/actions";
@@ -10,7 +11,20 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const t = useTranslations("Login");
+  // Where to land after OTP succeeds instead of the dashboard — e.g. /sikkum
+  // sends agents straight through login into the deal wizard. Validated
+  // server-side in verifyOtp (action-utils.ts safeNextPath) before it's ever
+  // used as a redirect target.
+  const next = useSearchParams().get("next") ?? "";
   const [state, formAction, pending] = useActionState<
     AuthActionResult | null,
     FormData
@@ -20,6 +34,7 @@ export default function LoginPage() {
     <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 p-6">
       <h1 className="text-2xl font-bold">{t("title")}</h1>
       <form action={formAction} className="flex flex-col gap-4" noValidate>
+        {next && <input type="hidden" name="next" value={next} />}
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="contact">{t("contactLabel")}</Label>
           <Input
