@@ -461,37 +461,58 @@ unmodified.
   `/login?next=/deals/new`; OTP success lands them straight on the wizard
   (`safeNextPath` in `action-utils.ts` guards against an open redirect).
   Already logged in → `/sikkum` skips login entirely. No second auth system.
-- **8a — foundation**: deps (`@anthropic-ai/sdk`, `react-hook-form`,
-  `@hookform/resolvers`, `libphonenumber-js`, `mammoth`, `pdf-parse`); extend
-  `Deal` with the wizard's rich fields (§4); a `WizardDraft` type + Redis
-  store keyed by **agentId** (real agentLedger session, no separate OTP/draftId).
-- **8b — port the 18 step routes + shared components** (`party-form`,
-  `persons-form`, `commission-form`, `phone-input`, `wizard-chrome`,
-  `did-you-mean`, `person-suggestions`, `wizard-choice`, `wizard-step-error`,
-  `wizard-submit-button`) into `app/src/app/deals/new/(wizard)/*`. The
-  owner-agent/buyer-agent steps (naming a colleague) move from Daf Kesher
-  lookups to `listAgentsByOffice` + `SearchableSelect`. `validation.ts` ports
-  near-unchanged.
+- ✅ **8a — foundation** (`d156fb5`) — deps (`@anthropic-ai/sdk`,
+  `react-hook-form`, `@hookform/resolvers`, `libphonenumber-js`, `mammoth`,
+  `pdf-parse`); `Deal` gained `docLanguage`/`otherSideRepresentedBy`/
+  `pdfStatus`/`mondayItemId`/`propertyId`/`offerId`; `src/lib/wizard/`
+  (`draft.ts`, `steps.ts`, `commission.ts`, `form-parse.ts`, `validation.ts`)
+  ported verbatim, keyed by the real session's **agentId** (Redis), not a
+  second draftId/JWT.
+- ✅ **8b — all 18 step routes + shared components** (`49d89d3`), folded
+  together with 8e's prefill matching since they're one working unit —
+  `party-form`, `persons-form`, `commission-form`, `phone-input`,
+  `wizard-chrome`, `did-you-mean`, `person-suggestions`, `wizard-choice`,
+  `wizard-step-error`, `wizard-submit-button`, `property-match.ts`,
+  `offer-match.ts`, and the full Monday layer (`src/lib/wizard/monday/`:
+  properties/clients/offers/deals + column maps) all live at
+  `app/src/app/deals/new/(wizard)/*`. Step order, validation, and field
+  behavior are byte-for-byte unchanged. `/deals/new` (bare) now resumes the
+  draft's `furthestStep` or starts fresh — **it replaces the old
+  manager-only quick form outright**; that form's `submitNewDeal` action is
+  dead code, removed in 8d.
+  - Owner-agent/buyer-agent's colleague picker now reads `listAgentsByOffice`
+    instead of Daf Kesher — its own picker UI (search + manual-entry toggle)
+    is untouched, only the data source moved.
+  - **Real finding, not anticipated in this plan when written**: Properties
+    Raw Data / Signed Contracts / Offers ownership is a Monday
+    `board_relation` keyed by the **Monday pulse id**, not agentLedger's own
+    `agt_<uuid>`. Every call into the ported Monday layer (property/offer/
+    client pickers, the picker-selection ownership re-check, referral/
+    commission prefill, `writeBackClients`) now resolves and passes
+    `AgentRecord.mondayItemId` — get this wrong and the picker silently
+    shows "no properties found" or the ownership re-check throws on every
+    real selection.
+  - New env vars, added to `next.config.ts`'s `SERVER_ENV_KEYS` and
+    `.env.local`, **still needs adding to the Amplify console**:
+    `MONDAY_PROPERTIES_BOARD_ID=1633691694`, `MONDAY_DEALS_BOARD_ID=1946512255`.
+  - Still Monday-only: `review/actions.ts`'s `submitDeal()` calls the ported
+    `createDealItem` (Deals_Raw_Data) and nothing else yet — no agentLedger
+    `Deal`/`Billing` row exists until 8d.
 - **8c — AI extraction (upload step)**: `claude-extract.ts` + the
-  mammoth/pdf-parse text extraction, `ANTHROPIC_API_KEY` added. Known bugs
+  mammoth/pdf-parse text extraction, `ANTHROPIC_API_KEY` added (found in
+  sikkumPigisha's `.env.local`, needs adding here + Amplify). Known bugs
   carried over as TODOs, not silently fixed: ignores `representation` when
   flagging missing fields; over-infers "both sides" on meeting-summary docs.
 - **8d — submit path**: validate → `services/createDeal` (DynamoDB, real
-  source) → billing opens → `mirrorDealToMonday()` (new, adapted from
-  sikkumPigisha's `monday/deals.ts` column-mapping) creates the Deals_Raw_Data
-  item + sets `pdfStatus` so Make fires unmodified. Property/Offer/Contacts
-  writes (`setPropertyListingStatus`, `setOfferStatus`, `writeBackClients`)
-  port as direct Monday calls, unchanged — those boards don't have
-  agentLedger tables until Phase 9.
+  source) → billing opens → `mirrorDealToMonday()` (new, adapted from the
+  already-ported `wizard/monday/deals.ts` `createDealItem`) keeps writing
+  Deals_Raw_Data + `pdfStatus` so Make fires unmodified — call it FROM the
+  new path, don't duplicate its column-mapping logic.
   - **An agent-submitted wizard never lands a deal in `signed` stage**,
     regardless of the `signingDate` field — stays `potential` until Levi
     manually marks it signed (the existing fraud-gate decision; the merge
     must not accidentally trust the wizard's own field for this).
-  - **The wizard becomes the one intake path**, replacing the manager-only
-    quick `/deals/new` form — not living alongside it. Managers use the same
-    wizard.
-- **8e — prefill** from a picked property/offer (`property-match.ts` /
-  `offer-match.ts`) — ports as-is, still Monday-backed until Phase 9.
+  - Delete the old quick-form's now-dead `submitNewDeal` (`src/app/deals/actions.ts`).
 - **8f — cutover**: point sikkumPigisha's Amplify domain at `/sikkum`;
   decommission the repo/deploy after a verification window.
 - Rebuild the summary-of-terms PDF in-app (Google Docs API right after
