@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { submitNewDeal } from "../actions";
 
 export default async function NewDealPage({
@@ -39,23 +40,17 @@ export default async function NewDealPage({
         <form action={submitNewDeal} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="agentId">{t("agent")}</Label>
-            <select
+            <SearchableSelect
               id="agentId"
               name="agentId"
               required
-              defaultValue=""
-              className="h-11 rounded-md border border-input bg-background px-3"
-            >
-              <option value="" disabled>
-                {t("agentPlaceholder")}
-              </option>
-              {agents.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name}
-                  {a.team != null ? ` · ${t("teamShort")}${a.team}` : ""}
-                </option>
-              ))}
-            </select>
+              placeholder={t("agentPlaceholder")}
+              options={agents.map((a) => ({
+                value: a.id,
+                label: a.name,
+                hint: a.team != null ? `${t("teamShort")}${a.team}` : undefined,
+              }))}
+            />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="dealType">{t("dealType")}</Label>

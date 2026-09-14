@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import Link from "next/link";
 import {
   addOfficeExpenseAction,
@@ -141,19 +142,14 @@ export default async function FinancePage({
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="rmi-agent">{t("agent")}</Label>
-                <select
+                <SearchableSelect
                   id="rmi-agent"
                   name="agentId"
                   required
-                  className="h-11 rounded-md border border-input bg-background px-3"
-                >
-                  <option value="">{t("agentPlaceholder")}</option>
-                  {agents.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.name}
-                    </option>
-                  ))}
-                </select>
+                  placeholder={t("agentPlaceholder")}
+                  className="w-48"
+                  options={agents.map((a) => ({ value: a.id, label: a.name }))}
+                />
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="rmi-date">{t("date")}</Label>

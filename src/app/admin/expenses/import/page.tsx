@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { commitImportAction, parseUploadAction } from "./actions";
 
 export default async function ExpenseImportPage({
@@ -113,19 +114,20 @@ export default async function ExpenseImportPage({
                       <td className="p-2">₪{r.unitCost}</td>
                       <td className="p-2">₪{(r.qty * r.unitCost).toLocaleString()}</td>
                       <td className="p-2">
-                        <select
+                        <SearchableSelect
                           name={`agent_${r.n}`}
                           defaultValue={r.agentId ?? ""}
-                          className="h-9 max-w-[12rem] rounded-md border border-input bg-background px-2"
-                        >
-                          <option value="">{t("skipRow")}</option>
-                          {agents.map((a) => (
-                            <option key={a.id} value={a.id}>
-                              {a.name}
-                              {a.team != null ? ` · ${a.team}` : ""}
-                            </option>
-                          ))}
-                        </select>
+                          placeholder={t("skipRow")}
+                          className="h-9 max-w-[12rem] px-2 text-sm"
+                          options={[
+                            { value: "", label: t("skipRow") },
+                            ...agents.map((a) => ({
+                              value: a.id,
+                              label: a.name,
+                              hint: a.team != null ? String(a.team) : undefined,
+                            })),
+                          ]}
+                        />
                       </td>
                     </tr>
                   ))}
