@@ -7,6 +7,16 @@ export async function listIncomeForDeal(dealId: string): Promise<Income[]> {
   return queryByIndex<Income>(TABLES.income(), "byDealId", "dealId", dealId);
 }
 
+/** Every payment received in an office — for the monthly "payments made"
+ *  report. Same pattern as listLedgerEntriesForOffice: hash-only query on
+ *  the byOfficeId GSI (range key is createdAt, not receivedDate, so callers
+ *  filter by receivedDate client-side — same as how /reports/daily already
+ *  filters listDeals by whatever it needs). */
+export async function listIncomeForOffice(officeId: string): Promise<Income[]> {
+  const all = await queryByIndex<Income>(TABLES.income(), "byOfficeId", "officeId", officeId);
+  return all.sort((a, b) => b.receivedDate.localeCompare(a.receivedDate));
+}
+
 export async function getIncome(id: string): Promise<Income | null> {
   return getById<Income>(TABLES.income(), id);
 }

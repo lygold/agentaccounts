@@ -11,6 +11,7 @@ import { listBankTransactionsForDate, getBankBalance, getPriorBankBalance } from
 import { listRemaxIsraelReceiptsForDate } from "@/lib/store/remax-israel-receipts";
 import { Nav } from "@/components/nav";
 import { Button } from "@/components/ui/button";
+import { ExportCsvButton } from "@/components/ui/export-csv-button";
 
 const isoDate = (d: Date) => d.toISOString().slice(0, 10);
 
@@ -69,6 +70,22 @@ export default async function DailyReportPage({
 
   const officeExpensesTotal = officeExpensesToday.reduce((s, e) => s + e.amount, 0);
 
+  const agentsCsvRows: (string | number)[][] = [
+    [t("colAgent"), t("colIncome"), t("colExpense"), t("colBalance")],
+    ...rows.map((r) => [r.agent.name, Math.round(r.income), Math.round(r.expense), Math.round(r.balance)]),
+    [t("total"), Math.round(totals.income), Math.round(totals.expense), Math.round(totals.balance)],
+  ];
+  const remaxCsvRows: (string | number)[][] = [
+    [t("colClient"), t("colAgent"), t("colGross"), t("colReceived"), t("colInvoice")],
+    ...remaxToday.map((r) => [
+      r.clientName,
+      r.agentName,
+      Math.round(r.grossAmount),
+      Math.round(r.receivedAmount),
+      r.invoiceNumber,
+    ]),
+  ];
+
   return (
     <div>
       <Nav />
@@ -86,7 +103,10 @@ export default async function DailyReportPage({
         </div>
 
         <section className="rounded-lg border p-4">
-          <h2 className="mb-3 font-semibold">{t("agentsTitle")}</h2>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-semibold">{t("agentsTitle")}</h2>
+            <ExportCsvButton rows={agentsCsvRows} filename={`daily-agents-${date}`} label={t("exportCsv")} />
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-left text-muted-foreground">
@@ -169,7 +189,12 @@ export default async function DailyReportPage({
         </section>
 
         <section className="rounded-lg border p-4">
-          <h2 className="mb-3 font-semibold">{t("remaxTitle")}</h2>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-semibold">{t("remaxTitle")}</h2>
+            {remaxToday.length > 0 && (
+              <ExportCsvButton rows={remaxCsvRows} filename={`daily-remax-${date}`} label={t("exportCsv")} />
+            )}
+          </div>
           {remaxToday.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("remaxEmpty")}</p>
           ) : (

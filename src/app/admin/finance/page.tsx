@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireSession, isAdmin } from "@/lib/auth/session-cookie";
 import { listAgentsByOffice, compareByTeamThenName } from "@/lib/store/agents";
+import { defaultLastMonth } from "@/lib/month";
 import { Nav } from "@/components/nav";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,6 +41,7 @@ export default async function FinancePage({
   ]);
 
   const today = new Date().toISOString().slice(0, 10);
+  const lastMonth = defaultLastMonth();
 
   return (
     <div>
@@ -47,9 +49,17 @@ export default async function FinancePage({
       <main className="mx-auto flex max-w-3xl flex-col gap-6 p-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">{t("title")}</h1>
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/reports/daily?date=${today}`}>{t("openReport")}</Link>
-          </Button>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/reports/daily?date=${today}`}>{t("openReport")}</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/reports/deals-signed?month=${lastMonth}`}>{t("openDealsSignedReport")}</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/reports/payments-made?month=${lastMonth}`}>{t("openPaymentsMadeReport")}</Link>
+            </Button>
+          </div>
         </div>
 
         {error && (
