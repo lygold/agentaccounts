@@ -94,6 +94,29 @@ export default async function DealDetailPage({
     deal.agentReceiptAttachment ? getAttachmentUrl(deal.agentReceiptAttachment.s3Key) : null,
   ]);
 
+  // Advisory-only invoice check (see invoice-verify.ts) — never blocks
+  // uploading or paying, just surfaces what looked off so Ariyel can glance
+  // at it before marking paid.
+  const verification = deal.agentInvoiceVerification;
+  const verificationIssues: string[] = [];
+  if (verification) {
+    if (verification.extractionFailed) {
+      verificationIssues.push(t("verifyExtractionFailed"));
+    } else {
+      if (verification.amountMatches === false) {
+        verificationIssues.push(
+          t("verifyAmountMismatch", {
+            extracted: verification.extractedAmount?.toLocaleString() ?? "—",
+          }),
+        );
+      } else if (verification.amountMatches === null) {
+        verificationIssues.push(t("verifyAmountNotFound"));
+      }
+      if (!verification.mentionsPropertyAddress) verificationIssues.push(t("verifyAddressMissing"));
+      if (!verification.mentionsClientName) verificationIssues.push(t("verifyClientMissing"));
+    }
+  }
+
   let candidates: GreenInvoiceClient[] = [];
   if (giCandidates) {
     try {
@@ -375,6 +398,24 @@ export default async function DealDetailPage({
                     </>
                   )}
                 </p>
+
+                {verification && (
+                  verificationIssues.length > 0 ? (
+                    <Alert variant="destructive">
+                      <AlertDescription>
+                        <p className="font-medium">{t("verifyWarningTitle")}</p>
+                        <ul className="mt-1 list-inside list-disc text-xs">
+                          {verificationIssues.map((msg, i) => (
+                            <li key={i}>{msg}</li>
+                          ))}
+                        </ul>
+                        {verification.note && <p className="mt-1 text-xs">{verification.note}</p>}
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <p className="text-xs text-secondary">{t("verifyAllMatch")}</p>
+                  )
+                )}
 
                 {!deal.agentPaidAt ? (
                   isAdmin(session) ? (

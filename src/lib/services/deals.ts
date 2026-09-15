@@ -7,6 +7,7 @@ import { getAgentById } from "../store/agents";
 import { createLedgerEntry, listLedgerEntriesForAgent, updateLedgerEntry } from "../store/agent-ledger";
 import { computeBillingAmount } from "../commission";
 import { uploadAttachment } from "../s3-attachments";
+import { verifyAgentInvoice } from "../invoice-verify";
 import {
   createGreenInvoiceClient,
   getGreenInvoiceClient,
@@ -297,8 +298,24 @@ export async function uploadDealAgentInvoice(
   if (deal.paymentStatus !== "paid") return null;
   if (deal.agentInvoiceAttachment) return null;
 
-  const attachment = await uploadAttachment(officeId, dealId, "invoice", file, "Tax invoice");
-  return updateDeal(dealId, { agentInvoiceAttachment: attachment }, officeId);
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const [attachment, expectedAmount] = await Promise.all([
+    uploadAttachment(officeId, dealId, "invoice", file, "Tax invoice"),
+    commissionTotalForDeal(deal.agentId, dealId),
+  ]);
+  const verification = await verifyAgentInvoice(
+    buffer,
+    file.type,
+    file.name,
+    expectedAmount,
+    deal.propertyAddress,
+    deal.clientName,
+  );
+  return updateDeal(
+    dealId,
+    { agentInvoiceAttachment: attachment, agentInvoiceVerification: verification },
+    officeId,
+  );
 }
 
 /**

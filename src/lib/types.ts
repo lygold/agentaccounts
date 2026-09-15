@@ -110,6 +110,10 @@ export interface Deal {
    *     they received it — the office never produces this one).
    */
   agentInvoiceAttachment?: AgentLedgerAttachment;
+  /** Advisory AI check run at upload time (see invoice-verify.ts) — never
+   *  blocks the upload or a payment, just flags a mismatch for Ariyel to
+   *  glance at before marking paid. */
+  agentInvoiceVerification?: InvoiceVerification;
   agentPaidAt?: string;
   agentPayoutLedgerEntryId?: string;
   agentReceiptAttachment?: AgentLedgerAttachment;
@@ -206,6 +210,26 @@ export interface AgentLedgerAttachment {
   label: string;
   s3Key: string;
   uploadedAt: string;
+}
+
+/** Advisory AI check on an uploaded agent invoice — see invoice-verify.ts.
+ *  Never blocks the upload or a payment, just flags a mismatch for Ariyel
+ *  to glance at before marking paid. */
+export interface InvoiceVerification {
+  /** The invoice's own stated total, VAT-inclusive — null if Claude
+   *  couldn't find one. */
+  extractedAmount: number | null;
+  /** Exact match against the deal's own posted commission (a few agorot of
+   *  rounding slack) — null when extractedAmount is null (nothing to compare). */
+  amountMatches: boolean | null;
+  mentionsPropertyAddress: boolean;
+  mentionsClientName: boolean;
+  /** Short Hebrew note from Claude when something looks off; absent when
+   *  everything matches cleanly. */
+  note?: string;
+  /** Set when extraction itself failed (bad file, API error) — the upload
+   *  still succeeds; this is just "we couldn't check it". */
+  extractionFailed?: boolean;
 }
 
 export interface AgentLedgerEntry {
