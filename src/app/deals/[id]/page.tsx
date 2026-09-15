@@ -9,6 +9,7 @@ import { listLedgerEntriesForAgent, entryExVat } from "@/lib/store/agent-ledger"
 import { getGiDocument } from "@/lib/store/gi-documents";
 import { computeBillingAmount, computeDealValue } from "@/lib/commission";
 import { potentialCommission } from "@/lib/commission-auto";
+import { getAttachmentUrl } from "@/lib/s3-attachments";
 import type { GreenInvoiceClient } from "@/lib/green-invoice/clients";
 import { Nav } from "@/components/nav";
 import { Input } from "@/components/ui/input";
@@ -18,12 +19,15 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   confirmGreenInvoiceClient,
   createTransactionAccountForDeal,
+  markAgentPaidAction,
   markDealSignedAction,
   searchGreenInvoiceClientForDeal,
   sendTransactionAccountForDeal,
   submitIncome,
   updateDealRemaxFieldsAction,
   updateIncomeRemaxReportedAction,
+  uploadAgentInvoiceAction,
+  uploadAgentReceiptAction,
 } from "../actions";
 
 export default async function DealDetailPage({
@@ -42,6 +46,7 @@ export default async function DealDetailPage({
   if (!(await canSeeDeal(session, deal))) notFound();
   const canEdit = isManager(session);
   const canSeeRemax = isAdmin(session);
+  const canUploadAgentDocs = session.agentId === deal.agentId || isAdmin(session);
 
   const [billingRows, incomeRows, received, t, tSide, tStage] = await Promise.all([
     listBillingForDeal(id),
@@ -76,6 +81,18 @@ export default async function DealDetailPage({
     potentialCommission(deal),
   ]);
   const potentialRate = dealValue > 0 ? potential / dealValue : 0;
+
+  // Agent payout lifecycle (per-deal, only once fully paid — see
+  // services/deals.ts). VAT-inclusive, since that's the actual cash figure
+  // Ariyel wires — commissionPosted above is the ex-VAT accounting figure
+  // used for the effective-rate display.
+  const payoutAmount = agentEntries
+    .filter((e) => e.dealId === id && e.type === "commission")
+    .reduce((sum, e) => sum + e.amount, 0);
+  const [invoiceUrl, receiptUrl] = await Promise.all([
+    deal.agentInvoiceAttachment ? getAttachmentUrl(deal.agentInvoiceAttachment.s3Key) : null,
+    deal.agentReceiptAttachment ? getAttachmentUrl(deal.agentReceiptAttachment.s3Key) : null,
+  ]);
 
   let candidates: GreenInvoiceClient[] = [];
   if (giCandidates) {
@@ -317,6 +334,98 @@ export default async function DealDetailPage({
           </dl>
           <p className="mt-2 text-xs text-muted-foreground">{t("commissionAuto")}</p>
         </section>
+
+        {deal.paymentStatus === "paid" && (
+          <section className="rounded-lg border p-4">
+            <h2 className="mb-2 font-semibold">{t("agentPayoutTitle")}</h2>
+            <p className="mb-3 text-sm">
+              {t("agentPayoutAmount", {
+                amount: payoutAmount.toLocaleString(undefined, { maximumFractionDigits: 0 }),
+              })}
+            </p>
+
+            {!deal.agentInvoiceAttachment ? (
+              canUploadAgentDocs ? (
+                <form
+                  action={uploadAgentInvoiceAction.bind(null, deal.id)}
+                  className="flex flex-wrap items-end gap-3"
+                  encType="multipart/form-data"
+                >
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="invoiceFile">{t("uploadInvoiceLabel")}</Label>
+                    <input id="invoiceFile" name="file" type="file" required className="text-sm" />
+                  </div>
+                  <Button type="submit" size="sm">
+                    {t("uploadInvoiceSubmit")}
+                  </Button>
+                </form>
+              ) : (
+                <p className="text-sm text-muted-foreground">{t("awaitingAgentInvoice")}</p>
+              )
+            ) : (
+              <div className="flex flex-col gap-3">
+                <p className="text-sm">
+                  {t("invoiceUploaded")}
+                  {invoiceUrl && (
+                    <>
+                      {" — "}
+                      <a href={invoiceUrl} target="_blank" rel="noopener noreferrer" className="underline-offset-4 hover:underline">
+                        {t("viewFile")}
+                      </a>
+                    </>
+                  )}
+                </p>
+
+                {!deal.agentPaidAt ? (
+                  isAdmin(session) ? (
+                    <form action={markAgentPaidAction.bind(null, deal.id)}>
+                      <Button type="submit" size="sm">{t("markPaid")}</Button>
+                    </form>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{t("payableAwaitingPayment")}</p>
+                  )
+                ) : (
+                  <>
+                    <p className="text-sm text-secondary">
+                      {t("paidOn", { date: deal.agentPaidAt })}
+                    </p>
+                    {!deal.agentReceiptAttachment ? (
+                      canUploadAgentDocs ? (
+                        <form
+                          action={uploadAgentReceiptAction.bind(null, deal.id)}
+                          className="flex flex-wrap items-end gap-3"
+                          encType="multipart/form-data"
+                        >
+                          <div className="flex flex-col gap-1.5">
+                            <Label htmlFor="receiptFile">{t("uploadReceiptLabel")}</Label>
+                            <input id="receiptFile" name="file" type="file" required className="text-sm" />
+                          </div>
+                          <Button type="submit" size="sm">
+                            {t("uploadReceiptSubmit")}
+                          </Button>
+                        </form>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">{t("awaitingAgentReceipt")}</p>
+                      )
+                    ) : (
+                      <p className="text-sm">
+                        {t("receiptUploaded")}
+                        {receiptUrl && (
+                          <>
+                            {" — "}
+                            <a href={receiptUrl} target="_blank" rel="noopener noreferrer" className="underline-offset-4 hover:underline">
+                              {t("viewFile")}
+                            </a>
+                          </>
+                        )}
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </section>
+        )}
 
         {billingRows.length > 0 && (
           <p className="text-xs text-muted-foreground">

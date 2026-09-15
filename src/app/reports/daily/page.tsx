@@ -64,6 +64,18 @@ export default async function DailyReportPage({
     { income: 0, expense: 0, balance: 0 },
   );
 
+  // --- Ariyel's payments-to-make checklist -------------------------------
+  // Deals whose agent has uploaded their חשבונית מס (payable) but Ariyel
+  // hasn't paid yet — see services/deals.ts's per-deal payout lifecycle.
+  const payableDeals = allDeals
+    .filter((d) => d.agentInvoiceAttachment && !d.agentPaidAt)
+    .map((d) => ({
+      deal: d,
+      amount: allEntries
+        .filter((e) => e.dealId === d.id && e.type === "commission")
+        .reduce((sum, e) => sum + e.amount, 0),
+    }));
+
   // --- section 2: bank ----------------------------------------------------
   const debits = bankToday.reduce((s, tx) => s + tx.debit, 0);
   const credits = bankToday.reduce((s, tx) => s + tx.credit, 0);
@@ -85,6 +97,10 @@ export default async function DailyReportPage({
       r.invoiceNumber,
     ]),
   ];
+  const payableCsvRows: (string | number)[][] = [
+    [t("colAgent"), t("colClient"), t("colAmount")],
+    ...payableDeals.map(({ deal, amount }) => [deal.agentName, deal.clientName, Math.round(amount)]),
+  ];
 
   return (
     <div>
@@ -101,6 +117,46 @@ export default async function DailyReportPage({
             </Button>
           </div>
         </div>
+
+        {payableDeals.length > 0 && (
+          <section className="rounded-lg border p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="font-semibold">{t("payableTitle")}</h2>
+              <ExportCsvButton rows={payableCsvRows} filename={`daily-payable-${date}`} label={t("exportCsv")} />
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="text-left text-muted-foreground">
+                  <tr>
+                    <th className="p-2">{t("colAgent")}</th>
+                    <th className="p-2">{t("colClient")}</th>
+                    <th className="p-2">{t("colAmount")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payableDeals.map(({ deal, amount }) => (
+                    <tr key={deal.id} className="border-t">
+                      <td className="p-2">
+                        <Link
+                          href={`/agents/${encodeURIComponent(deal.agentId)}`}
+                          className="underline-offset-4 hover:underline"
+                        >
+                          {deal.agentName}
+                        </Link>
+                      </td>
+                      <td className="p-2">
+                        <Link href={`/deals/${deal.id}`} className="underline-offset-4 hover:underline">
+                          {deal.clientName}
+                        </Link>
+                      </td>
+                      <td className="p-2">₪{fmt(amount)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
 
         <section className="rounded-lg border p-4">
           <div className="mb-3 flex items-center justify-between">

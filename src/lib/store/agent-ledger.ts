@@ -65,6 +65,14 @@ export async function listAgentBalances(officeId: string): Promise<
     .sort((a, b) => a.agentName.localeCompare(b.agentName));
 }
 
+export async function updateLedgerEntry(
+  id: string,
+  patch: Partial<Omit<AgentLedgerEntry, "id" | "createdAt">>,
+  expectedOfficeId?: string,
+): Promise<AgentLedgerEntry | null> {
+  return update<AgentLedgerEntry>(TABLES.agentAccount(), id, patch, expectedOfficeId);
+}
+
 export async function createLedgerEntry(
   input: Omit<AgentLedgerEntry, "id" | "createdAt" | "amountExVat"> & {
     amountExVat?: number;

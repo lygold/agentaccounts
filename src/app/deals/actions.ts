@@ -1,14 +1,17 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { requireManager, requireAdmin } from "@/lib/auth/session-cookie";
+import { requireManager, requireAdmin, requireSession, isAdmin } from "@/lib/auth/session-cookie";
 import { IncomeEntrySchema } from "@/lib/form-parse";
 import {
   createDealTransactionAccount,
   markDealSigned,
+  markDealAgentPaid,
   resolveGiClientForDeal,
   sendTransactionAccount,
   setGiClientForDeal,
+  uploadDealAgentInvoice,
+  uploadDealAgentReceipt,
 } from "@/lib/services/deals";
 import { recordDealPayment } from "@/lib/services/payments";
 import { getDeal, updateDeal } from "@/lib/store/deals";
@@ -206,6 +209,71 @@ export async function updateIncomeRemaxReportedAction(dealId: string, formData: 
   } catch (e) {
     if (isNextJsRedirect(e)) throw e;
     console.error("updateIncomeRemaxReportedAction failed:", e);
+    redirect(`/deals/${dealId}?error=save`);
+  }
+}
+
+/**
+ * Agent payout lifecycle (per-deal, only once fully paid — see Deal's own
+ * doc comment and services/deals.ts). The deal's own agent may upload their
+ * own חשבונית/קבלה; an admin may do either step on their behalf too.
+ * Marking paid is admin-only (that's Ariyel).
+ */
+export async function uploadAgentInvoiceAction(dealId: string, formData: FormData) {
+  try {
+    const session = await requireSession();
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size === 0) {
+      redirect(`/deals/${dealId}?error=save`);
+    }
+    const deal = await uploadDealAgentInvoice(
+      dealId,
+      session.officeId,
+      session.agentId,
+      isAdmin(session),
+      file,
+    );
+    if (!deal) redirect(`/deals/${dealId}?error=save`);
+    redirect(`/deals/${dealId}`);
+  } catch (e) {
+    if (isNextJsRedirect(e)) throw e;
+    console.error("uploadAgentInvoiceAction failed:", e);
+    redirect(`/deals/${dealId}?error=save`);
+  }
+}
+
+export async function markAgentPaidAction(dealId: string) {
+  try {
+    const session = await requireAdmin();
+    const deal = await markDealAgentPaid(dealId, session.officeId);
+    if (!deal) redirect(`/deals/${dealId}?error=save`);
+    redirect(`/deals/${dealId}`);
+  } catch (e) {
+    if (isNextJsRedirect(e)) throw e;
+    console.error("markAgentPaidAction failed:", e);
+    redirect(`/deals/${dealId}?error=save`);
+  }
+}
+
+export async function uploadAgentReceiptAction(dealId: string, formData: FormData) {
+  try {
+    const session = await requireSession();
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size === 0) {
+      redirect(`/deals/${dealId}?error=save`);
+    }
+    const deal = await uploadDealAgentReceipt(
+      dealId,
+      session.officeId,
+      session.agentId,
+      isAdmin(session),
+      file,
+    );
+    if (!deal) redirect(`/deals/${dealId}?error=save`);
+    redirect(`/deals/${dealId}`);
+  } catch (e) {
+    if (isNextJsRedirect(e)) throw e;
+    console.error("uploadAgentReceiptAction failed:", e);
     redirect(`/deals/${dealId}?error=save`);
   }
 }

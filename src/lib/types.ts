@@ -95,6 +95,24 @@ export interface Deal {
   remaxReportedDate?: string;
   remaxId?: string;
   remaxMonthlyReported?: boolean;
+  /**
+   * Agent payout lifecycle for this specific deal (per-deal, not per the
+   * agent's whole balance — a deal only enters this once it's fully paid:
+   * `paymentStatus === "paid"`). Matches ROADMAP's originally-scoped
+   * `owed → invoice_requested → payable → paid → receipted` chain:
+   *   - fully paid + no agentInvoiceAttachment yet → awaiting the agent's
+   *     חשבונית מס (implicit state, nothing stored for it).
+   *   - agentInvoiceAttachment set, no agentPaidAt → "payable" (Ariyel owes
+   *     the agent the deal's posted commission total).
+   *   - agentPaidAt set → paid; agentPayoutLedgerEntryId points at the
+   *     payment_to_agent entry markDealAgentPaid() created.
+   *   - agentReceiptAttachment set → "receipted" (agent's own קבלה, proof
+   *     they received it — the office never produces this one).
+   */
+  agentInvoiceAttachment?: AgentLedgerAttachment;
+  agentPaidAt?: string;
+  agentPayoutLedgerEntryId?: string;
+  agentReceiptAttachment?: AgentLedgerAttachment;
   createdAt: string;
   updatedAt: string;
 }

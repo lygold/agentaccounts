@@ -4,7 +4,9 @@ import { createDeal, getDeal, updateDeal } from "../store/deals";
 import { createBilling, listBillingForDeal, updateBilling } from "../store/billing";
 import { appendDistribution, putGiDocument } from "../store/gi-documents";
 import { getAgentById } from "../store/agents";
+import { createLedgerEntry, listLedgerEntriesForAgent, updateLedgerEntry } from "../store/agent-ledger";
 import { computeBillingAmount } from "../commission";
+import { uploadAttachment } from "../s3-attachments";
 import {
   createGreenInvoiceClient,
   getGreenInvoiceClient,
@@ -253,4 +255,110 @@ export async function sendTransactionAccount(
     to,
   });
   return { sentTo: to };
+}
+
+/**
+ * Agent payout lifecycle (per-deal — see Deal's own doc comment). Only ever
+ * scoped to ONE deal's own posted commission, never the agent's whole
+ * balance: a deal with a referral or a colleague-agent split still bills
+ * each side separately, so "what this deal owes the agent" is always this
+ * deal's own commission total, not a cross-deal figure.
+ */
+
+/** Sum of every "commission" entry posted against this specific deal — the
+ *  VAT-inclusive cash figure, since that's what actually gets wired to the
+ *  agent (not the pre-VAT accounting figure used elsewhere for deal-value
+ *  reporting). */
+async function commissionTotalForDeal(agentId: string, dealId: string): Promise<number> {
+  const entries = await listLedgerEntriesForAgent(agentId);
+  return entries
+    .filter((e) => e.dealId === dealId && e.type === "commission")
+    .reduce((sum, e) => sum + e.amount, 0);
+}
+
+/**
+ * Agent (or admin, on their behalf) uploads their חשבונית מס for a fully-paid
+ * deal — this is what makes the deal's commission "payable". Refuses when
+ * the deal isn't fully paid yet (`paymentStatus !== "paid"`), when the
+ * requester is neither the deal's own agent nor an admin, or when an
+ * invoice is already on file (upload once; re-uploading isn't supported
+ * here — ask an admin to sort out a mistake directly in S3/DynamoDB).
+ */
+export async function uploadDealAgentInvoice(
+  dealId: string,
+  officeId: string,
+  requesterAgentId: string,
+  requesterIsAdmin: boolean,
+  file: File,
+): Promise<Deal | null> {
+  const deal = await getDeal(dealId);
+  if (!deal || deal.officeId !== officeId) return null;
+  if (deal.agentId !== requesterAgentId && !requesterIsAdmin) return null;
+  if (deal.paymentStatus !== "paid") return null;
+  if (deal.agentInvoiceAttachment) return null;
+
+  const attachment = await uploadAttachment(officeId, dealId, "invoice", file, "Tax invoice");
+  return updateDeal(dealId, { agentInvoiceAttachment: attachment }, officeId);
+}
+
+/**
+ * Ariyel (admin only) pays out — posts the actual payment_to_agent ledger
+ * entry for this deal's own posted commission total and marks it paid.
+ * Refuses without an invoice on file yet, or if already paid (never
+ * double-pays the same deal).
+ */
+export async function markDealAgentPaid(dealId: string, officeId: string): Promise<Deal | null> {
+  const deal = await getDeal(dealId);
+  if (!deal || deal.officeId !== officeId) return null;
+  if (!deal.agentInvoiceAttachment || deal.agentPaidAt) return null;
+
+  const amount = await commissionTotalForDeal(deal.agentId, dealId);
+  const entry = await createLedgerEntry({
+    officeId,
+    agentId: deal.agentId,
+    agentName: deal.agentName,
+    type: "payment_to_agent",
+    amount: -Math.abs(amount),
+    description: `Payment to agent — ${deal.clientName} (${deal.propertyAddress ?? deal.dealType})`,
+    dealId,
+    date: new Date().toISOString().slice(0, 10),
+    attachments: [deal.agentInvoiceAttachment],
+  });
+
+  return updateDeal(
+    dealId,
+    { agentPaidAt: entry.date, agentPayoutLedgerEntryId: entry.id },
+    officeId,
+  );
+}
+
+/**
+ * Agent (or admin) uploads the agent's own קבלה once paid — proof the agent
+ * received the money (the office never produces this one, only the agent
+ * does — see ROADMAP's money-flow rules). Also appends it onto the
+ * payment_to_agent ledger entry's own attachments, alongside the invoice
+ * that authorised it.
+ */
+export async function uploadDealAgentReceipt(
+  dealId: string,
+  officeId: string,
+  requesterAgentId: string,
+  requesterIsAdmin: boolean,
+  file: File,
+): Promise<Deal | null> {
+  const deal = await getDeal(dealId);
+  if (!deal || deal.officeId !== officeId) return null;
+  if (deal.agentId !== requesterAgentId && !requesterIsAdmin) return null;
+  if (!deal.agentPaidAt || deal.agentReceiptAttachment) return null;
+
+  const attachment = await uploadAttachment(officeId, dealId, "receipt", file, "Kabbala");
+  const updated = await updateDeal(dealId, { agentReceiptAttachment: attachment }, officeId);
+  if (updated && deal.agentPayoutLedgerEntryId) {
+    await updateLedgerEntry(
+      deal.agentPayoutLedgerEntryId,
+      { attachments: [...(deal.agentInvoiceAttachment ? [deal.agentInvoiceAttachment] : []), attachment] },
+      officeId,
+    );
+  }
+  return updated;
 }
