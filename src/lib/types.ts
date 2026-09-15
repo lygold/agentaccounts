@@ -8,6 +8,7 @@
  */
 
 import type { AppRole } from "./monday/types";
+import type { VatMode } from "./wizard/draft";
 
 export type DealType = "sale" | "rental";
 export type DealSide = "seller" | "buyer" | "landlord" | "renter";
@@ -434,4 +435,142 @@ export interface RemaxIsraelReceipt {
   invoiceNumber: string;
   notes?: string;
   createdAt: string;
+}
+
+/**
+ * Phase 9 — a file living in Google Drive (the source of truth for property
+ * media/documents; agentLedger never stores the bytes, only this pointer).
+ * See src/lib/google-drive.ts. Deliberately parallel to AgentLedgerAttachment
+ * above, which is the S3 equivalent for the low-volume agent-invoice case.
+ */
+export interface DriveFileRef {
+  driveFileId: string;
+  name: string;
+  /** Drive's own "open in browser" link — good enough to hand to an agent,
+   *  no presigning needed since Drive handles its own auth/sharing. */
+  webViewLink: string;
+  uploadedAt: string;
+}
+
+/**
+ * Phase 9 — a property listing, created by the native intake wizard
+ * (/properties/new) that replaces the external Superform. Field grouping
+ * mirrors the wizard's own step order; see ROADMAP.md / the Phase 9 plan
+ * for the full Superform-vs-Monday field mapping this was built against.
+ * Deliberately NOT mirrored to Monday's Properties Raw Data board in this
+ * phase — this table is its own source of truth going forward.
+ */
+export interface PropertyRecord {
+  id: string;
+  officeId: string;
+  /** This app's own agent id (agt_…) — the logged-in wizard session, same
+   *  convention as Deal.agentId. No agent-picker in the wizard. */
+  agentId: string;
+  agentName: string;
+
+  // --- Basics ---
+  dealType: DealType;
+  /** Exclusivity vs. open listing etc. — exact option set decided at
+   *  wizard-build time (9b); kept as free text until then. */
+  contractType?: string;
+
+  // --- Prefill provenance (Phase 9's signed-contracts picker step) ---
+  /** Monday pulse id of the signed contract this listing was prefilled
+   *  from, if any — "not listed, manual entry" leaves this unset. */
+  sourceContractMondayId?: string;
+  sourceContractRole?: Extract<DealSide, "seller" | "landlord">;
+
+  // --- Media (Google Drive refs, never raw bytes — see DriveFileRef) ---
+  mainPhotos?: DriveFileRef[];
+  additionalPhotos?: DriveFileRef[];
+  copyrightConfirmed?: boolean;
+  renderingsConfirmed?: boolean;
+  forms?: DriveFileRef[];
+  documents?: DriveFileRef[];
+  virtualTourUrl?: string;
+  youtubeUrl?: string;
+  youtubeDisplayText?: string;
+
+  // --- Address (Google Places Autocomplete — see the plan's rationale on
+  // uniform street-name spelling) ---
+  city?: string;
+  neighbourhood?: string;
+  street?: string;
+  buildingNumber?: string;
+  entrance?: string;
+  apartmentNumber?: string;
+  /** Places' own place_id — kept for re-lookup/dedup, not shown to agents. */
+  placeId?: string;
+  formattedAddress?: string;
+  lat?: number;
+  lng?: number;
+  publishNotes?: string;
+
+  // --- Deal terms ---
+  propertyType?: string;
+  referralSource?: string;
+  referralSourceOther?: string;
+  externalReferringAgentName?: string;
+  externalReferringAgentOffice?: string;
+  externalReferringAgentPhone?: string;
+  /** % of this listing's commission owed to the external referring agent
+   *  above, if any — distinct from the wizard's own deal-side referral. */
+  referralPercentOfCommission?: number;
+  commissionPercent?: number;
+  commissionVatMode?: VatMode;
+  ownerName?: string;
+  ownerPhone?: string;
+  ownerEmail?: string;
+
+  // --- Descriptions ---
+  titleHe?: string;
+  titleEn?: string;
+  useSeparateYad2Description?: boolean;
+  descriptionHe?: string;
+  /** Only used when useSeparateYad2Description is true. */
+  descriptionYad2?: string;
+  descriptionEn?: string;
+  yad2Package?: "premium" | "ultra";
+
+  // --- Technical details ---
+  rooms?: number;
+  bedrooms?: number;
+  toilets?: number;
+  bathrooms?: number;
+  masterSuite?: boolean;
+  floor?: number;
+  floorsTotal?: number;
+  levels?: string;
+  sizeSqm?: number;
+  plotSizeSqm?: number;
+  /** מחיר מבוקש — the asking price. */
+  askingPrice?: number;
+  /** מחיר התחלה — starting price, if different from asking. */
+  startingPrice?: number;
+  condition?: string;
+  elevator?: boolean;
+  balcony?: boolean;
+  balconySizeSqm?: number;
+  garden?: boolean;
+  gardenSizeSqm?: number;
+  ac?: boolean;
+  parking?: boolean;
+  parkingCount?: number;
+  storage?: boolean;
+  storageSizeSqm?: number;
+  /** ממ"ד — safe room. */
+  safeRoom?: boolean;
+  additionalFeatures?: string[];
+
+  // --- Internal ratings (office-only — never published/exported) ---
+  sellabilityRating?: number; // 0-9
+  sellerMotivation?: number; // 0-9
+  priceToCmaMatch?: number; // 0-9
+  ownerPressureToSell?: number; // 0-9
+  trueCmaValue?: number;
+  estimatedMonthsToSell?: number;
+  letterGrade?: "A" | "B" | "C" | "D";
+
+  createdAt: string;
+  updatedAt: string;
 }

@@ -35,6 +35,10 @@ const TARGETS = [
   { name: "agent-ledger-billing", range: "createdAt" },
   { name: "agent-ledger-income", range: "createdAt" },
   { name: "agent-ledger-agent-account", range: "date" },
+  // Phase 9 — properties predates this migration (created with only
+  // {id, agentId} + byAgentId), needs the same office-scoping every other
+  // table already got. Empty of real data today, so no backfill concern.
+  { name: "agent-ledger-properties", range: "createdAt" },
 ];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

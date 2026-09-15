@@ -578,6 +578,10 @@ Signed Contracts, Properties, Offers, and Referrals Monday boards.
     start/end, PDF `s3Key`. GSI `byAgentId`.
   - **`properties`** — address, gush/chelka, price, rooms/size, photo Drive
     links, listing status, link to the seller's signed contract. GSI `byAgentId`.
+    **9a done** (`PropertyRecord` in `src/lib/types.ts`, `src/lib/store/
+    properties.ts`, `byOfficeId` GSI added) — see "Native property intake"
+    progress note below; this is the same table, now with the full ~90-field
+    Superform/Monday-parity inventory rather than the short list above.
   - **`offers`** (הצעת מחיר) — buyer(s), property, price, payment terms, transfer
     dates, signature files, status (`follow-up | accepted | rejected |
     duplicate`). GSI `byAgentId`.
@@ -608,6 +612,29 @@ Signed Contracts, Properties, Offers, and Referrals Monday boards.
 **Verification:** link a property → its offers → accepted offer → deal, and
 navigate the chain. Forward a signed haskama to the inbox → a draft appears in
 the review queue.
+
+**Native property intake (in progress, supersedes the "add/update property
+form" bullet above with full field parity)** — replaces the external
+Superform (`superform.spot-nik.com/form/66f3eedf7560d752eaab3ac0`) with a
+native wizard, same pattern as Phase 8 for deals. Drive is the storage
+source of truth for photos/documents — agentLedger only stores a
+`{driveFileId, webViewLink}` pointer, never the bytes (deliberate reversal
+of the Decisions Log's old "S3 + auto-copy to Drive" answer below — see
+that row). No Monday write in this phase.
+- **9a — DB + storage scaffolding:** ✅ done. `byOfficeId` GSI added to
+  `agent-ledger-properties` (predated Phase 5, had none). `PropertyRecord`
+  type (full field inventory, grouped by wizard step). `src/lib/store/
+  properties.ts`. `DYNAMODB_TABLE_PROPERTIES` wired (`.env.local`, Amplify
+  console, `next.config.ts`).
+  **Not yet done:** `src/lib/google-drive.ts` (needs a GCP service account
+  + Drive-API enablement + target folder share from Levi first — blocking),
+  Google Places Autocomplete wiring (needs `GOOGLE_MAPS_API_KEY` from Levi).
+- **9b/9c/9d — the wizard itself:** not started. `/properties/new/(wizard)/*`,
+  step order: deal type → signed-contract picker (prefills owner/address/
+  commission, reusing the deal wizard's `listSellersForAgent`) → address
+  (Places) → commission → property type/referral → media (Drive) →
+  descriptions → technical details → internal ratings (office-only) →
+  review/submit.
 
 ### Phase 10 — Monday.com full decommission
 
@@ -724,7 +751,7 @@ the review queue.
 | — | Deal financial terms | Anchored to the signed sikkum — agents can complete *missing* fields, never edit provided figures. |
 | — | Ariyel | Broker-owner. Uses the hub mainly for reports; does Levi's job when Levi's away → `admin` role. |
 | — | Commission | Full commission charged; agent expenses billed via credit card in Green Invoice. |
-| — | Doc storage | S3 source of truth + auto-copy into the accounting Google Drive folder. |
+| — | Doc storage | ~~S3 source of truth + auto-copy into the accounting Google Drive folder.~~ **Reversed, Phase 9**: Drive is primary for property media/documents — agentLedger stores only a `{driveFileId, webViewLink}` pointer, never the bytes. Cost-driven (Levi: tables/queries are cheap regardless of volume on `PAY_PER_REQUEST`; file storage is the real cost lever, and the business already uses Drive). The existing S3-based agent-invoice/receipt attachments (Phase "agent payout") are low-volume and NOT migrated — out of scope. |
 | — | Backfill | 2026-forward for now; full historical backfill is a later phase. |
 | — | PDF fidelity | "Pretty similar" is fine — a clean rebuild, not byte-identical. |
 | — | Design | One dedicated pass near the end (Phase 11); the public open page not designed until it's greenlit. |

@@ -76,6 +76,12 @@ export const TABLES = {
       "DYNAMODB_TABLE_REMAX_ISRAEL_RECEIPTS",
       process.env.DYNAMODB_TABLE_REMAX_ISRAEL_RECEIPTS,
     ),
+  /** Property listings (Phase 9) — created by the native intake wizard,
+   *  replacing the external Superform. Physical table:
+   *  agent-ledger-properties (predates Phase 4/5, migrated for officeId
+   *  scoping in scripts/add-office-gsis.mjs). */
+  properties: () =>
+    requireTableName("DYNAMODB_TABLE_PROPERTIES", process.env.DYNAMODB_TABLE_PROPERTIES),
 };
 
 /** Value is passed in via a *static* `process.env.X` read (not a dynamic
