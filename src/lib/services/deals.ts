@@ -310,6 +310,7 @@ export async function uploadDealAgentInvoice(
     expectedAmount,
     deal.propertyAddress,
     deal.clientName,
+    deal.side,
   );
   return updateDeal(
     dealId,

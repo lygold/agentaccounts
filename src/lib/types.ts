@@ -224,6 +224,9 @@ export interface InvoiceVerification {
   amountMatches: boolean | null;
   mentionsPropertyAddress: boolean;
   mentionsClientName: boolean;
+  /** Whether the invoice text references the deal's side — מוכר/קונה/
+   *  משכיר/שוכר, per Deal.side (see invoice-verify.ts's SIDE_LABELS_HE). */
+  mentionsSide: boolean;
   /** Short Hebrew note from Claude when something looks off; absent when
    *  everything matches cleanly. */
   note?: string;

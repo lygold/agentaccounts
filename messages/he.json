@@ -127,6 +127,7 @@
     "verifyAmountNotFound": "לא הצלחנו לזהות סכום בחשבונית.",
     "verifyAddressMissing": "לא נמצאה התייחסות לכתובת הנכס בחשבונית.",
     "verifyClientMissing": "לא נמצאה התייחסות לשם הלקוח בחשבונית.",
+    "verifySideMissing": "לא נמצאה התייחסות לצד בעסקה (מוכר/קונה/משכיר/שוכר) בחשבונית.",
     "verifyExtractionFailed": "לא הצלחנו לבדוק את החשבונית אוטומטית — בדקו אותה ידנית.",
     "figuresTitle": "נתונים",
     "salePrice": "מחיר מכירה",

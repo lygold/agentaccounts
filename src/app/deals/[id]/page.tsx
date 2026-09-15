@@ -114,6 +114,7 @@ export default async function DealDetailPage({
       }
       if (!verification.mentionsPropertyAddress) verificationIssues.push(t("verifyAddressMissing"));
       if (!verification.mentionsClientName) verificationIssues.push(t("verifyClientMissing"));
+      if (!verification.mentionsSide) verificationIssues.push(t("verifySideMissing"));
     }
   }
 

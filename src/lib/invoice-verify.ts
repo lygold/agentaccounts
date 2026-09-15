@@ -1,7 +1,7 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { extractText } from "./wizard/extract/text";
-import type { InvoiceVerification } from "./types";
+import type { DealSide, InvoiceVerification } from "./types";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -12,6 +12,18 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 // wrong amount) before money moves, not adding friction to a legitimate
 // one. Ariyel always sees the actual file and can mark paid regardless.
 
+/** The literal Hebrew term Claude should look for in the invoice's own
+ *  text — not a UI-locale label (agentLedger's Enums.side translation is
+ *  for the app's own UI and could be English), since the source document
+ *  itself is always in Hebrew regardless of which locale the admin/agent
+ *  is browsing in. */
+const SIDE_LABELS_HE: Record<DealSide, string> = {
+  seller: "מוכר",
+  buyer: "קונה",
+  landlord: "משכיר",
+  renter: "שוכר",
+};
+
 const SYSTEM_PROMPT = `You are checking an Israeli tax invoice (חשבונית מס) issued by a real-estate agent to their brokerage office, verifying it corresponds to a specific commission payment.
 Return ONLY valid JSON — no explanation, no markdown, just the JSON object.
 
@@ -20,6 +32,7 @@ Expected JSON structure:
   "amount": <number or null>,
   "mentionsPropertyAddress": <boolean>,
   "mentionsClientName": <boolean>,
+  "mentionsSide": <boolean>,
   "note": "<short note in Hebrew, only if something looks off — omit otherwise>"
 }
 
@@ -27,16 +40,23 @@ Rules:
 - "amount" is the invoice's own final stated total (VAT-inclusive) — the
   amount the office should pay. Number only, no currency symbol or commas.
   null if you can't find a clear total.
-- "mentionsPropertyAddress"/"mentionsClientName": true only if the invoice's
-  own text (description/line items) references the given value, even
-  partially or abbreviated (e.g. just a street name, or just a surname).
-  Don't guess when unsure — false rather than assume a match.`;
+- "mentionsPropertyAddress"/"mentionsClientName"/"mentionsSide": true only if
+  the invoice's own text (description/line items) references the given
+  value, even partially or abbreviated (e.g. just a street name, just a
+  surname, or the bare word itself for the side). Don't guess when unsure —
+  false rather than assume a match.`;
 
-function buildUserPrompt(expectedAmount: number, propertyAddress: string | undefined, clientName: string): string {
+function buildUserPrompt(
+  expectedAmount: number,
+  propertyAddress: string | undefined,
+  clientName: string,
+  sideLabel: string,
+): string {
   return [
     `Expected amount (₪, VAT-inclusive): ${expectedAmount}`,
     `Expected property address: ${propertyAddress ?? "(not provided)"}`,
     `Expected client name: ${clientName}`,
+    `Expected side (Hebrew term the invoice should reference): ${sideLabel}`,
   ].join("\n");
 }
 
@@ -47,6 +67,7 @@ function parseVerification(raw: string, expectedAmount: number): InvoiceVerifica
     amount: number | null;
     mentionsPropertyAddress: boolean;
     mentionsClientName: boolean;
+    mentionsSide: boolean;
     note?: string;
   };
   const extractedAmount = typeof parsed.amount === "number" ? parsed.amount : null;
@@ -55,6 +76,7 @@ function parseVerification(raw: string, expectedAmount: number): InvoiceVerifica
     amountMatches: extractedAmount === null ? null : Math.abs(extractedAmount - expectedAmount) < 0.1,
     mentionsPropertyAddress: !!parsed.mentionsPropertyAddress,
     mentionsClientName: !!parsed.mentionsClientName,
+    mentionsSide: !!parsed.mentionsSide,
     note: parsed.note || undefined,
   };
 }
@@ -71,10 +93,11 @@ export async function verifyAgentInvoice(
   expectedAmount: number,
   propertyAddress: string | undefined,
   clientName: string,
+  side: DealSide,
 ): Promise<InvoiceVerification> {
   try {
     const { text, isImage } = await extractText(buffer, mimeType, fileName);
-    const userPrompt = buildUserPrompt(expectedAmount, propertyAddress, clientName);
+    const userPrompt = buildUserPrompt(expectedAmount, propertyAddress, clientName, SIDE_LABELS_HE[side]);
 
     const response = isImage
       ? await client.messages.create({
@@ -119,6 +142,7 @@ export async function verifyAgentInvoice(
       amountMatches: null,
       mentionsPropertyAddress: false,
       mentionsClientName: false,
+      mentionsSide: false,
       extractionFailed: true,
     };
   }

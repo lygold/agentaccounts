@@ -127,6 +127,7 @@
     "verifyAmountNotFound": "Couldn't find a clear amount on the invoice.",
     "verifyAddressMissing": "No reference to the property address found on the invoice.",
     "verifyClientMissing": "No reference to the client's name found on the invoice.",
+    "verifySideMissing": "No reference to the deal's side (seller/buyer/landlord/renter) found on the invoice.",
     "verifyExtractionFailed": "Couldn't check the invoice automatically — please review it manually.",
     "figuresTitle": "Figures",
     "salePrice": "Sale price",
