@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { requireSession, isManager } from "@/lib/auth/session-cookie";
+import { requireSession, isManager, isAdmin } from "@/lib/auth/session-cookie";
 import { canSeeDeal } from "@/lib/auth/scope";
 import { getDeal } from "@/lib/store/deals";
 import { listBillingForDeal } from "@/lib/store/billing";
@@ -22,6 +22,8 @@ import {
   searchGreenInvoiceClientForDeal,
   sendTransactionAccountForDeal,
   submitIncome,
+  updateDealRemaxFieldsAction,
+  updateIncomeRemaxReportedAction,
 } from "../actions";
 
 export default async function DealDetailPage({
@@ -39,6 +41,7 @@ export default async function DealDetailPage({
   // Don't leak another agent's deal by direct URL — same scoping as the list.
   if (!(await canSeeDeal(session, deal))) notFound();
   const canEdit = isManager(session);
+  const canSeeRemax = isAdmin(session);
 
   const [billingRows, incomeRows, received, t, tSide, tStage] = await Promise.all([
     listBillingForDeal(id),
@@ -250,6 +253,30 @@ export default async function DealDetailPage({
               ))}
             </ul>
           )}
+          {canSeeRemax && incomeRows.length > 0 && (
+            <form
+              action={updateIncomeRemaxReportedAction.bind(null, deal.id)}
+              className="mb-3 flex flex-col gap-2 rounded-md border border-dashed p-3"
+            >
+              <p className="text-xs font-medium text-muted-foreground">
+                {t("remaxPaymentReportingTitle")}
+              </p>
+              {incomeRows.map((r) => (
+                <label key={r.id} className="flex items-center gap-2 text-xs">
+                  <input
+                    type="checkbox"
+                    name={`remaxReported.${r.id}`}
+                    defaultChecked={!!r.remaxMonthlyReported}
+                    className="h-4 w-4"
+                  />
+                  {r.receivedDate} — ₪{r.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </label>
+              ))}
+              <Button type="submit" variant="outline" size="sm" className="self-start">
+                {t("save")}
+              </Button>
+            </form>
+          )}
           {canEdit && isSigned && (
             <form action={submitIncome.bind(null, deal.id)} className="flex flex-col gap-3">
               <div className="flex gap-3">
@@ -295,6 +322,44 @@ export default async function DealDetailPage({
           <p className="text-xs text-muted-foreground">
             {t("billingCreatedOn", { date: new Date(billingRows[0].createdAt).toLocaleDateString() })}
           </p>
+        )}
+
+        {canSeeRemax && (
+          <section className="rounded-lg border p-4">
+            <h2 className="mb-2 font-semibold">{t("remaxTitle")}</h2>
+            <form
+              action={updateDealRemaxFieldsAction.bind(null, deal.id)}
+              className="flex flex-col gap-3"
+            >
+              <div className="flex flex-wrap gap-3">
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <Label htmlFor="remaxReportedDate">{t("remaxReportedDateLabel")}</Label>
+                  <Input
+                    id="remaxReportedDate"
+                    name="remaxReportedDate"
+                    type="date"
+                    defaultValue={deal.remaxReportedDate}
+                  />
+                </div>
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <Label htmlFor="remaxId">{t("remaxIdLabel")}</Label>
+                  <Input id="remaxId" name="remaxId" dir="ltr" defaultValue={deal.remaxId} />
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name="remaxMonthlyReported"
+                  defaultChecked={!!deal.remaxMonthlyReported}
+                  className="h-4 w-4"
+                />
+                {t("remaxMonthlyReportedLabel")}
+              </label>
+              <Button type="submit" variant="outline" size="sm" className="self-start">
+                {t("save")}
+              </Button>
+            </form>
+          </section>
         )}
       </main>
     </div>

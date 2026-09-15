@@ -90,6 +90,11 @@ export interface Deal {
    *  agent picked an existing listing/offer rather than typing manually. */
   propertyId?: string;
   offerId?: string;
+  /** RE/MAX franchise reporting — admin-only (see isAdmin), matching the
+   *  Red File board's דיווח לרימקס / מספר של רימקס / דיווח חודשי columns. */
+  remaxReportedDate?: string;
+  remaxId?: string;
+  remaxMonthlyReported?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -125,6 +130,11 @@ export interface Income {
   /** GI's payment-method string ("wire-transfer", "cheque", …) for a
    *  webhook-sourced row. */
   paymentMethod?: string;
+  /** RE/MAX franchise reporting — admin-only, per-payment (Red File's
+   *  subitem-level "תשלום דיווח לרימקס" checkbox — separate from the
+   *  deal-level Deal.remaxMonthlyReported, since one deal can span several
+   *  reporting cycles across its payments). */
+  remaxMonthlyReported?: boolean;
   createdAt: string;
 }
 

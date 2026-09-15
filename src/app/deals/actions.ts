@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { requireManager } from "@/lib/auth/session-cookie";
+import { requireManager, requireAdmin } from "@/lib/auth/session-cookie";
 import { IncomeEntrySchema } from "@/lib/form-parse";
 import {
   createDealTransactionAccount,
@@ -11,6 +11,8 @@ import {
   setGiClientForDeal,
 } from "@/lib/services/deals";
 import { recordDealPayment } from "@/lib/services/payments";
+import { getDeal, updateDeal } from "@/lib/store/deals";
+import { listIncomeForDeal, updateIncome } from "@/lib/store/income";
 import { isNextJsRedirect } from "@/lib/action-utils";
 
 // submitNewDeal (the old manager-only quick form) was removed in Phase 8d —
@@ -151,3 +153,59 @@ export async function sendTransactionAccountForDeal(
 // createReceiptForIncome removed in Phase 6 — the app doesn't issue receipts.
 // Levi/Ariyel create the 305/320/400 in Green Invoice; the GI webhook
 // (/api/green-invoice/webhook) turns those into income + commission.
+
+/**
+ * RE/MAX franchise reporting fields on the deal itself — admin-only
+ * (matching Red File's דיווח לרימקס / מספר של רימקס / דיווח חודשי columns).
+ */
+export async function updateDealRemaxFieldsAction(dealId: string, formData: FormData) {
+  try {
+    const session = await requireAdmin();
+    const deal = await getDeal(dealId);
+    if (!deal || deal.officeId !== session.officeId) throw new Error("NOT_FOUND");
+    const remaxReportedDate = (formData.get("remaxReportedDate") as string) || undefined;
+    const remaxId = (formData.get("remaxId") as string)?.trim() || undefined;
+    await updateDeal(
+      dealId,
+      {
+        remaxReportedDate,
+        remaxId,
+        remaxMonthlyReported: formData.get("remaxMonthlyReported") === "on",
+      },
+      session.officeId,
+    );
+    redirect(`/deals/${dealId}`);
+  } catch (e) {
+    if (isNextJsRedirect(e)) throw e;
+    console.error("updateDealRemaxFieldsAction failed:", e);
+    redirect(`/deals/${dealId}?error=save`);
+  }
+}
+
+/**
+ * Per-payment "reported to RE/MAX" checklist — admin-only, matching Red
+ * File's subitem-level תשלום דיווח לרימקס checkbox. One form covers every
+ * payment on the deal so a monthly reporting pass is a single save.
+ */
+export async function updateIncomeRemaxReportedAction(dealId: string, formData: FormData) {
+  try {
+    const session = await requireAdmin();
+    const deal = await getDeal(dealId);
+    if (!deal || deal.officeId !== session.officeId) throw new Error("NOT_FOUND");
+    const incomeRows = await listIncomeForDeal(dealId);
+    await Promise.all(
+      incomeRows.map((r) =>
+        updateIncome(
+          r.id,
+          { remaxMonthlyReported: formData.get(`remaxReported.${r.id}`) === "on" },
+          session.officeId,
+        ),
+      ),
+    );
+    redirect(`/deals/${dealId}`);
+  } catch (e) {
+    if (isNextJsRedirect(e)) throw e;
+    console.error("updateIncomeRemaxReportedAction failed:", e);
+    redirect(`/deals/${dealId}?error=save`);
+  }
+}
