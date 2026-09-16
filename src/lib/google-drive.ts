@@ -11,18 +11,21 @@ import type { DriveFileRef } from "./types";
  * already used for session cookies) exchanged for an OAuth2 access token,
  * then plain `fetch` calls against the Drive REST API v3.
  *
- * IMPORTANT operational caveat, confirm before relying on this in prod:
- * a bare service account (no domain-wide delegation) owns files it
- * creates itself and has **zero personal storage quota** unless the
- * target folder lives inside a Shared Drive (a Drive "shared drive" /
- * legacy Team Drive, which has pooled org storage, not a regular folder
- * under someone's My Drive that's merely *shared* with the service
- * account). If GOOGLE_DRIVE_PROPERTIES_ROOT_FOLDER_ID points at a normal
- * My Drive folder, uploads will likely fail with a storage-quota error
- * the first time a real file is written — verified via a manual
- * round-trip test before wiring this into the wizard (see chat/ROADMAP).
- * If that happens, the fix is moving the root folder into a Shared Drive
- * the service account is a member of, not a code change here.
+ * Writes go straight into the office's existing folder structure —
+ * "נכסים בטיפול רימקס חזון" / {year} / "{street} {building}-{apartment}" —
+ * confirmed live and working: GOOGLE_DRIVE_PROPERTIES_ROOT_FOLDER_ID
+ * points at that real root, not a separate staging area.
+ *
+ * A bare service account has zero Drive storage quota of its own and
+ * can't create files inside someone else's My Drive folder (verified
+ * live against Google's actual error) — so every request here is signed
+ * with GOOGLE_DRIVE_IMPERSONATE_EMAIL set as the JWT's subject (domain-
+ * wide delegation, granted in the Workspace Admin console for this
+ * service account's OAuth Client ID, scope
+ * https://www.googleapis.com/auth/drive). Uploads are then charged
+ * against and owned by that real account, same as if a person had put
+ * them there by hand — that account also needs ordinary Editor sharing
+ * on the root folder, delegation alone doesn't grant folder access.
  */
 
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -52,6 +55,15 @@ function getRootFolderId(): string {
   return id;
 }
 
+/** The real account uploads are impersonated as (domain-wide delegation) —
+ *  see the file-level doc comment. Required; there's no supported way to
+ *  write into the existing folder as the bare service account. */
+function getImpersonateEmail(): string {
+  const email = process.env.GOOGLE_DRIVE_IMPERSONATE_EMAIL;
+  if (!email) throw new Error("GOOGLE_DRIVE_IMPERSONATE_EMAIL is not set");
+  return email;
+}
+
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
 /** RFC 7523 JWT-bearer flow: sign a short-lived claim set with the service
@@ -66,7 +78,11 @@ async function getAccessToken(): Promise<string> {
   const assertion = await new SignJWT({ scope: SCOPE })
     .setProtectedHeader({ alg: "RS256", typ: "JWT" })
     .setIssuer(getServiceAccountEmail())
-    .setSubject(getServiceAccountEmail())
+    // The impersonated real account, not the service account's own email —
+    // this IS the domain-wide delegation: Google honors `sub` as "act as
+    // this user" once the Workspace admin has granted it for this
+    // service account's Client ID + the drive scope above.
+    .setSubject(getImpersonateEmail())
     .setAudience(TOKEN_URL)
     .setIssuedAt(now)
     .setExpirationTime(now + 3600)
@@ -89,11 +105,33 @@ async function getAccessToken(): Promise<string> {
   return body.access_token;
 }
 
-/** Creates a new folder under the properties root and returns its id.
- *  Callers (src/lib/store/properties.ts) store the id on the
- *  PropertyRecord (`driveFolderId`) so it's only created once per
- *  listing, not looked up by name on every upload. */
-export async function createPropertyFolder(label: string): Promise<string> {
+/** Escapes a name for use inside a Drive `files.list` query string's
+ *  single-quoted literal (backslash and quote are the only specials). */
+function escapeForDriveQuery(name: string): string {
+  return name.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
+/** Looks for an existing child folder by exact name — used so re-running
+ *  the path builder (or two agents hitting the same year) doesn't create
+ *  duplicate year/property folders alongside ones that already exist in
+ *  the real structure. */
+async function findFolder(parentId: string, name: string): Promise<string | null> {
+  const token = await getAccessToken();
+  const q =
+    `name = '${escapeForDriveQuery(name)}' and '${parentId}' in parents ` +
+    `and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
+  const res = await fetch(`${DRIVE_API}/files?q=${encodeURIComponent(q)}&fields=files(id)&pageSize=1`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error(`Drive folder lookup failed (${res.status}): ${await res.text()}`);
+  }
+  const body = (await res.json()) as { files?: Array<{ id: string }> };
+  return body.files?.[0]?.id ?? null;
+}
+
+async function createFolder(parentId: string, name: string): Promise<string> {
   const token = await getAccessToken();
   const res = await fetch(`${DRIVE_API}/files?fields=id`, {
     method: "POST",
@@ -102,9 +140,9 @@ export async function createPropertyFolder(label: string): Promise<string> {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      name: label,
+      name,
       mimeType: "application/vnd.google-apps.folder",
-      parents: [getRootFolderId()],
+      parents: [parentId],
     }),
     cache: "no-store",
   });
@@ -113,6 +151,29 @@ export async function createPropertyFolder(label: string): Promise<string> {
   }
   const json = (await res.json()) as { id: string };
   return json.id;
+}
+
+async function findOrCreateFolder(parentId: string, name: string): Promise<string> {
+  const existing = await findFolder(parentId, name);
+  if (existing) return existing;
+  return createFolder(parentId, name);
+}
+
+/** Resolves (creating as needed) the real `{root}/{year}/{propertyLabel}`
+ *  path and returns the property folder's id — callers
+ *  (src/lib/store/properties.ts) store it on the PropertyRecord
+ *  (`driveFolderId`) so it's only resolved once per listing, not looked
+ *  up by name on every subsequent upload.
+ *
+ *  `year` is the submission year (e.g. new Date().getFullYear()), matching
+ *  the existing structure's "year added to the system" folders, not the
+ *  property's own listing/build year. `propertyLabel` should match the
+ *  existing "{street} {building}-{apartment}" convention where the
+ *  address has one — for a project/building-named listing without a
+ *  clean street+number, pass whatever label the agent confirms instead. */
+export async function ensurePropertyFolder(year: string, propertyLabel: string): Promise<string> {
+  const yearFolderId = await findOrCreateFolder(getRootFolderId(), year);
+  return findOrCreateFolder(yearFolderId, propertyLabel);
 }
 
 /** multipart/related body: a JSON metadata part + the raw file bytes,
@@ -133,7 +194,7 @@ function buildMultipartBody(
   return Buffer.concat([metaPart, fileHeader, fileBuffer, closing]);
 }
 
-/** Uploads one file into an existing folder (see createPropertyFolder) and
+/** Uploads one file into an existing folder (see ensurePropertyFolder) and
  *  returns the DriveFileRef to store on the PropertyRecord. Uses a plain
  *  multipart upload — fine for typical phone photos and PDFs; if agents'
  *  photos routinely exceed a few MB this should move to Drive's resumable
