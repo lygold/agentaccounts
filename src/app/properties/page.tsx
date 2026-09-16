@@ -5,15 +5,24 @@ import { allowedAgentIds, isIdAllowed } from "@/lib/auth/scope";
 import { listPropertiesByOffice } from "@/lib/store/properties";
 import { Nav } from "@/components/nav";
 import { Button } from "@/components/ui/button";
-import type { DealType } from "@/lib/types";
+import { PropertyGanttChart } from "@/components/property-gantt-chart";
+import type { DealType, PropertyRecord } from "@/lib/types";
 
 type Tab = "all" | DealType;
 
-/** Same access shape as /deals: agent -> own listings, team_leader -> own +
- *  team roster, manager/admin -> everything (allowedAgentIds already
- *  encodes that scoping — see src/lib/auth/scope.ts). Same All/Sales/Rental
- *  tabs as /properties/gantt, applied here too per Levi's confirmed answer
- *  ("both the Gantt views and the existing list page"). */
+function hasExclusivity(
+  p: PropertyRecord,
+): p is PropertyRecord & { exclusivityStartDate: string; exclusivityEndDate: string } {
+  return Boolean(p.exclusivityStartDate && p.exclusivityEndDate);
+}
+
+/** The Gantt is the default /properties view now (per Levi: "when I click
+ *  on properties it should show me the gantt not the list. The list is the
+ *  alternative view" — see /properties/list). Manager and per-agent view
+ *  are the same route — allowedAgentIds already encodes "manager sees
+ *  everyone, agent sees themselves (+ team)", same scoping /properties and
+ *  /deals use. Only active listings are shown: sold/rented/off-market/
+ *  withdrawn ones aren't "in flight" any more. */
 export default async function PropertiesPage({
   searchParams,
 }: {
@@ -23,63 +32,82 @@ export default async function PropertiesPage({
   const { tab: rawTab } = await searchParams;
   const tab: Tab = rawTab === "sale" || rawTab === "rental" ? rawTab : "all";
 
-  const [allProperties, allowed, t, tDealType] = await Promise.all([
+  const [allProperties, allowed, t, tProperties, tDealType] = await Promise.all([
     listPropertiesByOffice(session.officeId),
     allowedAgentIds(session),
+    getTranslations("PropertyGantt"),
     getTranslations("Properties"),
     getTranslations("Enums.dealType"),
   ]);
-  const scoped = allProperties.filter((p) => isIdAllowed(allowed, p.agentId));
-  const properties = tab === "all" ? scoped : scoped.filter((p) => p.dealType === tab);
+
+  const visible = allProperties.filter(
+    (p) => isIdAllowed(allowed, p.agentId) && p.status === "active",
+  );
+  const filtered = tab === "all" ? visible : visible.filter((p) => p.dealType === tab);
+  const withExclusivity = filtered.filter(hasExclusivity);
+  const haskamotOnly = filtered.filter((p) => !hasExclusivity(p));
+  const showAgent = allowed === "all";
 
   return (
     <div>
       <Nav />
       <main className="mx-auto max-w-3xl p-6">
         <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">{t("title")}</h1>
+          <h1 className="text-2xl font-bold">{tProperties("title")}</h1>
           <div className="flex items-center gap-3">
-            <Link href="/properties/gantt" className="text-sm text-secondary underline-offset-4 hover:underline">
-              {t("viewGantt")}
+            <Link href="/properties/list" className="text-sm text-secondary underline-offset-4 hover:underline">
+              {t("backToList")}
             </Link>
             <Button asChild>
-              <Link href="/properties/new">{t("newProperty")}</Link>
+              <Link href="/properties/new">{tProperties("newProperty")}</Link>
             </Button>
           </div>
         </div>
+
         <div className="mb-4 flex gap-2 text-sm">
-          <TabLink tab="all" current={tab} label={t("tabAll")} />
+          <TabLink tab="all" current={tab} label={tProperties("tabAll")} />
           <TabLink tab="sale" current={tab} label={tDealType("sale")} />
           <TabLink tab="rental" current={tab} label={tDealType("rental")} />
         </div>
-        {properties.length === 0 ? (
-          <p className="text-muted-foreground">{t("empty")}</p>
-        ) : (
-          <div className="divide-y overflow-hidden rounded-lg border">
-            {properties.map((p) => {
-              const address =
-                [p.street, p.buildingNumber, p.apartmentNumber ? `דירה ${p.apartmentNumber}` : null]
-                  .filter(Boolean)
-                  .join(" ") || t("noAddress");
-              return (
-                <Link
-                  key={p.id}
-                  href={`/properties/${p.id}`}
-                  className="flex items-center justify-between p-4 hover:bg-muted/40"
-                >
-                  <div>
-                    <div className="font-medium">{address}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {p.agentName}
-                      {p.ownerName ? ` · ${p.ownerName}` : ""}
+
+        <section className="mb-6">
+          <h2 className="mb-2 text-sm font-semibold text-muted-foreground">{t("exclusivitiesTitle")}</h2>
+          {withExclusivity.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("noExclusivities")}</p>
+          ) : (
+            <PropertyGanttChart properties={withExclusivity} showAgent={showAgent} />
+          )}
+        </section>
+
+        <section>
+          <h2 className="mb-2 text-sm font-semibold text-muted-foreground">{t("haskamotTitle")}</h2>
+          {haskamotOnly.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("noHaskamot")}</p>
+          ) : (
+            <div className="divide-y overflow-hidden rounded-lg border">
+              {haskamotOnly.map((p) => {
+                const address =
+                  [p.street, p.buildingNumber].filter(Boolean).join(" ") || "—";
+                return (
+                  <Link
+                    key={p.id}
+                    href={`/properties/${p.id}`}
+                    className="flex items-center justify-between p-3 text-sm hover:bg-muted/40"
+                  >
+                    <div>
+                      <div className="font-medium">{address}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {showAgent ? p.agentName : null}
+                        {p.ownerName ? `${showAgent ? " · " : ""}${p.ownerName}` : ""}
+                      </div>
                     </div>
-                  </div>
-                  <span className="text-sm text-muted-foreground">{tDealType(p.dealType)}</span>
-                </Link>
-              );
-            })}
-          </div>
-        )}
+                    <span className="text-xs text-muted-foreground">{tDealType(p.dealType)}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </section>
       </main>
     </div>
   );
