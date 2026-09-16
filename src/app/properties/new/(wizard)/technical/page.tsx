@@ -6,7 +6,7 @@ import { PropertyWizardChrome } from "@/components/property-wizard-chrome";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { SearchableSelect } from "@/components/searchable-select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { PROPERTY_WIZARD_FORM_ID } from "@/lib/property-wizard/steps";
 import { submitPropertyTechnical } from "./actions";
 
@@ -48,6 +48,7 @@ export default async function PropertyTechnicalPage() {
         </div>
 
         <SearchableSelect
+          rtl
           id="condition"
           name="condition"
           label={t("conditionLabel")}
@@ -56,7 +57,7 @@ export default async function PropertyTechnicalPage() {
           )}
           defaultValue={draft.condition}
           placeholder={t("selectPlaceholder")}
-          searchPlaceholder={t("selectPlaceholder")}
+          emptyLabel={t("selectPlaceholder")}
         />
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-md border p-3">

@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { SearchableSelect } from "@/components/searchable-select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { PROPERTY_WIZARD_FORM_ID } from "@/lib/property-wizard/steps";
 import { submitPropertyDetails } from "./actions";
 
@@ -44,23 +44,25 @@ export function DetailsStepForm({ initial }: { initial: Initial }) {
   return (
     <form id={PROPERTY_WIZARD_FORM_ID} action={submitPropertyDetails} className="flex flex-col gap-4">
       <SearchableSelect
+        rtl
         id="propertyType"
         name="propertyType"
         label={t("propertyTypeLabel")}
         options={propertyTypeOptions}
         defaultValue={initial.propertyType}
         placeholder={t("selectPlaceholder")}
-        searchPlaceholder={t("selectPlaceholder")}
+        emptyLabel={t("selectPlaceholder")}
       />
 
       <SearchableSelect
+        rtl
         id="referralSource"
         name="referralSource"
         label={t("referralSourceLabel")}
         options={referralSourceOptions}
         defaultValue={initial.referralSource}
         placeholder={t("selectPlaceholder")}
-        searchPlaceholder={t("selectPlaceholder")}
+        emptyLabel={t("selectPlaceholder")}
         onChange={setReferralSource}
       />
 

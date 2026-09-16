@@ -111,6 +111,33 @@ export default async function PropertyDetailPage({
             <Field label={t("letterGradeLabel")} value={property.letterGrade} />
           </Section>
         )}
+
+        <div className="flex flex-col gap-2 rounded-lg border p-4">
+          <h2 className="text-sm font-semibold text-muted-foreground">{t("updatesTitle")}</h2>
+          {!property.updates?.length ? (
+            <p className="text-sm text-muted-foreground">{t("noUpdates")}</p>
+          ) : (
+            <ul className="flex flex-col gap-3 text-sm">
+              {[...property.updates].reverse().map((u) => (
+                <li key={u.id} className="border-b pb-2 last:border-0">
+                  <div className="flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
+                    <span>{u.authorName}</span>
+                    <span>{new Date(u.at).toLocaleString()}</span>
+                  </div>
+                  <ul className="mt-1 list-inside list-disc">
+                    {u.changes.map((c, i) => (
+                      <li key={i}>{c}</li>
+                    ))}
+                  </ul>
+                  <div className="mt-1 flex gap-3 text-xs text-muted-foreground">
+                    {u.channelsSent.email && <span>✓ {t("notifiedEmail")}</span>}
+                    {u.channelsSent.whatsapp && <span>✓ {t("notifiedWhatsapp")}</span>}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </main>
     </div>
   );

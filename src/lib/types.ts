@@ -458,6 +458,20 @@ export interface DriveFileRef {
   uploadedAt: string;
 }
 
+/** One entry in a property's change log — see
+ *  src/lib/services/property-notify.ts. `channelsSent` records what
+ *  actually dispatched (a channel disabled via env, or WhatsApp before a
+ *  template exists, still logs the change but with that channel false). */
+export interface PropertyUpdateEntry {
+  id: string;
+  at: string;
+  authorId: string;
+  authorName: string;
+  /** Human-readable summary lines, e.g. "מחיר מבוקש: 1,200,000 ← 1,150,000". */
+  changes: string[];
+  channelsSent: { email: boolean; whatsapp: boolean };
+}
+
 /**
  * Phase 9 — a property listing, created by the native intake wizard
  * (/properties/new) that replaces the external Superform. Field grouping
@@ -589,6 +603,13 @@ export interface PropertyRecord {
   trueCmaValue?: number;
   estimatedMonthsToSell?: number;
   letterGrade?: "A" | "B" | "C" | "D";
+
+  /** Append-only per-property change log — every edit after creation adds
+   *  one entry here (see src/lib/services/property-notify.ts), regardless
+   *  of whether the secretary notification actually sent. Never trimmed —
+   *  this is the property's own history, unlike the capped aggregated
+   *  feed in Redis. */
+  updates?: PropertyUpdateEntry[];
 
   createdAt: string;
   updatedAt: string;

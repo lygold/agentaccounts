@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { Label } from "./label";
 
 export interface SearchableSelectOption {
   value: string;
@@ -29,6 +30,13 @@ export function SearchableSelect({
   required,
   className,
   id,
+  label,
+  onChange,
+  /** RTL-aware rendering (right-aligned text, `dir="rtl"` on the input and
+   *  option list) — off by default so existing (LTR) callers are
+   *  unaffected; pass true for Hebrew-first contexts like the property
+   *  wizard. */
+  rtl,
 }: {
   name: string;
   options: SearchableSelectOption[];
@@ -38,6 +46,14 @@ export function SearchableSelect({
   required?: boolean;
   className?: string;
   id?: string;
+  /** Optional label rendered above the field — callers that already wrap
+   *  this in their own <Label> can leave this unset. */
+  label?: string;
+  /** Fired when the selection changes — the hidden input already covers
+   *  form submission; this is for parents that need to react (e.g. show
+   *  conditional fields based on the pick). */
+  onChange?: (value: string) => void;
+  rtl?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -74,6 +90,7 @@ export function SearchableSelect({
 
   function choose(o: SearchableSelectOption) {
     setValue(o.value);
+    onChange?.(o.value);
     setOpen(false);
     setQuery("");
   }
@@ -97,12 +114,19 @@ export function SearchableSelect({
   }
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className="relative flex flex-col gap-1.5">
+      {label && (
+        <Label htmlFor={id}>
+          {label}
+          {required && <span className="text-primary"> *</span>}
+        </Label>
+      )}
       <input type="hidden" name={name} value={value} required={required} />
       <input
         ref={inputRef}
         id={id}
         type="text"
+        dir={rtl ? "rtl" : undefined}
         role="combobox"
         aria-expanded={open}
         aria-controls={listId}
@@ -128,7 +152,8 @@ export function SearchableSelect({
         <ul
           id={listId}
           role="listbox"
-          className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border bg-background py-1 text-sm shadow-md"
+          dir={rtl ? "rtl" : undefined}
+          className="absolute top-full z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border bg-background py-1 text-sm shadow-md"
         >
           {filtered.length === 0 ? (
             <li className="px-3 py-2 text-muted-foreground">{emptyLabel}</li>
@@ -138,7 +163,8 @@ export function SearchableSelect({
                 <button
                   type="button"
                   className={cn(
-                    "flex w-full items-center justify-between gap-2 px-3 py-2 text-left hover:bg-muted",
+                    "flex w-full items-center justify-between gap-2 px-3 py-2 hover:bg-muted",
+                    rtl ? "text-right" : "text-left",
                     i === highlight && "bg-muted",
                   )}
                   onMouseEnter={() => setHighlight(i)}
