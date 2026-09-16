@@ -39,7 +39,11 @@ export default async function PropertiesPage() {
                   .filter(Boolean)
                   .join(" ") || t("noAddress");
               return (
-                <div key={p.id} className="flex items-center justify-between p-4">
+                <Link
+                  key={p.id}
+                  href={`/properties/${p.id}`}
+                  className="flex items-center justify-between p-4 hover:bg-muted/40"
+                >
                   <div>
                     <div className="font-medium">{address}</div>
                     <div className="text-sm text-muted-foreground">
@@ -48,7 +52,7 @@ export default async function PropertiesPage() {
                     </div>
                   </div>
                   <span className="text-sm text-muted-foreground">{tDealType(p.dealType)}</span>
-                </div>
+                </Link>
               );
             })}
           </div>

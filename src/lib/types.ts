@@ -20,6 +20,12 @@ export type DealSide = "seller" | "buyer" | "landlord" | "renter";
  *  split is meant to fix. */
 export type DealStage = "potential" | "signed" | "cancelled";
 
+/** Property listing lifecycle — independent of the underlying contract's
+ *  exclusivity state (a property can be "active" with an expired
+ *  exclusivity, or "sold" while still technically within an exclusivity
+ *  window). Confirmed with Levi 2026-09-16. */
+export type PropertyStatus = "active" | "sold" | "rented" | "off_market" | "withdrawn";
+
 /** Client-payment status — derived from Billing vs. Income where possible
  *  (received=0 → due, 0<received<billed → partial_payment, received>=billed
  *  → paid), with overdue/dead_debt as explicit admin/manager flags. */
@@ -467,6 +473,10 @@ export interface PropertyRecord {
    *  convention as Deal.agentId. No agent-picker in the wizard. */
   agentId: string;
   agentName: string;
+  /** Defaults to "active" on creation (see review/actions.ts) — a real
+   *  listing lifecycle, distinct from the contract's own exclusivity
+   *  state (exclusivityStartDate/EndDate below). */
+  status: PropertyStatus;
 
   // --- Basics ---
   dealType: DealType;

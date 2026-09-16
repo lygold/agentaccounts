@@ -19,6 +19,7 @@ export async function submitPropertyReview() {
       officeId: session.officeId,
       agentId: session.agentId,
       agentName: session.agentName,
+      status: "active",
       dealType: draft.dealType!,
       sourceContractMondayId: draft.sourceContractMondayId,
       sourceContractRole: draft.sourceContractRole,

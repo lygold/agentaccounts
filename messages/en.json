@@ -36,6 +36,33 @@
     "empty": "No properties yet.",
     "noAddress": "—"
   },
+  "PropertyDetail": {
+    "edit": "Edit",
+    "noAddress": "—",
+    "ownerTitle": "Owner",
+    "ownerNameLabel": "Name",
+    "ownerPhoneLabel": "Phone",
+    "ownerEmailLabel": "Email",
+    "commissionTitle": "Commission & exclusivity",
+    "percentLabel": "Commission %",
+    "vatModeLabel": "VAT",
+    "vatPlus": "Plus VAT",
+    "vatIncluded": "VAT included",
+    "exclusivityStartLabel": "Exclusivity start",
+    "exclusivityEndLabel": "Exclusivity end",
+    "mediaTitle": "Media",
+    "mainPhotosLabel": "Main photo",
+    "additionalPhotosLabel": "Additional photos",
+    "technicalTitle": "Technical details",
+    "roomsLabel": "Rooms",
+    "sizeSqmLabel": "Size (sqm)",
+    "askingPriceLabel": "Asking price",
+    "floorLabel": "Floor",
+    "ratingsTitle": "Internal rating",
+    "sellabilityLabel": "Sellability",
+    "sellerMotivationLabel": "Seller motivation",
+    "letterGradeLabel": "Overall grade"
+  },
   "Enums": {
     "role": {
       "admin": "admin",
@@ -58,6 +85,13 @@
     "dealType": {
       "sale": "Sale",
       "rental": "Rental"
+    },
+    "propertyStatus": {
+      "active": "Active",
+      "sold": "Sold",
+      "rented": "Rented",
+      "off_market": "Off market",
+      "withdrawn": "Withdrawn"
     },
     "side": {
       "seller": "Seller",

@@ -36,6 +36,33 @@
     "empty": "אין עדיין נכסים.",
     "noAddress": "—"
   },
+  "PropertyDetail": {
+    "edit": "עריכה",
+    "noAddress": "—",
+    "ownerTitle": "בעלים",
+    "ownerNameLabel": "שם",
+    "ownerPhoneLabel": "טלפון",
+    "ownerEmailLabel": "אימייל",
+    "commissionTitle": "עמלה ובלעדיות",
+    "percentLabel": "אחוז עמלה",
+    "vatModeLabel": "מע״מ",
+    "vatPlus": "בתוספת מע״מ",
+    "vatIncluded": "כולל מע״מ",
+    "exclusivityStartLabel": "תחילת בלעדיות",
+    "exclusivityEndLabel": "סיום בלעדיות",
+    "mediaTitle": "מדיה",
+    "mainPhotosLabel": "תמונה ראשית",
+    "additionalPhotosLabel": "תמונות נוספות",
+    "technicalTitle": "פרטים טכניים",
+    "roomsLabel": "חדרים",
+    "sizeSqmLabel": "שטח (מ״ר)",
+    "askingPriceLabel": "מחיר מבוקש",
+    "floorLabel": "קומה",
+    "ratingsTitle": "הערכה פנימית",
+    "sellabilityLabel": "דירוג סחירות",
+    "sellerMotivationLabel": "מוטיבציית המוכר",
+    "letterGradeLabel": "ציון כללי"
+  },
   "Enums": {
     "role": {
       "admin": "מנהל מערכת",
@@ -58,6 +85,13 @@
     "dealType": {
       "sale": "מכירה",
       "rental": "השכרה"
+    },
+    "propertyStatus": {
+      "active": "פעיל",
+      "sold": "נמכר",
+      "rented": "הושכר",
+      "off_market": "ירד מהשוק",
+      "withdrawn": "בוטל"
     },
     "side": {
       "seller": "מוכר",
