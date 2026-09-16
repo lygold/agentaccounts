@@ -38,6 +38,28 @@ export default async function PropertyReviewPage() {
             ? `${draft.commissionPercent}% (${draft.commissionVatMode === "included" ? t("vatIncluded") : t("vatPlus")})`
             : t("notSet")}
         </Section>
+        {draft.propertyType && (
+          <Section title={t("propertyTypeTitle")} editHref={propertyStepHref("details")}>
+            {draft.propertyType}
+          </Section>
+        )}
+        <Section title={t("mediaTitle")} editHref={propertyStepHref("media")}>
+          {t("mediaCount", {
+            main: draft.mainPhotos?.length ?? 0,
+            additional: draft.additionalPhotos?.length ?? 0,
+          })}
+        </Section>
+        {(draft.sizeSqm || draft.rooms || draft.askingPrice) && (
+          <Section title={t("technicalTitle")} editHref={propertyStepHref("technical")}>
+            {[
+              draft.rooms ? t("roomsShort", { n: draft.rooms }) : null,
+              draft.sizeSqm ? t("sizeSqmShort", { n: draft.sizeSqm }) : null,
+              draft.askingPrice ? t("priceShort", { n: draft.askingPrice }) : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </Section>
+        )}
 
         <form id={PROPERTY_WIZARD_FORM_ID} action={submitPropertyReview}>
           <Button type="submit" size="lg" className="w-full">
