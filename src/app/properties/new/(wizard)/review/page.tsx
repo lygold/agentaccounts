@@ -23,6 +23,8 @@ export default async function PropertyReviewPage() {
       <div className="flex flex-col gap-4">
         <Section title={t("dealTypeTitle")} editHref={propertyStepHref("deal-type")}>
           {draft.dealType === "rental" ? t("rental") : t("sale")}
+          {draft.contractType &&
+            ` · ${draft.contractType === "biladiut" ? t("contractTypeBiladiut") : t("contractTypeHaskama")}`}
         </Section>
         <Section title={t("addressTitle")} editHref={propertyStepHref("address")}>
           {draft.formattedAddress || `${draft.street} ${draft.buildingNumber}`}

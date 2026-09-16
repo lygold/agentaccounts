@@ -514,6 +514,12 @@
   "ContractPickStep": {
     "promptSale": "Pick from your signed contracts with the seller, or enter details manually",
     "promptRental": "Pick from your signed contracts with the landlord, or enter details manually",
+    "contractTypePrompt": "Is this listing exclusive?",
+    "contractTypeBiladiut": "Exclusive",
+    "contractTypeBiladiutHint": "A biladiut (exclusivity) contract for a set period",
+    "contractTypeHaskama": "Not exclusive",
+    "contractTypeHaskamaHint": "A haskama (commission agreement) only, no exclusivity",
+    "changeContractType": "Change",
     "pickerLabel": "My signed contracts",
     "noContracts": "No signed contracts found — you can enter details manually",
     "searchPlaceholder": "Search by name or address",
@@ -648,6 +654,8 @@
   },
   "PropertyReviewStep": {
     "dealTypeTitle": "Deal type",
+    "contractTypeBiladiut": "Exclusive",
+    "contractTypeHaskama": "Not exclusive",
     "addressTitle": "Address",
     "ownerTitle": "Owner",
     "commissionTitle": "Commission",

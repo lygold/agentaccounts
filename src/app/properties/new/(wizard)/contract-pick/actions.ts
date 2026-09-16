@@ -12,11 +12,14 @@ import { nextPropertyStep, propertyStepHref } from "@/lib/property-wizard/steps"
 import { isNextJsRedirect } from "@/lib/wizard/action-utils";
 import type { DealSide } from "@/lib/types";
 
+const ContractTypeSchema = z.enum(["biladiut", "haskama"]);
+
 const PickerSchema = z.object({
   mode: z.literal("picker"),
+  contractType: ContractTypeSchema,
   selectedItemId: z.string().min(1),
 });
-const ManualSchema = z.object({ mode: z.literal("manual") });
+const ManualSchema = z.object({ mode: z.literal("manual"), contractType: ContractTypeSchema });
 const Schema = z.discriminatedUnion("mode", [PickerSchema, ManualSchema]);
 
 export async function submitContractPick(formData: FormData) {
@@ -36,6 +39,7 @@ export async function submitContractPick(formData: FormData) {
 
     if (data.mode === "manual") {
       await advancePropertyDraft(session.agentId, "contract-pick", {
+        contractType: data.contractType,
         sourceContractMondayId: undefined,
         sourceContractRole: undefined,
       });
@@ -50,7 +54,13 @@ export async function submitContractPick(formData: FormData) {
     const contracts = agent?.mondayItemId
       ? await listSellersForPropertyWizard(agent.mondayItemId, { dealType: draft.dealType! })
       : [];
-    const picked = contracts.find((c) => c.id === data.selectedItemId);
+    // Re-verify server-side that the picked contract actually belongs to
+    // the claimed bucket (biladiut vs haskama-only) — never trust the
+    // client's own filtering.
+    const bucketed = contracts.filter((c) =>
+      data.contractType === "biladiut" ? c.hasExclusivity : !c.hasExclusivity,
+    );
+    const picked = bucketed.find((c) => c.id === data.selectedItemId);
     if (!picked) return;
 
     const role: DealSide = draft.dealType === "rental" ? "landlord" : "seller";
@@ -68,6 +78,7 @@ export async function submitContractPick(formData: FormData) {
       : {};
 
     await advancePropertyDraft(session.agentId, "contract-pick", {
+      contractType: data.contractType,
       sourceContractMondayId: picked.id,
       sourceContractRole: role,
       ownerName: picked.name,

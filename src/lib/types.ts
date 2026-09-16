@@ -494,8 +494,11 @@ export interface PropertyRecord {
 
   // --- Basics ---
   dealType: DealType;
-  /** Exclusivity vs. open listing etc. — exact option set decided at
-   *  wizard-build time (9b); kept as free text until then. */
+  /** "biladiut" (exclusive — the agent explicitly chose this on the
+   *  contract-pick step, which then only shows contracts with a linked
+   *  biladiut row) or "haskama" (non-exclusive, haskama-only). Kept as a
+   *  plain string rather than a union so a future third bucket doesn't
+   *  need a type change. */
   contractType?: string;
 
   // --- Prefill provenance (Phase 9's signed-contracts picker step) ---

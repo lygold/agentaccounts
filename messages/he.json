@@ -514,6 +514,12 @@
   "ContractPickStep": {
     "promptSale": "בחרו מתוך החוזים החתומים שלכם עם המוכר, או הזינו פרטים ידנית",
     "promptRental": "בחרו מתוך החוזים החתומים שלכם עם המשכיר, או הזינו פרטים ידנית",
+    "contractTypePrompt": "האם לנכס זה יש בלעדיות?",
+    "contractTypeBiladiut": "יש בלעדיות",
+    "contractTypeBiladiutHint": "חוזה בלעדיות (בלעדיות) לתקופה מוגדרת",
+    "contractTypeHaskama": "אין בלעדיות",
+    "contractTypeHaskamaHint": "הסכמה לתשלום עמלה בלבד, ללא בלעדיות",
+    "changeContractType": "שינוי",
     "pickerLabel": "החוזים החתומים שלי",
     "noContracts": "לא נמצאו חוזים חתומים — ניתן להזין פרטים ידנית",
     "searchPlaceholder": "חיפוש לפי שם או כתובת",
@@ -648,6 +654,8 @@
   },
   "PropertyReviewStep": {
     "dealTypeTitle": "סוג עסקה",
+    "contractTypeBiladiut": "בלעדיות",
+    "contractTypeHaskama": "ללא בלעדיות",
     "addressTitle": "כתובת",
     "ownerTitle": "בעלים",
     "commissionTitle": "עמלה",

@@ -32,7 +32,11 @@ export default async function ContractPickPage() {
         <p className="text-sm text-muted-foreground">
           {draft.dealType === "rental" ? t("promptRental") : t("promptSale")}
         </p>
-        <ContractPickForm contracts={contracts} initialSelectedId={draft.sourceContractMondayId} />
+        <ContractPickForm
+          contracts={contracts}
+          initialSelectedId={draft.sourceContractMondayId}
+          initialContractType={draft.contractType}
+        />
       </div>
     </PropertyWizardChrome>
   );
