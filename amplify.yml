@@ -3,6 +3,14 @@ frontend:
   phases:
     preBuild:
       commands:
+        # nvm auto-reinstalls whatever's listed in ~/.nvm/default-packages
+        # into any newly `nvm install`ed version — Amplify's build image
+        # ships that file pre-populated with @aws-amplify/cli, bower,
+        # cypress, grunt-cli, hugo-extended, vuepress, yarn, none of which
+        # this project uses. That reinstall costs ~70s every single build;
+        # emptying the file first skips it. Safe no-op if the file doesn't
+        # exist yet.
+        - mkdir -p ~/.nvm && > ~/.nvm/default-packages
         - nvm install 22 && nvm use 22
         - npm ci --cache .npm --prefer-offline
     build:
