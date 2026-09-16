@@ -211,11 +211,15 @@ export const CLIENTS_BOARD = {
   },
   /** Confirmed live (2026-09): an exclusive listing gets TWO rows for the
    *  same client + property_address — one `contractType: "haskama"` (the
-   *  commission agreement) and one `contractType: "biladiut"` (the
-   *  exclusivity itself). Commission is duplicated onto both rows, but
-   *  ONLY the biladiut row carries these two dates — the haskama row's
-   *  dates are always empty. A non-exclusive representation has no
-   *  biladiut row at all (just haskama, or often neither status set). */
+   *  agreement to pay commission) and one `contractType: "biladiut"` (the
+   *  exclusive advertising rights, typically a 6-month window — the actual
+   *  business meaning of these two, confirmed with Levi 2026-09-16).
+   *  A haskama can exist on its own (non-exclusive representation, just an
+   *  agreement to pay commission) — but a biladiut never exists without an
+   *  accompanying haskama; exclusivity always implies the commission
+   *  agreement is also in place. Commission is duplicated onto both rows
+   *  when both exist, but ONLY the biladiut row carries these two dates —
+   *  the haskama row's dates are always empty. */
   exclusivity: {
     startDate: "date_start",
     endDate: "date_end",
