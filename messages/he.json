@@ -398,6 +398,76 @@
     "back": "חזרה",
     "backToSummary": "חזרה לסיכום"
   },
+  "PropertyWizardChrome": {
+    "greeting": "שלום {name}",
+    "stepOf": "שלב {current} מתוך {total}",
+    "back": "חזרה",
+    "backToSummary": "חזרה לסיכום"
+  },
+  "PropertyStepTitles": {
+    "deal-type": "מכירה או השכרה",
+    "contract-pick": "בחירת חוזה חתום",
+    "address": "כתובת הנכס",
+    "commission": "עמלה",
+    "details": "פרטי עסקה",
+    "media": "תמונות ומסמכים",
+    "descriptions": "תיאורים",
+    "technical": "פרטים טכניים",
+    "ratings": "הערכה פנימית",
+    "review": "סיכום ובדיקה"
+  },
+  "PropertyDealTypeStep": {
+    "prompt": "איזה סוג נכס אתם מעלים?",
+    "sale": "מכירה",
+    "saleHint": "נכס למכירה",
+    "rental": "השכרה",
+    "rentalHint": "נכס להשכרה"
+  },
+  "ContractPickStep": {
+    "promptSale": "בחרו מתוך החוזים החתומים שלכם עם המוכר, או הזינו פרטים ידנית",
+    "promptRental": "בחרו מתוך החוזים החתומים שלכם עם המשכיר, או הזינו פרטים ידנית",
+    "pickerLabel": "החוזים החתומים שלי",
+    "noContracts": "לא נמצאו חוזים חתומים — ניתן להזין פרטים ידנית",
+    "searchPlaceholder": "חיפוש לפי שם או כתובת",
+    "noMatches": "לא נמצאו תוצאות",
+    "notListed": "לא מופיע ברשימה — הזנה ידנית",
+    "manualNotice": "פרטי הבעלים והכתובת יוזנו ידנית בשלבים הבאים",
+    "backToList": "חזרה לרשימה"
+  },
+  "PropertyAddressStep": {
+    "prompt": "חפשו את כתובת הנכס — הבחירה תאחיד את שם הרחוב לכתיב אחיד",
+    "searchLabel": "חיפוש כתובת",
+    "cityLabel": "עיר",
+    "streetLabel": "רחוב",
+    "buildingNumberLabel": "מספר בית",
+    "entranceLabel": "כניסה",
+    "apartmentNumberLabel": "מספר דירה"
+  },
+  "PropertyCommissionStep": {
+    "prompt": "מהי העמלה שסוכמה עבור עסקה זו?",
+    "percentLabel": "אחוז עמלה",
+    "vatModeLabel": "מע״מ",
+    "vatPlus": "בתוספת מע״מ",
+    "vatIncluded": "כולל מע״מ"
+  },
+  "PropertyReviewStep": {
+    "dealTypeTitle": "סוג עסקה",
+    "addressTitle": "כתובת",
+    "ownerTitle": "בעלים",
+    "commissionTitle": "עמלה",
+    "sale": "מכירה",
+    "rental": "השכרה",
+    "vatPlus": "בתוספת מע״מ",
+    "vatIncluded": "כולל מע״מ",
+    "notSet": "לא הוזן",
+    "submit": "שמירת הנכס",
+    "moreStepsNote": "שלבים נוספים (תמונות, תיאורים, פרטים טכניים) יתווספו בהמשך — ניתן לערוך את הנכס לאחר השמירה."
+  },
+  "PropertyDoneStep": {
+    "title": "הנכס נשמר בהצלחה",
+    "body": "פרטי הנכס נשמרו במערכת.",
+    "addAnother": "הוספת נכס נוסף"
+  },
   "StepTitles": {
     "language": "שפת מסמך",
     "deal-type": "מכירה או השכרה",

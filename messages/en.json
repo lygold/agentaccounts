@@ -398,6 +398,76 @@
     "back": "Back",
     "backToSummary": "Back to summary"
   },
+  "PropertyWizardChrome": {
+    "greeting": "Hi {name}",
+    "stepOf": "Step {current} of {total}",
+    "back": "Back",
+    "backToSummary": "Back to summary"
+  },
+  "PropertyStepTitles": {
+    "deal-type": "Sale or rental",
+    "contract-pick": "Pick a signed contract",
+    "address": "Property address",
+    "commission": "Commission",
+    "details": "Deal details",
+    "media": "Photos and documents",
+    "descriptions": "Descriptions",
+    "technical": "Technical details",
+    "ratings": "Internal rating",
+    "review": "Review and submit"
+  },
+  "PropertyDealTypeStep": {
+    "prompt": "What kind of listing are you adding?",
+    "sale": "Sale",
+    "saleHint": "Property for sale",
+    "rental": "Rental",
+    "rentalHint": "Property for rent"
+  },
+  "ContractPickStep": {
+    "promptSale": "Pick from your signed contracts with the seller, or enter details manually",
+    "promptRental": "Pick from your signed contracts with the landlord, or enter details manually",
+    "pickerLabel": "My signed contracts",
+    "noContracts": "No signed contracts found — you can enter details manually",
+    "searchPlaceholder": "Search by name or address",
+    "noMatches": "No matches",
+    "notListed": "Not listed — manual entry",
+    "manualNotice": "Owner and address details will be entered manually in the next steps",
+    "backToList": "Back to list"
+  },
+  "PropertyAddressStep": {
+    "prompt": "Search for the property's address — picking a result normalizes the street name",
+    "searchLabel": "Address search",
+    "cityLabel": "City",
+    "streetLabel": "Street",
+    "buildingNumberLabel": "Building number",
+    "entranceLabel": "Entrance",
+    "apartmentNumberLabel": "Apartment number"
+  },
+  "PropertyCommissionStep": {
+    "prompt": "What commission was agreed for this listing?",
+    "percentLabel": "Commission %",
+    "vatModeLabel": "VAT",
+    "vatPlus": "Plus VAT",
+    "vatIncluded": "VAT included"
+  },
+  "PropertyReviewStep": {
+    "dealTypeTitle": "Deal type",
+    "addressTitle": "Address",
+    "ownerTitle": "Owner",
+    "commissionTitle": "Commission",
+    "sale": "Sale",
+    "rental": "Rental",
+    "vatPlus": "Plus VAT",
+    "vatIncluded": "VAT included",
+    "notSet": "Not set",
+    "submit": "Save property",
+    "moreStepsNote": "More steps (photos, descriptions, technical details) are coming — you'll be able to edit this listing after saving."
+  },
+  "PropertyDoneStep": {
+    "title": "Property saved",
+    "body": "The listing's details have been saved.",
+    "addAnother": "Add another property"
+  },
   "StepTitles": {
     "language": "Document Language",
     "deal-type": "Sale or Rental",

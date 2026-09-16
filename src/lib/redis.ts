@@ -38,4 +38,7 @@ export const RedisKeys = {
    *  had, since the agent is already authenticated into the real hub
    *  session by the time they reach the wizard). */
   wizardDraft: (agentId: string) => `al:wizard:draft:${agentId}`,
+  /** Phase 9 property-intake wizard — separate draft/key from the deal
+   *  wizard above (different field set, not a shared module). */
+  propertyWizardDraft: (agentId: string) => `al:property-wizard:draft:${agentId}`,
 };
