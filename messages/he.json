@@ -504,6 +504,9 @@
   "PhoneInput": {
     "countryCodeLabel": "קידומת מדינה"
   },
+  "AddressAutocomplete": {
+    "loading": "מחפש..."
+  },
   "OwnerLawyerStep": {
     "intro": "פרטי עורך הדין מצד הבעלים"
   },

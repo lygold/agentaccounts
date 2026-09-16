@@ -504,6 +504,9 @@
   "PhoneInput": {
     "countryCodeLabel": "Country code"
   },
+  "AddressAutocomplete": {
+    "loading": "Searching..."
+  },
   "OwnerLawyerStep": {
     "intro": "Owner's lawyer details"
   },

@@ -481,6 +481,9 @@ export interface PropertyRecord {
   sourceContractRole?: Extract<DealSide, "seller" | "landlord">;
 
   // --- Media (Google Drive refs, never raw bytes — see DriveFileRef) ---
+  /** The Drive folder holding every file for this listing (created lazily
+   *  on first upload — see src/lib/google-drive.ts). */
+  driveFolderId?: string;
   mainPhotos?: DriveFileRef[];
   additionalPhotos?: DriveFileRef[];
   copyrightConfirmed?: boolean;
