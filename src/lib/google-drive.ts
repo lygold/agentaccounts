@@ -48,12 +48,18 @@ function getServiceAccountEmail(): string {
 }
 
 /** The console shows the key with literal `\n` escape sequences (it's a
- *  JSON string field) — .env.local keeps it exactly as pasted from that
- *  JSON, so un-escape here rather than asking Levi to hand-edit a PEM
- *  into real line breaks in a single-line env file. */
+ *  JSON string field) — kept exactly as pasted from that JSON rather than
+ *  asking Levi to hand-edit a PEM into real line breaks in a single-line
+ *  env value, so un-escape here. Also strips one pair of wrapping `"`
+ *  quotes if present: `.env.local` (dotenv) strips those itself when
+ *  parsing, but Amplify's console env vars are injected raw with no such
+ *  stripping — pasting the value the same way in both places would
+ *  otherwise leave literal quote characters in the PEM in production
+ *  only, a hard-to-notice mismatch between local and deployed behavior. */
 function getPrivateKeyPem(): string {
-  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
+  let raw = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
   if (!raw) throw new Error("GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY is not set");
+  if (raw.startsWith('"') && raw.endsWith('"')) raw = raw.slice(1, -1);
   return raw.replace(/\\n/g, "\n");
 }
 
