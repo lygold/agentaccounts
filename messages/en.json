@@ -439,7 +439,8 @@
     "noMatches": "No matches",
     "notListed": "Not listed — manual entry",
     "manualNotice": "Owner and address details will be entered manually in the next steps",
-    "backToList": "Back to list"
+    "backToList": "Back to list",
+    "exclusiveUntil": "Exclusive until {date}"
   },
   "PropertyAddressStep": {
     "prompt": "Search for the property's address — picking a result normalizes the street name",
@@ -503,7 +504,11 @@
     "percentLabel": "Commission %",
     "vatModeLabel": "VAT",
     "vatPlus": "Plus VAT",
-    "vatIncluded": "VAT included"
+    "vatIncluded": "VAT included",
+    "exclusivityLabel": "Exclusivity period",
+    "exclusivityHint": "Leave blank if not exclusive",
+    "exclusivityStartLabel": "Exclusivity start",
+    "exclusivityEndLabel": "Exclusivity end"
   },
   "PropertyDescriptionsStep": {
     "prompt": "Listing descriptions for publishing",

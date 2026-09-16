@@ -18,6 +18,8 @@ export default async function PropertyCommissionPage() {
         <CommissionStepForm
           initialPercent={draft.commissionPercent}
           initialVatMode={draft.commissionVatMode}
+          initialExclusivityStartDate={draft.exclusivityStartDate}
+          initialExclusivityEndDate={draft.exclusivityEndDate}
         />
       </div>
     </PropertyWizardChrome>

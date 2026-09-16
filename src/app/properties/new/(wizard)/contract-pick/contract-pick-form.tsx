@@ -6,12 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import type { ClientCommissionSummary } from "@/lib/wizard/monday/types";
+import type { PropertyContractSummary } from "@/lib/wizard/monday";
 import { PROPERTY_WIZARD_FORM_ID } from "@/lib/property-wizard/steps";
 import { submitContractPick } from "./actions";
 
 interface Props {
-  contracts: ClientCommissionSummary[];
+  contracts: PropertyContractSummary[];
   initialSelectedId?: string;
 }
 
@@ -74,6 +74,11 @@ export function ContractPickForm({ contracts, initialSelectedId }: Props) {
                         <span className="font-medium">{c.name}</span>
                         {c.propertyAddress && (
                           <span className="text-xs text-muted-foreground">{c.propertyAddress}</span>
+                        )}
+                        {c.exclusivityEndDate && (
+                          <span className="text-xs text-primary">
+                            {t("exclusiveUntil", { date: c.exclusivityEndDate })}
+                          </span>
                         )}
                       </button>
                     </li>

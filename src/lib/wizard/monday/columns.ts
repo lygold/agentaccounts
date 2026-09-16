@@ -209,6 +209,17 @@ export const CLIENTS_BOARD = {
      *  "forms" upload instead of asking the agent to re-upload it. */
     file: "file_mkt2b0av",
   },
+  /** Confirmed live (2026-09): an exclusive listing gets TWO rows for the
+   *  same client + property_address — one `contractType: "haskama"` (the
+   *  commission agreement) and one `contractType: "biladiut"` (the
+   *  exclusivity itself). Commission is duplicated onto both rows, but
+   *  ONLY the biladiut row carries these two dates — the haskama row's
+   *  dates are always empty. A non-exclusive representation has no
+   *  biladiut row at all (just haskama, or often neither status set). */
+  exclusivity: {
+    startDate: "date_start",
+    endDate: "date_end",
+  },
 } as const;
 
 export const CLIENTS_BOARD_ID = "1623367406";

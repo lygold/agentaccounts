@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { requireSession } from "@/lib/auth/session-cookie";
 import { getAgentById } from "@/lib/store/agents";
 import { loadPropertyDraft } from "@/lib/property-wizard/draft";
-import { listSellersWithCommissionForAgent } from "@/lib/wizard/monday";
+import { listSellersForPropertyWizard } from "@/lib/wizard/monday";
 import { PropertyWizardChrome } from "@/components/property-wizard-chrome";
 import { ContractPickForm } from "./contract-pick-form";
 
@@ -23,7 +23,7 @@ export default async function ContractPickPage() {
   const agent = await getAgentById(session.agentId);
   const contracts =
     agent?.mondayItemId
-      ? await listSellersWithCommissionForAgent(agent.mondayItemId, { dealType: draft.dealType })
+      ? await listSellersForPropertyWizard(agent.mondayItemId, { dealType: draft.dealType })
       : [];
 
   return (

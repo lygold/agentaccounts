@@ -10,6 +10,8 @@ import { isNextJsRedirect } from "@/lib/wizard/action-utils";
 const Schema = z.object({
   commissionPercent: z.coerce.number().min(0).max(100).optional().or(z.literal("")),
   vatMode: z.enum(["plus", "included"]),
+  exclusivityStartDate: z.string().trim().optional(),
+  exclusivityEndDate: z.string().trim().optional(),
 });
 
 export async function submitPropertyCommission(formData: FormData) {
@@ -23,6 +25,8 @@ export async function submitPropertyCommission(formData: FormData) {
       commissionPercent:
         parsed.data.commissionPercent === "" ? undefined : parsed.data.commissionPercent,
       commissionVatMode: parsed.data.vatMode,
+      exclusivityStartDate: parsed.data.exclusivityStartDate || undefined,
+      exclusivityEndDate: parsed.data.exclusivityEndDate || undefined,
     });
     redirect(propertyStepHref(nextPropertyStep("commission")!));
   } catch (e) {

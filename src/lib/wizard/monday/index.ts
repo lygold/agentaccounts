@@ -17,12 +17,13 @@ export {
   listClientsForAgent,
   listSellersForAgent,
   listSellersWithCommissionForAgent,
+  listSellersForPropertyWizard,
   listBuyersWithCommissionForAgent,
   notifyClientSelected,
   writeBackClients,
   getSignedContractFile,
 } from "./clients";
-export type { ClientWriteBackPerson } from "./clients";
+export type { ClientWriteBackPerson, PropertyContractSummary } from "./clients";
 export { listOffersForAgent, setOfferStatus } from "./offers";
 export { createDealItem } from "./deals";
 export {

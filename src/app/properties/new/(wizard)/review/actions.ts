@@ -36,6 +36,8 @@ export async function submitPropertyReview() {
       ownerEmail: draft.ownerEmail,
       commissionPercent: draft.commissionPercent,
       commissionVatMode: draft.commissionVatMode,
+      exclusivityStartDate: draft.exclusivityStartDate,
+      exclusivityEndDate: draft.exclusivityEndDate,
       propertyType: draft.propertyType,
       referralSource: draft.referralSource,
       referralSourceOther: draft.referralSourceOther,

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { requireSession } from "@/lib/auth/session-cookie";
 import { getAgentById } from "@/lib/store/agents";
 import { advancePropertyDraft, loadPropertyDraft } from "@/lib/property-wizard/draft";
-import { listSellersWithCommissionForAgent } from "@/lib/wizard/monday";
+import { listSellersForPropertyWizard } from "@/lib/wizard/monday";
 import { parsePercentText } from "@/lib/wizard/commission";
 import { parseStreetAndBuilding } from "@/lib/property-wizard/address-parse";
 import { nextPropertyStep, propertyStepHref } from "@/lib/property-wizard/steps";
@@ -48,7 +48,7 @@ export async function submitContractPick(formData: FormData) {
     // store to getById from.
     const agent = await getAgentById(session.agentId);
     const contracts = agent?.mondayItemId
-      ? await listSellersWithCommissionForAgent(agent.mondayItemId, { dealType: draft.dealType! })
+      ? await listSellersForPropertyWizard(agent.mondayItemId, { dealType: draft.dealType! })
       : [];
     const picked = contracts.find((c) => c.id === data.selectedItemId);
     if (!picked) return;
@@ -78,6 +78,8 @@ export async function submitContractPick(formData: FormData) {
       buildingNumber,
       commissionPercent,
       commissionVatMode: commissionPercent != null ? "plus" : undefined,
+      exclusivityStartDate: picked.exclusivityStartDate ?? undefined,
+      exclusivityEndDate: picked.exclusivityEndDate ?? undefined,
     });
     redirect(propertyStepHref(nextPropertyStep("contract-pick")!));
   } catch (e) {

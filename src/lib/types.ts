@@ -521,6 +521,12 @@ export interface PropertyRecord {
   referralPercentOfCommission?: number;
   commissionPercent?: number;
   commissionVatMode?: VatMode;
+  /** ISO yyyy-mm-dd. Prefilled from the signed contract's own "biladiut"
+   *  (exclusivity) row when one exists — see
+   *  src/lib/wizard/monday/clients.ts's listSellersForPropertyWizard.
+   *  Absent for a non-exclusive representation. */
+  exclusivityStartDate?: string;
+  exclusivityEndDate?: string;
   ownerName?: string;
   ownerPhone?: string;
   ownerEmail?: string;

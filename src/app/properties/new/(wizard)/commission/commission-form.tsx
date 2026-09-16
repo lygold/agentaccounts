@@ -12,9 +12,13 @@ import { submitPropertyCommission } from "./actions";
 export function CommissionStepForm({
   initialPercent,
   initialVatMode,
+  initialExclusivityStartDate,
+  initialExclusivityEndDate,
 }: {
   initialPercent?: number;
   initialVatMode?: VatMode;
+  initialExclusivityStartDate?: string;
+  initialExclusivityEndDate?: string;
 }) {
   const t = useTranslations("PropertyCommissionStep");
   const common = useTranslations("Common");
@@ -55,6 +59,37 @@ export function CommissionStepForm({
           ))}
         </div>
         <input type="hidden" name="vatMode" value={vatMode} />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label>{t("exclusivityLabel")}</Label>
+        <p className="text-xs text-muted-foreground">{t("exclusivityHint")}</p>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="exclusivityStartDate" className="text-xs font-normal text-muted-foreground">
+              {t("exclusivityStartLabel")}
+            </Label>
+            <Input
+              id="exclusivityStartDate"
+              name="exclusivityStartDate"
+              type="date"
+              dir="ltr"
+              defaultValue={initialExclusivityStartDate ?? ""}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="exclusivityEndDate" className="text-xs font-normal text-muted-foreground">
+              {t("exclusivityEndLabel")}
+            </Label>
+            <Input
+              id="exclusivityEndDate"
+              name="exclusivityEndDate"
+              type="date"
+              dir="ltr"
+              defaultValue={initialExclusivityEndDate ?? ""}
+            />
+          </div>
+        </div>
       </div>
 
       <Button type="submit" size="lg">
