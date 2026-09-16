@@ -27,6 +27,7 @@
     "myLedger": "My ledger",
     "deals": "Deals",
     "properties": "Properties",
+    "gantt": "Exclusivities",
     "notifications": "Property updates",
     "signOut": "Sign out",
     "agents": "Agents"
@@ -41,7 +42,17 @@
     "title": "Properties",
     "newProperty": "New property",
     "empty": "No properties yet.",
-    "noAddress": "—"
+    "noAddress": "—",
+    "tabAll": "All",
+    "viewGantt": "Timeline view"
+  },
+  "PropertyGantt": {
+    "title": "Exclusivity timeline",
+    "backToList": "List",
+    "exclusivitiesTitle": "Active exclusivities",
+    "noExclusivities": "No active exclusivities.",
+    "haskamotTitle": "Agreements (no exclusivity)",
+    "noHaskamot": "No active non-exclusive agreements."
   },
   "PropertyDetail": {
     "edit": "Edit",

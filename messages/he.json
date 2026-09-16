@@ -27,6 +27,7 @@
     "myLedger": "היומן שלי",
     "deals": "עסקאות",
     "properties": "נכסים",
+    "gantt": "בלעדיויות",
     "notifications": "עדכוני נכסים",
     "signOut": "התנתקות",
     "agents": "סוכנים"
@@ -41,7 +42,17 @@
     "title": "נכסים",
     "newProperty": "נכס חדש",
     "empty": "אין עדיין נכסים.",
-    "noAddress": "—"
+    "noAddress": "—",
+    "tabAll": "הכל",
+    "viewGantt": "תצוגת ציר זמן"
+  },
+  "PropertyGantt": {
+    "title": "ציר זמן בלעדיויות",
+    "backToList": "רשימה",
+    "exclusivitiesTitle": "בלעדיויות פעילות",
+    "noExclusivities": "אין בלעדיויות פעילות.",
+    "haskamotTitle": "הסכמות (ללא בלעדיות)",
+    "noHaskamot": "אין הסכמות פעילות ללא בלעדיות."
   },
   "PropertyDetail": {
     "edit": "עריכה",

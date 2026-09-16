@@ -5,19 +5,32 @@ import { allowedAgentIds, isIdAllowed } from "@/lib/auth/scope";
 import { listPropertiesByOffice } from "@/lib/store/properties";
 import { Nav } from "@/components/nav";
 import { Button } from "@/components/ui/button";
+import type { DealType } from "@/lib/types";
+
+type Tab = "all" | DealType;
 
 /** Same access shape as /deals: agent -> own listings, team_leader -> own +
  *  team roster, manager/admin -> everything (allowedAgentIds already
- *  encodes that scoping — see src/lib/auth/scope.ts). */
-export default async function PropertiesPage() {
+ *  encodes that scoping — see src/lib/auth/scope.ts). Same All/Sales/Rental
+ *  tabs as /properties/gantt, applied here too per Levi's confirmed answer
+ *  ("both the Gantt views and the existing list page"). */
+export default async function PropertiesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const session = await requireSession();
+  const { tab: rawTab } = await searchParams;
+  const tab: Tab = rawTab === "sale" || rawTab === "rental" ? rawTab : "all";
+
   const [allProperties, allowed, t, tDealType] = await Promise.all([
     listPropertiesByOffice(session.officeId),
     allowedAgentIds(session),
     getTranslations("Properties"),
     getTranslations("Enums.dealType"),
   ]);
-  const properties = allProperties.filter((p) => isIdAllowed(allowed, p.agentId));
+  const scoped = allProperties.filter((p) => isIdAllowed(allowed, p.agentId));
+  const properties = tab === "all" ? scoped : scoped.filter((p) => p.dealType === tab);
 
   return (
     <div>
@@ -25,9 +38,19 @@ export default async function PropertiesPage() {
       <main className="mx-auto max-w-3xl p-6">
         <div className="mb-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold">{t("title")}</h1>
-          <Button asChild>
-            <Link href="/properties/new">{t("newProperty")}</Link>
-          </Button>
+          <div className="flex items-center gap-3">
+            <Link href="/properties/gantt" className="text-sm text-secondary underline-offset-4 hover:underline">
+              {t("viewGantt")}
+            </Link>
+            <Button asChild>
+              <Link href="/properties/new">{t("newProperty")}</Link>
+            </Button>
+          </div>
+        </div>
+        <div className="mb-4 flex gap-2 text-sm">
+          <TabLink tab="all" current={tab} label={t("tabAll")} />
+          <TabLink tab="sale" current={tab} label={tDealType("sale")} />
+          <TabLink tab="rental" current={tab} label={tDealType("rental")} />
         </div>
         {properties.length === 0 ? (
           <p className="text-muted-foreground">{t("empty")}</p>
@@ -59,5 +82,19 @@ export default async function PropertiesPage() {
         )}
       </main>
     </div>
+  );
+}
+
+function TabLink({ tab, current, label }: { tab: Tab; current: Tab; label: string }) {
+  const active = tab === current;
+  return (
+    <Link
+      href={tab === "all" ? "/properties" : `/properties?tab=${tab}`}
+      className={`rounded-full border px-3 py-1 ${
+        active ? "border-primary bg-primary text-primary-foreground" : "text-muted-foreground"
+      }`}
+    >
+      {label}
+    </Link>
   );
 }
