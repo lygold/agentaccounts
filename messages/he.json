@@ -26,8 +26,15 @@
     "dashboard": "לוח בקרה",
     "myLedger": "היומן שלי",
     "deals": "עסקאות",
+    "properties": "נכסים",
     "signOut": "התנתקות",
     "agents": "סוכנים"
+  },
+  "Properties": {
+    "title": "נכסים",
+    "newProperty": "נכס חדש",
+    "empty": "אין עדיין נכסים.",
+    "noAddress": "—"
   },
   "Enums": {
     "role": {
@@ -441,7 +448,8 @@
     "streetLabel": "רחוב",
     "buildingNumberLabel": "מספר בית",
     "entranceLabel": "כניסה",
-    "apartmentNumberLabel": "מספר דירה"
+    "apartmentNumberLabel": "מספר דירה",
+    "apartmentNumberHint": "אם לא רלוונטי (למשל בית פרטי), כתבו 0"
   },
   "PropertyMediaStep": {
     "prompt": "העלאת תמונות ומסמכים לנכס",
@@ -461,25 +469,29 @@
     "prompt": "עוד כמה פרטים על הנכס והעסקה",
     "selectPlaceholder": "בחרו...",
     "propertyTypeLabel": "סוג נכס",
-    "propertyType.apartment": "דירה",
-    "propertyType.gardenApartment": "דירת גן",
-    "propertyType.penthouse": "פנטהאוז",
-    "propertyType.duplex": "דופלקס",
-    "propertyType.house": "בית פרטי / וילה",
-    "propertyType.roofApartment": "דירת גג",
-    "propertyType.studio": "סטודיו",
-    "propertyType.office": "משרד",
-    "propertyType.commercial": "מסחרי",
-    "propertyType.land": "מגרש",
-    "propertyType.other": "אחר",
+    "propertyType": {
+      "apartment": "דירה",
+      "gardenApartment": "דירת גן",
+      "penthouse": "פנטהאוז",
+      "duplex": "דופלקס",
+      "house": "בית פרטי / וילה",
+      "roofApartment": "דירת גג",
+      "studio": "סטודיו",
+      "office": "משרד",
+      "commercial": "מסחרי",
+      "land": "מגרש",
+      "other": "אחר"
+    },
     "referralSourceLabel": "איך הגיע אלינו הנכס?",
-    "referralSource.website": "אתר אינטרנט",
-    "referralSource.socialMedia": "רשתות חברתיות",
-    "referralSource.sign": "שלט",
-    "referralSource.recommendation": "המלצה",
-    "referralSource.existingClient": "לקוח קיים",
-    "referralSource.externalAgent": "מתווך/משרד אחר",
-    "referralSource.other": "אחר",
+    "referralSource": {
+      "website": "אתר אינטרנט",
+      "socialMedia": "רשתות חברתיות",
+      "sign": "שלט",
+      "recommendation": "המלצה",
+      "existingClient": "לקוח קיים",
+      "externalAgent": "מתווך/משרד אחר",
+      "other": "אחר"
+    },
     "referralSourceOtherLabel": "פירוט",
     "externalAgentNameLabel": "שם המתווך",
     "externalAgentOfficeLabel": "שם המשרד",
@@ -521,10 +533,12 @@
     "startingPriceLabel": "מחיר התחלה",
     "conditionLabel": "מצב הנכס",
     "selectPlaceholder": "בחרו...",
-    "condition.new": "חדש",
-    "condition.renovated": "משופץ",
-    "condition.good": "שמור",
-    "condition.needsWork": "דורש שיפוץ",
+    "condition": {
+      "new": "חדש",
+      "renovated": "משופץ",
+      "good": "שמור",
+      "needsWork": "דורש שיפוץ"
+    },
     "elevatorLabel": "מעלית",
     "acLabel": "מיזוג אוויר",
     "safeRoomLabel": "ממ״ד",

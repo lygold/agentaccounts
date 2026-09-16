@@ -20,6 +20,7 @@ export {
   listBuyersWithCommissionForAgent,
   notifyClientSelected,
   writeBackClients,
+  getSignedContractFile,
 } from "./clients";
 export type { ClientWriteBackPerson } from "./clients";
 export { listOffersForAgent, setOfferStatus } from "./offers";

@@ -1,36 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { SearchableSelect } from "@/components/searchable-select";
 import { PROPERTY_WIZARD_FORM_ID } from "@/lib/property-wizard/steps";
 import { submitPropertyDetails } from "./actions";
-
-const PROPERTY_TYPES = [
-  "apartment",
-  "gardenApartment",
-  "penthouse",
-  "duplex",
-  "house",
-  "roofApartment",
-  "studio",
-  "office",
-  "commercial",
-  "land",
-  "other",
-] as const;
-
-const REFERRAL_SOURCES = [
-  "website",
-  "socialMedia",
-  "sign",
-  "recommendation",
-  "existingClient",
-  "externalAgent",
-  "other",
-] as const;
 
 interface Initial {
   propertyType?: string;
@@ -55,46 +32,37 @@ export function DetailsStepForm({ initial }: { initial: Initial }) {
   const isOther = referralSource === "other";
   const isExternalAgent = referralSource === "externalAgent";
 
+  const propertyTypeOptions = useMemo(() => {
+    const raw = t.raw("propertyType") as Record<string, string>;
+    return Object.entries(raw).map(([value, label]) => ({ value, label }));
+  }, [t]);
+  const referralSourceOptions = useMemo(() => {
+    const raw = t.raw("referralSource") as Record<string, string>;
+    return Object.entries(raw).map(([value, label]) => ({ value, label }));
+  }, [t]);
+
   return (
     <form id={PROPERTY_WIZARD_FORM_ID} action={submitPropertyDetails} className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="propertyType">{t("propertyTypeLabel")}</Label>
-        <select
-          id="propertyType"
-          name="propertyType"
-          defaultValue={initial.propertyType ?? ""}
-          className="h-11 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <option value="" disabled>
-            {t("selectPlaceholder")}
-          </option>
-          {PROPERTY_TYPES.map((v) => (
-            <option key={v} value={v}>
-              {t(`propertyType.${v}`)}
-            </option>
-          ))}
-        </select>
-      </div>
+      <SearchableSelect
+        id="propertyType"
+        name="propertyType"
+        label={t("propertyTypeLabel")}
+        options={propertyTypeOptions}
+        defaultValue={initial.propertyType}
+        placeholder={t("selectPlaceholder")}
+        searchPlaceholder={t("selectPlaceholder")}
+      />
 
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="referralSource">{t("referralSourceLabel")}</Label>
-        <select
-          id="referralSource"
-          name="referralSource"
-          value={referralSource}
-          onChange={(e) => setReferralSource(e.target.value)}
-          className="h-11 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <option value="" disabled>
-            {t("selectPlaceholder")}
-          </option>
-          {REFERRAL_SOURCES.map((v) => (
-            <option key={v} value={v}>
-              {t(`referralSource.${v}`)}
-            </option>
-          ))}
-        </select>
-      </div>
+      <SearchableSelect
+        id="referralSource"
+        name="referralSource"
+        label={t("referralSourceLabel")}
+        options={referralSourceOptions}
+        defaultValue={initial.referralSource}
+        placeholder={t("selectPlaceholder")}
+        searchPlaceholder={t("selectPlaceholder")}
+        onChange={setReferralSource}
+      />
 
       {isOther && (
         <div className="flex flex-col gap-1.5">

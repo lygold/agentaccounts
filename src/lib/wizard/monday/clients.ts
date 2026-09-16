@@ -636,3 +636,71 @@ function textOf(columns: ColumnValue[], id: string): string | null {
   const t = col?.text?.trim();
   return t ? t : null;
 }
+
+interface SignedContractFile {
+  name: string;
+  buffer: Buffer;
+  mimeType: string;
+}
+
+const EXTENSION_MIME_TYPES: Record<string, string> = {
+  ".pdf": "application/pdf",
+  ".doc": "application/msword",
+  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+};
+
+/**
+ * Downloads the signed contract's own attached file (confirmed live: one
+ * per item, the signed PDF itself — covers exclusivity/consent together,
+ * not separate documents) — for the property wizard to auto-attach as a
+ * "forms" upload instead of asking the agent to re-upload it. Returns null
+ * if the item has no file attached, or on any error (best-effort — never
+ * blocks the wizard's own flow on a Monday/network hiccup).
+ */
+export async function getSignedContractFile(
+  mondayItemId: string,
+): Promise<SignedContractFile | null> {
+  try {
+    const query = /* GraphQL */ `
+      query ($ids: [ID!]) {
+        items(ids: $ids) {
+          column_values(ids: ["${CLIENTS_BOARD.client.file}"]) {
+            ... on FileValue {
+              files {
+                ... on FileAssetValue {
+                  asset_id
+                  name
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+    const data = await mondayQuery<{
+      items: Array<{ column_values: Array<{ files?: Array<{ asset_id: string; name: string }> }> }>;
+    }>(query, { ids: [mondayItemId] });
+    const file = data.items?.[0]?.column_values?.[0]?.files?.[0];
+    if (!file) return null;
+
+    const assetData = await mondayQuery<{
+      assets: Array<{ public_url: string; file_extension: string }>;
+    }>(/* GraphQL */ `query ($ids: [ID!]) { assets(ids: $ids) { public_url file_extension } }`, {
+      ids: [file.asset_id],
+    });
+    const asset = assetData.assets?.[0];
+    if (!asset?.public_url) return null;
+
+    const res = await fetch(asset.public_url);
+    if (!res.ok) return null;
+    const buffer = Buffer.from(await res.arrayBuffer());
+    const mimeType = EXTENSION_MIME_TYPES[asset.file_extension.toLowerCase()] ?? "application/octet-stream";
+    return { name: file.name, buffer, mimeType };
+  } catch (e) {
+    console.error("[wizard] getSignedContractFile failed:", e);
+    return null;
+  }
+}

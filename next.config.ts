@@ -72,6 +72,19 @@ for (const key of SERVER_ENV_KEYS) {
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   env: bakedServerEnv,
+  // Next's default server-action body limit is 1MB — the property
+  // wizard's media step submits multiple photos/documents in one request
+  // (server actions accept File objects in FormData directly), and phone
+  // photos alone routinely run 3-5MB each, so the default limit made every
+  // submit with any file attached fail. Raised to cover a realistic batch
+  // (several photos + forms/documents in one go); if agents hit this in
+  // practice, either raise it further or split the media step's request
+  // into one submit per file instead of one big multi-file submit.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "50mb",
+    },
+  },
 };
 
 export default withNextIntl(nextConfig);

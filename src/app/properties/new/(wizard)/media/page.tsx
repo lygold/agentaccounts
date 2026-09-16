@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireSession } from "@/lib/auth/session-cookie";
-import { loadPropertyDraft } from "@/lib/property-wizard/draft";
+import { loadPropertyDraft, patchPropertyDraft, type PropertyDraft } from "@/lib/property-wizard/draft";
+import { ensurePropertyFolder, uploadFileToDrive } from "@/lib/google-drive";
+import { getSignedContractFile } from "@/lib/wizard/monday";
 import { PropertyWizardChrome } from "@/components/property-wizard-chrome";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,10 +11,44 @@ import { Button } from "@/components/ui/button";
 import { PROPERTY_WIZARD_FORM_ID } from "@/lib/property-wizard/steps";
 import { submitPropertyMedia } from "./actions";
 
+/** Auto-attaches the selected signed contract's own PDF as a "forms"
+ *  upload, the first time the agent reaches this step — so they don't
+ *  have to re-upload the exclusivity/consent document that's already on
+ *  file. Best-effort: any failure (no contract picked, no file on it,
+ *  Drive/Monday hiccup) just leaves forms empty for manual upload,
+ *  exactly like before this existed. Guarded so it only ever runs once
+ *  per draft (skips once `forms` is non-empty or there's no linked
+ *  contract), safe to call on every render. */
+async function ensureContractFormAutoAttached(
+  agentId: string,
+  draft: PropertyDraft,
+): Promise<PropertyDraft> {
+  if (draft.forms?.length || !draft.sourceContractMondayId || !draft.street || !draft.buildingNumber) {
+    return draft;
+  }
+  try {
+    const file = await getSignedContractFile(draft.sourceContractMondayId);
+    if (!file) return draft;
+
+    let folderId = draft.driveFolderId;
+    if (!folderId) {
+      const label = `${draft.street} ${draft.buildingNumber}${draft.apartmentNumber ? `-${draft.apartmentNumber}` : ""}`;
+      folderId = await ensurePropertyFolder(String(new Date().getFullYear()), label);
+    }
+    const webFile = new File([new Uint8Array(file.buffer)], file.name, { type: file.mimeType });
+    const ref = await uploadFileToDrive(folderId, webFile);
+    return patchPropertyDraft(agentId, { driveFolderId: folderId, forms: [ref] });
+  } catch (e) {
+    console.error("[property-wizard] auto-attach contract form failed:", e);
+    return draft;
+  }
+}
+
 export default async function PropertyMediaPage() {
   const session = await requireSession();
-  const draft = await loadPropertyDraft(session.agentId);
+  let draft = await loadPropertyDraft(session.agentId);
   if (!draft.street) redirect("/properties/new/address");
+  draft = await ensureContractFormAutoAttached(session.agentId, draft);
   const t = await getTranslations("PropertyMediaStep");
 
   return (

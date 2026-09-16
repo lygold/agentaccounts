@@ -6,6 +6,7 @@ import { PropertyWizardChrome } from "@/components/property-wizard-chrome";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { SearchableSelect } from "@/components/searchable-select";
 import { PROPERTY_WIZARD_FORM_ID } from "@/lib/property-wizard/steps";
 import { submitPropertyTechnical } from "./actions";
 
@@ -46,21 +47,17 @@ export default async function PropertyTechnicalPage() {
           <NumField id="startingPrice" label={t("startingPriceLabel")} defaultValue={draft.startingPrice} />
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="condition">{t("conditionLabel")}</Label>
-          <select
-            id="condition"
-            name="condition"
-            defaultValue={draft.condition ?? ""}
-            className="h-11 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <option value="">{t("selectPlaceholder")}</option>
-            <option value="new">{t("condition.new")}</option>
-            <option value="renovated">{t("condition.renovated")}</option>
-            <option value="good">{t("condition.good")}</option>
-            <option value="needsWork">{t("condition.needsWork")}</option>
-          </select>
-        </div>
+        <SearchableSelect
+          id="condition"
+          name="condition"
+          label={t("conditionLabel")}
+          options={Object.entries(t.raw("condition") as Record<string, string>).map(
+            ([value, label]) => ({ value, label }),
+          )}
+          defaultValue={draft.condition}
+          placeholder={t("selectPlaceholder")}
+          searchPlaceholder={t("selectPlaceholder")}
+        />
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-md border p-3">
           <BoolField id="elevator" label={t("elevatorLabel")} checked={draft.elevator} />

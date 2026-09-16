@@ -203,6 +203,11 @@ export const CLIENTS_BOARD = {
     /** Text, format "<number> חודשי שכירות" — same dual-role behavior,
      *  Landlord/Renter roles instead. */
     commissionRental: "commission_rental",
+    /** The signed contract PDF itself (one file per item, confirmed live)
+     *  — covers exclusivity/consent-to-commission together, not separate
+     *  documents. Used by the property wizard to auto-attach it as a
+     *  "forms" upload instead of asking the agent to re-upload it. */
+    file: "file_mkt2b0av",
   },
 } as const;
 

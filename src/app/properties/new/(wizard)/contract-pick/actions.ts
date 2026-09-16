@@ -7,6 +7,7 @@ import { getAgentById } from "@/lib/store/agents";
 import { advancePropertyDraft, loadPropertyDraft } from "@/lib/property-wizard/draft";
 import { listSellersWithCommissionForAgent } from "@/lib/wizard/monday";
 import { parsePercentText } from "@/lib/wizard/commission";
+import { parseStreetAndBuilding } from "@/lib/property-wizard/address-parse";
 import { nextPropertyStep, propertyStepHref } from "@/lib/property-wizard/steps";
 import { isNextJsRedirect } from "@/lib/wizard/action-utils";
 import type { DealSide } from "@/lib/types";
@@ -57,16 +58,24 @@ export async function submitContractPick(formData: FormData) {
       draft.dealType === "rental" ? picked.commissionRentalText : picked.commissionSaleText;
     const commissionPercent = parsePercentText(commissionText) ?? undefined;
 
+    // Split "דרך חברון 54" into street + buildingNumber for an immediate
+    // prefill — formattedAddress still carries the raw text into the
+    // address step's Places search box, so the agent can still normalize
+    // the street spelling from there; picking a suggestion overwrites
+    // these same fields with Places' own values.
+    const { street, buildingNumber } = picked.propertyAddress
+      ? parseStreetAndBuilding(picked.propertyAddress)
+      : {};
+
     await advancePropertyDraft(session.agentId, "contract-pick", {
       sourceContractMondayId: picked.id,
       sourceContractRole: role,
       ownerName: picked.name,
       ownerPhone: picked.phone ?? undefined,
       ownerEmail: picked.email ?? undefined,
-      // Raw Monday text, not yet run through Places — the address step
-      // re-resolves this into normalized city/street/etc, prefilled from
-      // this as the initial search text.
       formattedAddress: picked.propertyAddress ?? undefined,
+      street,
+      buildingNumber,
       commissionPercent,
       commissionVatMode: commissionPercent != null ? "plus" : undefined,
     });

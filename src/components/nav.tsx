@@ -26,6 +26,7 @@ export async function Nav() {
           )
         )}
         <Link href="/deals">{t("deals")}</Link>
+        <Link href="/properties">{t("properties")}</Link>
         {showAdmin && <Link href="/admin/agents">{t("agents")}</Link>}
       </div>
       <div className="flex items-center gap-4">

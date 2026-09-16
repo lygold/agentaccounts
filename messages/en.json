@@ -26,8 +26,15 @@
     "dashboard": "Dashboard",
     "myLedger": "My ledger",
     "deals": "Deals",
+    "properties": "Properties",
     "signOut": "Sign out",
     "agents": "Agents"
+  },
+  "Properties": {
+    "title": "Properties",
+    "newProperty": "New property",
+    "empty": "No properties yet.",
+    "noAddress": "—"
   },
   "Enums": {
     "role": {
@@ -441,7 +448,8 @@
     "streetLabel": "Street",
     "buildingNumberLabel": "Building number",
     "entranceLabel": "Entrance",
-    "apartmentNumberLabel": "Apartment number"
+    "apartmentNumberLabel": "Apartment number",
+    "apartmentNumberHint": "If not relevant (e.g. a private house), enter 0"
   },
   "PropertyMediaStep": {
     "prompt": "Upload photos and documents for the listing",
@@ -461,25 +469,29 @@
     "prompt": "A few more details about the property and deal",
     "selectPlaceholder": "Select...",
     "propertyTypeLabel": "Property type",
-    "propertyType.apartment": "Apartment",
-    "propertyType.gardenApartment": "Garden apartment",
-    "propertyType.penthouse": "Penthouse",
-    "propertyType.duplex": "Duplex",
-    "propertyType.house": "Private house / villa",
-    "propertyType.roofApartment": "Roof apartment",
-    "propertyType.studio": "Studio",
-    "propertyType.office": "Office",
-    "propertyType.commercial": "Commercial",
-    "propertyType.land": "Land",
-    "propertyType.other": "Other",
+    "propertyType": {
+      "apartment": "Apartment",
+      "gardenApartment": "Garden apartment",
+      "penthouse": "Penthouse",
+      "duplex": "Duplex",
+      "house": "Private house / villa",
+      "roofApartment": "Roof apartment",
+      "studio": "Studio",
+      "office": "Office",
+      "commercial": "Commercial",
+      "land": "Land",
+      "other": "Other"
+    },
     "referralSourceLabel": "How did this listing come to us?",
-    "referralSource.website": "Website",
-    "referralSource.socialMedia": "Social media",
-    "referralSource.sign": "Sign",
-    "referralSource.recommendation": "Recommendation",
-    "referralSource.existingClient": "Existing client",
-    "referralSource.externalAgent": "Another agent/office",
-    "referralSource.other": "Other",
+    "referralSource": {
+      "website": "Website",
+      "socialMedia": "Social media",
+      "sign": "Sign",
+      "recommendation": "Recommendation",
+      "existingClient": "Existing client",
+      "externalAgent": "Another agent/office",
+      "other": "Other"
+    },
     "referralSourceOtherLabel": "Details",
     "externalAgentNameLabel": "Agent name",
     "externalAgentOfficeLabel": "Office name",
@@ -521,10 +533,12 @@
     "startingPriceLabel": "Starting price",
     "conditionLabel": "Condition",
     "selectPlaceholder": "Select...",
-    "condition.new": "New",
-    "condition.renovated": "Renovated",
-    "condition.good": "Good",
-    "condition.needsWork": "Needs work",
+    "condition": {
+      "new": "New",
+      "renovated": "Renovated",
+      "good": "Good",
+      "needsWork": "Needs work"
+    },
     "elevatorLabel": "Elevator",
     "acLabel": "A/C",
     "safeRoomLabel": "Safe room",

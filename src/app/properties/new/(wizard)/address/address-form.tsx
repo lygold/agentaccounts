@@ -39,6 +39,7 @@ export function AddressStepForm({ initial }: { initial: Initial }) {
     lat: initial.lat,
     lng: initial.lng,
   });
+  const [apartmentNumber, setApartmentNumber] = useState(initial.apartmentNumber ?? "");
 
   function handleResolved(details: PlaceAddressDetails) {
     setResolved({
@@ -90,7 +91,14 @@ export function AddressStepForm({ initial }: { initial: Initial }) {
           onChange={(v) => setResolved((s) => ({ ...s, buildingNumber: v }))}
         />
         <Field id="entrance" label={t("entranceLabel")} defaultValue={initial.entrance} />
-        <Field id="apartmentNumber" label={t("apartmentNumberLabel")} defaultValue={initial.apartmentNumber} />
+        <Field
+          id="apartmentNumber"
+          label={t("apartmentNumberLabel")}
+          required
+          hint={t("apartmentNumberHint")}
+          value={apartmentNumber}
+          onChange={setApartmentNumber}
+        />
       </div>
 
       <Button type="submit" size="lg">
@@ -104,6 +112,7 @@ function Field({
   id,
   label,
   required,
+  hint,
   value,
   onChange,
   defaultValue,
@@ -111,6 +120,7 @@ function Field({
   id: string;
   label: string;
   required?: boolean;
+  hint?: string;
   value?: string;
   onChange?: (v: string) => void;
   defaultValue?: string;
@@ -125,11 +135,13 @@ function Field({
       <Input
         id={id}
         name={id}
+        required={required}
         dir="rtl"
         {...(controlled
           ? { value, onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange?.(e.target.value) }
           : { defaultValue: defaultValue ?? "" })}
       />
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 }
