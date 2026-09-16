@@ -621,14 +621,39 @@ source of truth for photos/documents — agentLedger only stores a
 `{driveFileId, webViewLink}` pointer, never the bytes (deliberate reversal
 of the Decisions Log's old "S3 + auto-copy to Drive" answer below — see
 that row). No Monday write in this phase.
-- **9a — DB + storage scaffolding:** ✅ done. `byOfficeId` GSI added to
-  `agent-ledger-properties` (predated Phase 5, had none). `PropertyRecord`
-  type (full field inventory, grouped by wizard step). `src/lib/store/
-  properties.ts`. `DYNAMODB_TABLE_PROPERTIES` wired (`.env.local`, Amplify
-  console, `next.config.ts`).
-  **Not yet done:** `src/lib/google-drive.ts` (needs a GCP service account
-  + Drive-API enablement + target folder share from Levi first — blocking),
-  Google Places Autocomplete wiring (needs `GOOGLE_MAPS_API_KEY` from Levi).
+- **9a — DB + storage scaffolding:**
+  - DB: ✅ done. `byOfficeId` GSI added to `agent-ledger-properties`
+    (predated Phase 5, had none). `PropertyRecord` type (full field
+    inventory, grouped by wizard step). `src/lib/store/properties.ts`.
+    `DYNAMODB_TABLE_PROPERTIES` wired (`.env.local`, Amplify console,
+    `next.config.ts`).
+  - Places API (New): ✅ done, verified live end-to-end with real
+    Jerusalem addresses (`src/lib/places.ts` + `places-actions.ts` +
+    `src/components/address-autocomplete.tsx`). Server-only key (calls go
+    through a server action, never reaches the browser — revised from an
+    earlier NEXT_PUBLIC_ plan). Field mask pinned to the Essentials SKU
+    tier so this never bills at the pricier Pro/Enterprise rates.
+  - Google Drive (`src/lib/google-drive.ts`): auth + folder/file
+    operations built, but **not writing to the office's real existing
+    folder yet**. Tried, in order: (1) a bare service account — fails,
+    zero Drive storage quota of its own, can't write into a regular
+    person's My Drive folder at all (confirmed live against Google's
+    actual error); (2) domain-wide delegation to impersonate a real
+    account (would let uploads land directly in the actual existing
+    `נכסים בטיפול רימקס חזון` structure) — Workspace Admin console setup
+    kept returning `unauthorized_client` and Levi parked it rather than
+    keep debugging live; likely a Client-ID-vs-email or scope mismatch in
+    the delegation entry, unconfirmed. **Current plan**: write into a
+    dedicated Shared Drive instead (a service account added as a member
+    writes against its pooled storage, no impersonation needed — every
+    Drive call already passes `supportsAllDrives=true` for this).
+    Blocking: Levi needs to create the Shared Drive + a folder in it and
+    share it with `GOOGLE_SERVICE_ACCOUNT_EMAIL` as Content Manager, then
+    give the folder id for `GOOGLE_DRIVE_PROPERTIES_ROOT_FOLDER_ID`.
+    `ensurePropertyFolder()` already builds the same
+    `{year}/{street} {building}-{apartment}` shape the real folder uses,
+    so moving into the real structure later (once delegation is revisited,
+    or some other reconciliation) is a relocation, not a restructuring.
 - **9b/9c/9d — the wizard itself:** not started. `/properties/new/(wizard)/*`,
   step order: deal type → signed-contract picker (prefills owner/address/
   commission, reusing the deal wizard's `listSellersForAgent`) → address

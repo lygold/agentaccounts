@@ -11,21 +11,29 @@ import type { DriveFileRef } from "./types";
  * already used for session cookies) exchanged for an OAuth2 access token,
  * then plain `fetch` calls against the Drive REST API v3.
  *
- * Writes go straight into the office's existing folder structure —
- * "נכסים בטיפול רימקס חזון" / {year} / "{street} {building}-{apartment}" —
- * confirmed live and working: GOOGLE_DRIVE_PROPERTIES_ROOT_FOLDER_ID
- * points at that real root, not a separate staging area.
+ * CURRENT STATE (deliberately temporary — see ROADMAP.md's Phase 9 notes):
+ * GOOGLE_DRIVE_PROPERTIES_ROOT_FOLDER_ID points at a folder inside a
+ * dedicated Shared Drive, NOT the office's real existing structure
+ * ("נכסים בטיפול רימקס חזון" / {year} / property, still a regular
+ * person's My Drive folder). A bare service account has zero storage
+ * quota of its own and can't write into a personal My Drive folder at
+ * all (confirmed live against Google's actual error) — a Shared Drive
+ * sidesteps that entirely: once the service account is added as a
+ * member (Content Manager), it writes against the Shared Drive's own
+ * pooled storage, no impersonation needed. Every Drive API call here
+ * passes `supportsAllDrives=true` (required for any call touching a
+ * Shared Drive) for that reason.
  *
- * A bare service account has zero Drive storage quota of its own and
- * can't create files inside someone else's My Drive folder (verified
- * live against Google's actual error) — so every request here is signed
- * with GOOGLE_DRIVE_IMPERSONATE_EMAIL set as the JWT's subject (domain-
- * wide delegation, granted in the Workspace Admin console for this
- * service account's OAuth Client ID, scope
- * https://www.googleapis.com/auth/drive). Uploads are then charged
- * against and owned by that real account, same as if a person had put
- * them there by hand — that account also needs ordinary Editor sharing
- * on the root folder, delegation alone doesn't grant folder access.
+ * Domain-wide delegation (impersonating a real account so uploads land
+ * directly in the actual existing folder, matching its structure
+ * exactly) was attempted and parked — Workspace Admin console setup
+ * kept failing with `unauthorized_client` and Levi chose to defer it
+ * rather than keep debugging it live. ensurePropertyFolder still builds
+ * the same {year}/{street} {building}-{apartment} shape inside this
+ * Shared Drive, so a later move into the real folder (once delegation
+ * is sorted out, or via some other reconciliation script) is a
+ * structural no-op — just relocating already-correctly-organized
+ * folders, not renaming/reorganizing anything.
  */
 
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -55,15 +63,6 @@ function getRootFolderId(): string {
   return id;
 }
 
-/** The real account uploads are impersonated as (domain-wide delegation) —
- *  see the file-level doc comment. Required; there's no supported way to
- *  write into the existing folder as the bare service account. */
-function getImpersonateEmail(): string {
-  const email = process.env.GOOGLE_DRIVE_IMPERSONATE_EMAIL;
-  if (!email) throw new Error("GOOGLE_DRIVE_IMPERSONATE_EMAIL is not set");
-  return email;
-}
-
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
 /** RFC 7523 JWT-bearer flow: sign a short-lived claim set with the service
@@ -78,11 +77,10 @@ async function getAccessToken(): Promise<string> {
   const assertion = await new SignJWT({ scope: SCOPE })
     .setProtectedHeader({ alg: "RS256", typ: "JWT" })
     .setIssuer(getServiceAccountEmail())
-    // The impersonated real account, not the service account's own email —
-    // this IS the domain-wide delegation: Google honors `sub` as "act as
-    // this user" once the Workspace admin has granted it for this
-    // service account's Client ID + the drive scope above.
-    .setSubject(getImpersonateEmail())
+    // Bare service-account auth, not delegation — see the file-level doc
+    // comment on why (Shared Drive membership, not impersonation, is what
+    // lets this write real files right now).
+    .setSubject(getServiceAccountEmail())
     .setAudience(TOKEN_URL)
     .setIssuedAt(now)
     .setExpirationTime(now + 3600)
@@ -120,7 +118,15 @@ async function findFolder(parentId: string, name: string): Promise<string | null
   const q =
     `name = '${escapeForDriveQuery(name)}' and '${parentId}' in parents ` +
     `and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
-  const res = await fetch(`${DRIVE_API}/files?q=${encodeURIComponent(q)}&fields=files(id)&pageSize=1`, {
+  const params = new URLSearchParams({
+    q,
+    fields: "files(id)",
+    pageSize: "1",
+    supportsAllDrives: "true",
+    includeItemsFromAllDrives: "true",
+    corpora: "allDrives",
+  });
+  const res = await fetch(`${DRIVE_API}/files?${params}`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   });
@@ -133,7 +139,7 @@ async function findFolder(parentId: string, name: string): Promise<string | null
 
 async function createFolder(parentId: string, name: string): Promise<string> {
   const token = await getAccessToken();
-  const res = await fetch(`${DRIVE_API}/files?fields=id`, {
+  const res = await fetch(`${DRIVE_API}/files?fields=id&supportsAllDrives=true`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -212,18 +218,21 @@ export async function uploadFileToDrive(folderId: string, file: File): Promise<D
     file.type || "application/octet-stream",
   );
 
-  const res = await fetch(`${UPLOAD_API}/files?uploadType=multipart&fields=id,name,webViewLink`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": `multipart/related; boundary=${boundary}`,
+  const res = await fetch(
+    `${UPLOAD_API}/files?uploadType=multipart&fields=id,name,webViewLink&supportsAllDrives=true`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": `multipart/related; boundary=${boundary}`,
+      },
+      // Buffer/Uint8Array is a valid fetch BodyInit at runtime (Node's fetch
+      // accepts any ArrayBufferView) — the `as` sidesteps a lib.dom/undici
+      // BodyInit type mismatch in this project's TS setup, not a real risk.
+      body: body as unknown as BodyInit,
+      cache: "no-store",
     },
-    // Buffer/Uint8Array is a valid fetch BodyInit at runtime (Node's fetch
-    // accepts any ArrayBufferView) — the `as` sidesteps a lib.dom/undici
-    // BodyInit type mismatch in this project's TS setup, not a real risk.
-    body: body as unknown as BodyInit,
-    cache: "no-store",
-  });
+  );
   if (!res.ok) {
     throw new Error(`Drive upload failed (${res.status}): ${await res.text()}`);
   }
