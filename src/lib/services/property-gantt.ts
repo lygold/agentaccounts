@@ -51,29 +51,34 @@ export function barThicknessPx(count: number): number {
   return Math.max(10, 32 - (n - 1) * 2);
 }
 
+/** Vertical gap (px) between rows — scales with bar thickness so rows never
+ *  visually merge into a solid staircase (the first cut's bug: the track
+ *  was a fixed 16px regardless of bar thickness, so anything thicker than
+ *  that overlapped the row below it). */
+export function rowGapPx(barHeight: number): number {
+  return Math.max(6, Math.round(barHeight / 2));
+}
+
 export interface TimelineBounds {
   startMs: number;
   endMs: number;
 }
 
-const PAD_MS = 3 * 24 * 60 * 60 * 1000; // 3 days of breathing room on each edge
+const PAD_MS_END = 5 * 24 * 60 * 60 * 1000; // a few days of breathing room after the last bar
 
-/** Shared timeline bounds across every bar being shown, always including
- *  "today" so a chart of only-future or only-past exclusivities still
- *  renders sensibly. */
+/**
+ * Shared timeline bounds across every bar being shown. Per Levi: "the
+ * dates should probably be most left ie start of earliest exclusivity" —
+ * the left edge is exactly the earliest start date, no padding. The right
+ * edge gets a few days of padding past the latest end date so the last bar
+ * isn't flush against the card's edge.
+ */
 export function computeTimelineBounds(
-  items: Array<{ exclusivityStartDate?: string; exclusivityEndDate?: string }>,
-  now: Date = new Date(),
+  items: Array<{ exclusivityStartDate: string; exclusivityEndDate: string }>,
 ): TimelineBounds {
-  const starts = items
-    .map((i) => (i.exclusivityStartDate ? new Date(i.exclusivityStartDate).getTime() : null))
-    .filter((v): v is number => v != null);
-  const ends = items
-    .map((i) => (i.exclusivityEndDate ? new Date(i.exclusivityEndDate).getTime() : null))
-    .filter((v): v is number => v != null);
-  const startMs = Math.min(...starts, now.getTime()) - PAD_MS;
-  const endMs = Math.max(...ends, now.getTime()) + PAD_MS;
-  return { startMs, endMs };
+  const starts = items.map((i) => new Date(i.exclusivityStartDate).getTime());
+  const ends = items.map((i) => new Date(i.exclusivityEndDate).getTime());
+  return { startMs: Math.min(...starts), endMs: Math.max(...ends) + PAD_MS_END };
 }
 
 /** Position (0-100) of a timestamp within the shared timeline. */
@@ -81,4 +86,21 @@ export function positionPercent(ms: number, bounds: TimelineBounds): number {
   const span = bounds.endMs - bounds.startMs;
   if (span <= 0) return 0;
   return Math.min(100, Math.max(0, ((ms - bounds.startMs) / span) * 100));
+}
+
+/**
+ * One tick per calendar month starting exactly at the timeline's left edge
+ * — per Levi: "...and then a line every one month after that." Real
+ * calendar months (not fixed 30-day chunks), so a tick always lands on the
+ * same day-of-month as the start date.
+ */
+export function monthTicks(bounds: TimelineBounds): number[] {
+  const ticks = [bounds.startMs];
+  for (let i = 1; ; i++) {
+    const next = new Date(bounds.startMs);
+    next.setMonth(next.getMonth() + i);
+    if (next.getTime() > bounds.endMs) break;
+    ticks.push(next.getTime());
+  }
+  return ticks;
 }
