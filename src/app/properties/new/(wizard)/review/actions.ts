@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth/session-cookie";
 import { loadPropertyDraft, savePropertyDraft, emptyPropertyDraft } from "@/lib/property-wizard/draft";
 import { createProperty } from "@/lib/store/properties";
+import { mirrorPropertyToMonday } from "@/lib/sync/properties";
 import { propertyStepHref } from "@/lib/property-wizard/steps";
 import { isNextJsRedirect } from "@/lib/wizard/action-utils";
 
@@ -97,6 +98,11 @@ export async function submitPropertyReview() {
       estimatedMonthsToSell: draft.estimatedMonthsToSell,
       letterGrade: draft.letterGrade,
     });
+
+    // Never throws — dead-letters to Redis on failure (see
+    // src/lib/sync/properties.ts). Awaited so it completes before this
+    // serverless invocation ends, same convention as admin/agents/actions.ts.
+    await mirrorPropertyToMonday(property);
 
     // Clear the draft so a fresh /properties/new starts clean, but keep the
     // furthestStep pointer meaningless here — reset entirely rather than

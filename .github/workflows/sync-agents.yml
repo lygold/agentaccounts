@@ -2,8 +2,9 @@ name: Sync agents from Daf Kesher
 
 # Inbound roster sync (ROADMAP Phase 4d): pulls the Daf Kesher (Monday) agent
 # board into the app's `agents` table. Runs until Daf Kesher is retired
-# (Phase 10). This is the ONLY Monday board the app syncs today — Properties /
-# Offers / Signed Contracts / Referrals get their own bridges in Phases 9-10.
+# (Phase 10). Properties Raw Data gets its own bridge — see
+# sync-properties.yml; Offers / Signed Contracts / Referrals don't have one
+# yet (Phases 9-10).
 #
 # Setup:
 #   - Repo secret  SYNC_SECRET  = the value from .env.local / Amplify env

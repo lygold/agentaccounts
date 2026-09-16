@@ -25,6 +25,7 @@ export const RedisKeys = {
   audit: (date: string) => `al:audit:${date}`,
   /** Dead-letter list for agent → Daf Kesher mirror writes that failed. */
   agentMirrorDeadletter: "al:sync:agent:deadletter",
+  propertyMirrorDeadletter: "al:sync:property:deadletter",
   /** Capped list (most recent first) of property-edit notifications, for
    *  the secretary's aggregated feed — see src/lib/services/property-notify.ts
    *  and /admin/notifications. Separate from PropertyRecord.updates, which

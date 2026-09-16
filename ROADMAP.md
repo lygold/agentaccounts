@@ -633,33 +633,51 @@ that row). No Monday write in this phase.
     through a server action, never reaches the browser — revised from an
     earlier NEXT_PUBLIC_ plan). Field mask pinned to the Essentials SKU
     tier so this never bills at the pricier Pro/Enterprise rates.
-  - Google Drive (`src/lib/google-drive.ts`): auth + folder/file
-    operations built, but **not writing to the office's real existing
-    folder yet**. Tried, in order: (1) a bare service account — fails,
-    zero Drive storage quota of its own, can't write into a regular
-    person's My Drive folder at all (confirmed live against Google's
-    actual error); (2) domain-wide delegation to impersonate a real
-    account (would let uploads land directly in the actual existing
-    `נכסים בטיפול רימקס חזון` structure) — Workspace Admin console setup
-    kept returning `unauthorized_client` and Levi parked it rather than
-    keep debugging live; likely a Client-ID-vs-email or scope mismatch in
-    the delegation entry, unconfirmed. **Current plan**: write into a
-    dedicated Shared Drive instead (a service account added as a member
-    writes against its pooled storage, no impersonation needed — every
-    Drive call already passes `supportsAllDrives=true` for this).
-    Blocking: Levi needs to create the Shared Drive + a folder in it and
-    share it with `GOOGLE_SERVICE_ACCOUNT_EMAIL` as Content Manager, then
-    give the folder id for `GOOGLE_DRIVE_PROPERTIES_ROOT_FOLDER_ID`.
-    `ensurePropertyFolder()` already builds the same
+  - Google Drive (`src/lib/google-drive.ts`): ✅ done, verified live —
+    folder-per-year/property creation + real file upload both confirmed
+    working. Writes go into a **dedicated Shared Drive**, not yet the
+    office's real existing `נכסים בטיפול רימקס חזון` folder — domain-wide
+    delegation (which would write directly into the real structure) was
+    attempted first, kept failing with `unauthorized_client` in the
+    Workspace Admin console regardless of which account was impersonated,
+    and Levi parked it rather than keep debugging live. A bare service
+    account has zero Drive storage quota and can't write into a regular
+    person's My Drive folder at all (confirmed live) — a Shared Drive
+    sidesteps that: the service account is a member, writes against its
+    pooled storage, no impersonation needed (`supportsAllDrives=true` on
+    every Drive call). `ensurePropertyFolder()` builds the same
     `{year}/{street} {building}-{apartment}` shape the real folder uses,
-    so moving into the real structure later (once delegation is revisited,
-    or some other reconciliation) is a relocation, not a restructuring.
-- **9b/9c/9d — the wizard itself:** not started. `/properties/new/(wizard)/*`,
-  step order: deal type → signed-contract picker (prefills owner/address/
-  commission, reusing the deal wizard's `listSellersForAgent`) → address
-  (Places) → commission → property type/referral → media (Drive) →
-  descriptions → technical details → internal ratings (office-only) →
-  review/submit.
+    so moving into the real structure later (revisit delegation, or some
+    other reconciliation) is a relocation, not a restructuring.
+- **9b/9c/9d — the wizard itself:** ✅ done, all 10 steps, deployed and
+  live at `/properties/new`. Deal type → signed-contract picker (prefills
+  owner/address/commission via `listSellersWithCommissionForAgent`, same
+  `agent.mondayItemId` caveat as the deal wizard) → address (Places,
+  editable after) → commission → property type/referral/external agent →
+  media (Drive uploads) → descriptions (HE/EN + Yad2) → technical details
+  → internal ratings (office-only) → review → creates a real
+  `PropertyRecord`. Property type / referral source option lists are a
+  reasonable standard set, not reconciled against Monday's exact dropdown
+  values — both are plain strings, easy to adjust later.
+- **Monday sync bridge** — same shape as agents' Phase 4d bridge
+  (`src/lib/sync/agents.ts`): built, **not yet deployed** (code committed
+  locally, held back on purpose pending review). `src/lib/sync/
+  properties.ts` — inbound `syncPropertiesFromMonday()` pulls every
+  Properties Raw Data item into the `properties` table (so listings
+  entered the old way, or via the Superform this wizard replaces, show up
+  here too), matched/linked by a new `PropertyRecord.mondayItemId`;
+  outbound `mirrorPropertyToMonday()` pushes a wizard-created property
+  back to the same board, called synchronously right after
+  `createProperty()` in `review/actions.ts` (never throws — dead-letters
+  to Redis on failure, same as `mirrorAgentToMonday`). `/api/sync/
+  properties` (POST, `SYNC_SECRET`-guarded) + `.github/workflows/
+  sync-properties.yml` (daily cron via GitHub Actions, same mechanism as
+  `sync-agents.yml` — no new secrets needed). **Scope limit**: only the
+  fields already reconciled in `PROPERTIES_BOARD` round-trip (address,
+  owner contact, commission %/VAT, dealType, rooms/size/price) — the
+  wizard's full ~90-field inventory (media, descriptions, technical,
+  ratings) has no reconciled Monday column mapping and does not sync
+  either direction yet.
 
 ### Phase 10 — Monday.com full decommission
 

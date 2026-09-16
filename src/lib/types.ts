@@ -491,6 +491,11 @@ export interface PropertyRecord {
    *  listing lifecycle, distinct from the contract's own exclusivity
    *  state (exclusivityStartDate/EndDate below). */
   status: PropertyStatus;
+  /** Pulse id on Monday's Properties Raw Data board, once mirrored there —
+   *  see src/lib/sync/properties.ts. Absent for listings that only exist
+   *  here (mirroring is fire-and-forget; a failure leaves this unset and
+   *  dead-letters the failure, same pattern as agents). */
+  mondayItemId?: string;
 
   // --- Basics ---
   dealType: DealType;

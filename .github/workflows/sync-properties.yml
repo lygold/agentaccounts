@@ -1,0 +1,45 @@
+name: Sync properties from Monday
+
+# Inbound sync (ROADMAP Phase 9): pulls Properties Raw Data (Monday) into
+# the app's `properties` table, so listings that exist the old way (typed
+# straight into Monday, or via the Superform the new wizard replaces) show
+# up here too. Outbound (wizard-created properties -> Monday) happens
+# synchronously on submit, not via this cron — see
+# src/lib/sync/properties.ts's file doc comment for the full picture and
+# its scope limit (only PROPERTIES_BOARD's already-reconciled fields
+# round-trip).
+#
+# Setup: same repo secret/variable as sync-agents.yml (SYNC_SECRET,
+# optional APP_URL) — nothing new to configure if that one's already set up.
+#
+# Trigger it by hand anytime from the Actions tab ("Run workflow").
+
+on:
+  schedule:
+    - cron: "15 4 * * *" # 04:15 UTC daily — staggered a bit after sync-agents
+  workflow_dispatch:
+
+concurrency:
+  group: sync-properties
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST /api/sync/properties
+        env:
+          SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
+          APP_URL: ${{ vars.APP_URL || 'https://main.d2aqfzo6esnq4n.amplifyapp.com' }}
+        run: |
+          if [ -z "$SYNC_SECRET" ]; then
+            echo "::error::SYNC_SECRET repo secret is not set"
+            exit 1
+          fi
+          code=$(curl -sS -o /tmp/body.json -w '%{http_code}' \
+            --retry 3 --retry-delay 10 --retry-all-errors --max-time 120 \
+            -X POST "$APP_URL/api/sync/properties" \
+            -H "Authorization: Bearer $SYNC_SECRET")
+          echo "HTTP $code"
+          cat /tmp/body.json; echo
+          test "$code" = "200"
