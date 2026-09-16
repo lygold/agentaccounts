@@ -674,6 +674,17 @@ that row). No Monday write in this phase.
 
 ## 6. Unscheduled / later
 
+- **Google Drive auth via Workload Identity Federation, not a static
+  service-account key.** Phase 9's Drive integration ships first with a
+  downloaded service-account JSON key (`GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`
+  in env). Levi flagged WIF (aws.amazon.com's compute role → GCP token
+  exchange, no long-lived secret ever stored) as a follow-up hardening
+  pass — not blocking the first ship. Would mean: a GCP Workload Identity
+  Pool + Provider configured to trust the app's AWS role (`agent-ledger-hub-
+  compute`) via its STS-issued token, granted impersonation rights on the
+  Drive service account, and `google-drive.ts` exchanging that instead of
+  signing a JWT from a stored private key. Do this once the wizard is
+  live and stable, not as part of the initial build.
 - **Search on every list page** — deals, agents, per-agent ledger, and each
   pipeline-entity list get a search/filter box. Not yet built; fold into the
   design pass (Phase 11) or do per-page as the lists grow. (Agents list already
