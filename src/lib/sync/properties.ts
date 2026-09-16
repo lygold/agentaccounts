@@ -256,6 +256,7 @@ export async function syncPropertiesFromMonday(
         agentId: agent.id,
         agentName: agent.name,
         mondayItemId: String(item.id),
+        status: "active",
         ...want,
         dealType,
       });
