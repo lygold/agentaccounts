@@ -120,6 +120,45 @@
     "notifyNote": "Every change saves immediately and the secretary gets notified to update the external sites.",
     "save": "Save"
   },
+  "ReferralNew": {
+    "title": "New referral",
+    "selectPlaceholder": "Select...",
+    "directionLabel": "Direction",
+    "direction": {
+      "outgoing": "Outgoing",
+      "outgoing_internal": "Outgoing (internal office)",
+      "incoming": "Incoming",
+      "incoming_internal": "Incoming (internal office)"
+    },
+    "receivingAgentLabel": "Hand off to",
+    "clientTitle": "Client details",
+    "clientNameLabel": "Client name",
+    "clientPhoneLabel": "Phone",
+    "clientEmailLabel": "Email",
+    "clientTypeLabel": "Client type",
+    "clientType": {
+      "seller": "Seller",
+      "buyer": "Buyer",
+      "landlord": "Landlord"
+    },
+    "notesLabel": "Notes",
+    "incomingNote": "An incoming referral is just logged — no WhatsApp message is sent.",
+    "submit": "Send referral",
+    "errorSave": "Saving the referral failed, please try again.",
+    "createdMessage": "Referral sent."
+  },
+  "ReferralRespond": {
+    "inviteTitle": "{name} from RE/MAX Vision Jerusalem wants to pass you a referral",
+    "submit": "Send",
+    "decline": "Not this time",
+    "acceptedTitle": "Thanks!",
+    "acceptedBody": "The client's details were sent to you on WhatsApp.",
+    "declinedTitle": "No problem.",
+    "declinedBody": "We let the sending agent know.",
+    "expiredTitle": "This link has expired.",
+    "expiredBody": "No response came in within 48 hours, so this referral is treated as no longer relevant. We let the sending agent know.",
+    "notFound": "This referral wasn't found — the link may be wrong."
+  },
   "Enums": {
     "role": {
       "admin": "admin",

@@ -63,9 +63,18 @@ const TABLES = [
     gsis: [["byAgentId", "agentId"]],
   },
   {
+    // Agent-to-agent lead handoffs (Phase 9), replacing the Monday
+    // "Referrals" board. byOfficeId added when this feature was built —
+    // if the table was already created before then, run this script again
+    // (idempotent) and separately add the byOfficeId GSI via an UpdateTable
+    // migration (see scripts/add-office-gsis.mjs for the precedent); a
+    // CreateTableCommand only applies to a table that doesn't exist yet.
     name: "agent-ledger-referrals",
-    attrs: { id: S, dealId: S },
-    gsis: [["byDealId", "dealId"]],
+    attrs: { id: S, dealId: S, officeId: S },
+    gsis: [
+      ["byDealId", "dealId"],
+      ["byOfficeId", "officeId"],
+    ],
   },
   {
     name: "agent-ledger-deal-notes",

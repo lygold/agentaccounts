@@ -120,6 +120,45 @@
     "notifyNote": "כל שינוי נשמר מיד והמזכירה תקבל התראה לעדכן את האתרים החיצוניים.",
     "save": "שמירה"
   },
+  "ReferralNew": {
+    "title": "הפניה חדשה",
+    "selectPlaceholder": "בחרו...",
+    "directionLabel": "כיוון",
+    "direction": {
+      "outgoing": "יוצא",
+      "outgoing_internal": "יוצא פנים משרדי",
+      "incoming": "נכנס",
+      "incoming_internal": "נכנס פנים משרדי"
+    },
+    "receivingAgentLabel": "לאיזה סוכן/ת מעבירים",
+    "clientTitle": "פרטי הלקוח",
+    "clientNameLabel": "שם הלקוח",
+    "clientPhoneLabel": "טלפון",
+    "clientEmailLabel": "אימייל",
+    "clientTypeLabel": "סוג לקוח",
+    "clientType": {
+      "seller": "מוכר",
+      "buyer": "קונה",
+      "landlord": "משכיר"
+    },
+    "notesLabel": "הערות",
+    "incomingNote": "הפניה נכנסת נרשמת ביומן בלבד — לא נשלחת הודעת וואטסאפ.",
+    "submit": "שליחת הפניה",
+    "errorSave": "שמירת ההפניה נכשלה, נסו שוב.",
+    "createdMessage": "ההפניה נשלחה בהצלחה."
+  },
+  "ReferralRespond": {
+    "inviteTitle": "{name} מרימקס חזון ירושלים רוצה להעביר לך הפניה",
+    "submit": "שלח",
+    "decline": "לא מעוניין/ת הפעם",
+    "acceptedTitle": "תודה! ",
+    "acceptedBody": "פרטי הלקוח נשלחו אליך בוואטסאפ.",
+    "declinedTitle": "בסדר גמור.",
+    "declinedBody": "עדכנו את הסוכן/ת ששלח/ה את ההפניה.",
+    "expiredTitle": "תוקף הקישור פג.",
+    "expiredBody": "לא התקבלה תגובה תוך 48 שעות, וההפניה נחשבת כלא רלוונטית. עדכנו את הסוכן/ת ששלח/ה אותה.",
+    "notFound": "ההפניה לא נמצאה, ייתכן שהקישור שגוי."
+  },
   "Enums": {
     "role": {
       "admin": "מנהל מערכת",

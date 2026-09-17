@@ -112,6 +112,202 @@ export async function sendPropertyUpdateTemplate(phoneE164: string, message: str
   }
 }
 
+interface TemplateComponent {
+  type: "body" | "button";
+  sub_type?: "url";
+  index?: string;
+  parameters: Array<{ type: "text"; text: string }>;
+}
+
+/**
+ * Shared send for every referral template below — same "not configured
+ * throws, caller soft-fails" contract as sendPropertyUpdateTemplate.
+ *
+ * Takes the already-resolved `templateName` (not an env var NAME to look up
+ * dynamically) because Amplify's SSR runtime only sees env vars that
+ * next.config.ts baked in via a *static* `process.env.SOME_KEY` read at
+ * build time — a dynamic `process.env[someVar]` lookup like this function
+ * used to do is invisible to that inlining and reads an empty runtime
+ * process.env on Amplify (see src/lib/store/dynamo-client.ts's own note on
+ * this). Each exported function below does its own static read and passes
+ * the value in; `configLabel` is just for the error message.
+ */
+async function sendReferralTemplate(
+  templateName: string | undefined,
+  configLabel: string,
+  phoneE164: string,
+  components: TemplateComponent[],
+): Promise<void> {
+  const phoneId = process.env.META_WABA_PHONE_ID;
+  const token = process.env.META_WABA_TOKEN;
+  const templateLang = process.env.META_WABA_TEMPLATE_LANG ?? "he";
+  if (!phoneId || !token || !templateName) {
+    throw new Error(
+      `Referral WhatsApp template not configured: set ${configLabel} once a template ` +
+        "is approved in Meta Business Manager (META_WABA_PHONE_ID/META_WABA_TOKEN already set for OTP)",
+    );
+  }
+
+  const url = `https://graph.facebook.com/${GRAPH_VERSION}/${phoneId}/messages`;
+  const body = {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: phoneE164,
+    type: "template",
+    template: { name: templateName, language: { code: templateLang }, components },
+  };
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`WABA referral send failed (${res.status}): ${text.slice(0, 500)}`);
+  }
+}
+
+/** The yes/no invite to the receiving agent — this is the EXISTING, already
+ *  Meta-approved `outgoing_referrals_approval` template (same one the old
+ *  Make scenario used), body params in template order:
+ *  {{recieving_agent_name}} then {{agent_name}} ("שלום {{recieving_agent_name}},
+ *  {{agent_name}} מרימקס... רוצה להעביר לך הפניה"). The button is a URL
+ *  button whose fixed base is still pointed at the old Fillout form in
+ *  Meta Business Manager — it needs to be edited there to point at this
+ *  app's /r/ path before this can go live (a template content edit, not a
+ *  brand-new template, so it shouldn't need a long re-review). Button
+ *  param: the referral id, appended to that base — same shape as
+ *  sendOtpTemplate's button. */
+export async function sendReferralInviteTemplate(
+  phoneE164: string,
+  receivingAgentName: string,
+  sendingAgentName: string,
+  referralId: string,
+): Promise<void> {
+  await sendReferralTemplate(
+    process.env.META_WABA_REFERRAL_INVITE_TEMPLATE_NAME,
+    "META_WABA_REFERRAL_INVITE_TEMPLATE_NAME",
+    phoneE164,
+    [
+      {
+        type: "body",
+        parameters: [receivingAgentName, sendingAgentName].map((text) => ({ type: "text", text })),
+      },
+      { type: "button", sub_type: "url", index: "0", parameters: [{ type: "text", text: referralId }] },
+    ],
+  );
+}
+
+/** The client's actual contact details, sent to the receiving agent only
+ *  after they accept via /r/[id]. */
+export async function sendReferralDetailsTemplate(
+  phoneE164: string,
+  params: {
+    receivingAgentName: string;
+    clientName: string;
+    clientPhone: string;
+    clientEmail: string;
+    clientType: string;
+    notes: string;
+    sendingAgentName: string;
+  },
+): Promise<void> {
+  await sendReferralTemplate(
+    process.env.META_WABA_REFERRAL_DETAILS_TEMPLATE_NAME,
+    "META_WABA_REFERRAL_DETAILS_TEMPLATE_NAME",
+    phoneE164,
+    [
+      {
+        type: "body",
+        parameters: [
+          params.receivingAgentName,
+          params.clientName,
+          params.clientPhone,
+          params.clientEmail,
+          params.clientType,
+          params.notes,
+          params.sendingAgentName,
+        ].map((text) => ({ type: "text", text })),
+      },
+    ],
+  );
+}
+
+/** Confirmation to the sending agent that the receiving agent accepted. */
+export async function sendReferralAcceptedTemplate(
+  phoneE164: string,
+  sendingAgentName: string,
+  receivingAgentName: string,
+): Promise<void> {
+  await sendReferralTemplate(
+    process.env.META_WABA_REFERRAL_ACCEPTED_TEMPLATE_NAME,
+    "META_WABA_REFERRAL_ACCEPTED_TEMPLATE_NAME",
+    phoneE164,
+    [
+      {
+        type: "body",
+        parameters: [sendingAgentName, receivingAgentName].map((text) => ({ type: "text", text })),
+      },
+    ],
+  );
+}
+
+/** Told the sending agent the receiving agent declined, or never responded
+ *  within the 48-hour window — new behavior, the original Monday/Make flow
+ *  never handled either case. `reason` distinguishes the two in the message
+ *  text itself (see src/lib/services/referral-expiry.ts) since both map to
+ *  the same ReferralRecord.status ("declined") — only `respondedAt` (set vs
+ *  null) tells them apart in storage. One template, not two, covers both:
+ *  still-to-be-created in Meta Business Manager, design its body around
+ *  this 3rd {{reason}} variable. */
+export async function sendReferralDeclinedTemplate(
+  phoneE164: string,
+  sendingAgentName: string,
+  receivingAgentName: string,
+  reason: string,
+): Promise<void> {
+  await sendReferralTemplate(
+    process.env.META_WABA_REFERRAL_DECLINED_TEMPLATE_NAME,
+    "META_WABA_REFERRAL_DECLINED_TEMPLATE_NAME",
+    phoneE164,
+    [
+      {
+        type: "body",
+        parameters: [sendingAgentName, receivingAgentName, reason].map((text) => ({
+          type: "text",
+          text,
+        })),
+      },
+    ],
+  );
+}
+
+/** Office-wide visibility ping to the broker on every new referral
+ *  (creation only, for now — see src/lib/services/referral-notify.ts). */
+export async function sendBrokerReferralTemplate(
+  phoneE164: string,
+  sendingAgentName: string,
+  receivingAgentName: string,
+  clientName: string,
+): Promise<void> {
+  await sendReferralTemplate(
+    process.env.META_WABA_BROKER_REFERRAL_TEMPLATE_NAME,
+    "META_WABA_BROKER_REFERRAL_TEMPLATE_NAME",
+    phoneE164,
+    [
+      {
+        type: "body",
+        parameters: [sendingAgentName, receivingAgentName, clientName].map((text) => ({
+          type: "text",
+          text,
+        })),
+      },
+    ],
+  );
+}
+
 export function toMetaPhone(israeliPhone: string): string {
   const cleaned = israeliPhone.replace(/[\s\-().+]/g, "");
   if (cleaned.startsWith("972")) return cleaned;

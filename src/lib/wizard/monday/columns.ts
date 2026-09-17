@@ -305,6 +305,40 @@ export const OFFERS_BOARD = {
 export const OFFERS_BOARD_ID = "1975354909";
 
 /**
+ * Referrals board (MONDAY_REFERRALS_BOARD_ID, currently 5092845827) — outbound
+ * mirror only (Phase 9), reverse-engineered from the two Make.com scenarios
+ * that used to run this board (blueprints/*.blueprint.json) plus a sample
+ * export of the board itself. `status` is a positional-index select on this
+ * board, not a labelled one — column mutations there use `{index, selectType:
+ * "index2index"}`, not a label string like STATUS_LABELS elsewhere in this
+ * file. Confirm indices against the live board before writing to it; the
+ * Make scenarios used index 4 for "נמסر" (delivered) and 7 for "וואטסאפ לא
+ * נמסר" (WhatsApp not delivered) — this app tracks its own richer status
+ * enum (ReferralRecord.status) and maps it down to whatever this board's
+ * labels turn out to be, not the other way around.
+ */
+export const REFERRALS_BOARD = {
+  status: "status",
+  /** "נכנס/יוצא" — direction. Only outgoing referrals ever triggered the old
+   *  WhatsApp/Fillout flow; incoming ones are manual-log entries. */
+  direction: "color_mm1cmn1y",
+  /** "סוג לקוח" — seller/buyer/landlord. */
+  clientType: "color_mm1cjdp8",
+  clientPhone: "phone_mm184181",
+  clientEmail: "email_mm18kzf2",
+  notes: "long_text_mm18wpvn",
+  /** board_relation to the Agents board (1593085910) — the SENDING agent's
+   *  Daf Kesher item, resolved via AgentRecord.mondayItemId. */
+  sendingAgentRelation: "board_relation_mm18g4wp",
+  /** Receiving agent's name/phone/office, hand-typed on the old board — the
+   *  app resolves a real AgentRecord instead, these are just mirrored as
+   *  plain text/phone for anyone still reading the Monday board. */
+  receivingAgentName: "short_text1t4zd2wp",
+  receivingAgentPhone: "agent_phone",
+  receivingAgentOffice: "short_texti723wgh4",
+} as const;
+
+/**
  * Agents board (id 1593085910). Pulse/item ID is the canonical agent identity
  * we carry through the session — it's what joins agents across all the other
  * boards (properties, prospects/signed-contracts). Email is the OTP lookup
@@ -371,6 +405,20 @@ export const STATUS_LABELS = {
   vatMode: {
     plus: "פלוס מעמ",
     included: "כולל מעמ",
+  },
+  /** Referrals board "נכנס/יוצא" direction column (REFERRALS_BOARD.direction)
+   *  — label text taken verbatim from the board export, not guessed. */
+  referralDirection: {
+    outgoing: "יוצא",
+    outgoingInternal: "יוצא פנים משרדי",
+    incoming: "נכנס",
+    incomingInternal: "נכנס פנים משרדי",
+  },
+  /** Referrals board "סוג לקוח" column (REFERRALS_BOARD.clientType). */
+  referralClientType: {
+    seller: "מוכר",
+    buyer: "קונה",
+    landlord: "משכיר",
   },
 } as const;
 

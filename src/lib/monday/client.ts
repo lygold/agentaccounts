@@ -97,3 +97,11 @@ export function getDealsBoardId(): string {
   if (!id) throw new MondayConfigError("MONDAY_DEALS_BOARD_ID is not set");
   return id;
 }
+
+/** Referrals — outbound mirror only (Phase 9), replacing the board's own
+ *  Make.com scenarios. Write-only from this app; no picker reads it. */
+export function getReferralsBoardId(): string {
+  const id = process.env.MONDAY_REFERRALS_BOARD_ID;
+  if (!id) throw new MondayConfigError("MONDAY_REFERRALS_BOARD_ID is not set");
+  return id;
+}

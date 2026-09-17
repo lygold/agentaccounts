@@ -82,6 +82,12 @@ export const TABLES = {
    *  scoping in scripts/add-office-gsis.mjs). */
   properties: () =>
     requireTableName("DYNAMODB_TABLE_PROPERTIES", process.env.DYNAMODB_TABLE_PROPERTIES),
+  /** Agent-to-agent lead handoffs (Phase 9), replacing the Monday
+   *  "Referrals" board. Physical table: agent-ledger-referrals
+   *  (pre-provisioned; see scripts/create-tables.mjs for the officeId GSI
+   *  this feature added). */
+  referrals: () =>
+    requireTableName("DYNAMODB_TABLE_REFERRALS", process.env.DYNAMODB_TABLE_REFERRALS),
 };
 
 /** Value is passed in via a *static* `process.env.X` read (not a dynamic

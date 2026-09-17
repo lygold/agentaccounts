@@ -622,3 +622,67 @@ export interface PropertyRecord {
   createdAt: string;
   updatedAt: string;
 }
+
+/**
+ * Agent-to-agent lead handoff (Phase 9) — replaces the Monday "Referrals"
+ * board (id 5092845827) + its two Make.com scenarios. Physical table:
+ * agent-ledger-referrals (pre-provisioned, key `id`, GSIs byDealId /
+ * byOfficeId).
+ *
+ * A DIFFERENT concept from a Deal's own referral-% commission field
+ * (src/lib/commission.ts, PROPERTIES_BOARD.commission.referral*) — that's a
+ * % owed to an external referrer once a deal closes. This is the handoff
+ * mechanics: Agent A gives Agent B a client to work, gated by Agent B
+ * accepting a fixed referral fee before client contact details are
+ * released. `dealId` stays null for now; it's a hook for reconciling the
+ * two concepts later, not something this feature sets itself.
+ */
+export interface ReferralRecord {
+  id: string;
+  officeId: string;
+  dealId: string | null;
+
+  /** The agent handing the client off — session.agentId at creation. */
+  sendingAgentId: string;
+  /** The agent receiving the client — picked from this office's roster. */
+  receivingAgentId: string;
+
+  /** `incoming*` referrals are manual-log entries only — no WhatsApp/consent
+   *  flow attaches to them, matching the Monday board's own "Check Outgoing"
+   *  filter (only outgoing referrals ever triggered the old Make flow). */
+  direction: "outgoing" | "outgoing_internal" | "incoming" | "incoming_internal";
+  clientType: "seller" | "buyer" | "landlord" | null;
+  clientName: string;
+  clientPhone: string | null;
+  clientEmail: string | null;
+  notes: string | null;
+
+  /** `sent`/`send_failed` reflect WhatsApp delivery of the invite, not the
+   *  receiving agent's response — same distinction the Monday board's
+   *  נמסר / וואטסאפ לא נמסר status pair made. */
+  status:
+    | "new"
+    | "sent"
+    | "send_failed"
+    | "accepted"
+    | "declined"
+    | "duplicate_irrelevant";
+  respondedAt: string | null;
+  /** Client IP the accept/decline request came from — same
+   *  x-forwarded-for/x-real-ip read as src/lib/auth/actions.ts's OTP flow.
+   *  Evidentiary, not used for any access control. */
+  respondedIp: string | null;
+  /** The EXACT consent text shown at accept time (src/lib/referral-consent.ts),
+   *  captured verbatim rather than referencing today's copy — so a later
+   *  wording change can't retroactively alter what an old referral's
+   *  acceptance record appears to say. Null for a decline (nothing was
+   *  agreed to) or before any response. */
+  consentTextShown: string | null;
+  consentVersion: string | null;
+
+  /** Set once the outbound mirror to the Monday board succeeds. */
+  mondayItemId: string | null;
+
+  createdAt: string;
+  updatedAt: string;
+}
