@@ -78,7 +78,7 @@ getting there and then going further.
 | **6** | Green Invoice income/expense engine: production GI, webhook + poll fallback, agent monthly expenses (recurring + bulk import), `billAgentExpenses`. | ✅ done |
 | **7** | Daily report (north star) — office-expenses, bank-transactions/balances, RE/MAX Israel receipts, `/reports/daily` 3-section report. WhatsApp handoff notifications not built. | ✅ core done, WhatsApp handoffs pending |
 | **8** | Deal-intake wizard merged in (`/deals/new`, 18 steps, AI upload extraction), replacing sikkumPigisha. `/sikkum` deep link live. | ✅ done, sikkumPigisha not yet decommissioned (8f) |
-| **9** | Native property wizard (`/properties/new`, full field parity), property status/detail/edit pages, secretary notifications, Gantt exclusivity view (now the default `/properties` landing page), Monday sync bridge for properties. | ✅ shipped and deployed 2026-09-17 — see the Phase 9 section for exact scope/gaps |
+| **9** | Native property wizard (`/properties/new`, full field parity), property status/detail/edit pages, secretary notifications, Gantt exclusivity view (now the default `/properties` landing page), Monday sync bridge for properties. | ✅ mostly shipped and deployed 2026-09-17 — **except the sync bridge, reported broken (data looks wrong on screen), needs work** — see the Phase 9 section |
 
 **What works today:** deploy at `main.d2aqfzo6esnq4n.amplifyapp.com`, OTP login,
 role-scoped dashboard / deals / per-agent ledger, deal creation with auto-billing,
@@ -88,8 +88,10 @@ deal-intake wizard (`/deals/new`), the daily accounting report
 (`/properties/new`), property status/detail/edit pages with secretary
 notifications, an exclusivity Gantt view (`/properties`, the default landing
 page for the properties area — the flat list moved to `/properties/list`),
-and a two-way Monday sync bridge for properties (live, verified: 295 existing
-Monday listings pulled in on first run).
+and a two-way Monday sync bridge for properties (deployed and pulled in 295
+existing Monday listings on first run — **but Levi reports the synced data
+looks wrong on screen; not yet diagnosed, needs real work**, see the Phase 9
+section).
 
 **Build/deploy infra**: Amplify build time optimized 2026-09-16 (skip nvm's
 default-packages reinstall in `amplify.yml` — ~58s/build saved, ~4m42s → ~3m44s).
@@ -744,26 +746,28 @@ that row). No Monday write in this phase.
   yet identified). Whole-site mobile optimization is explicitly deferred
   (agents mainly use mobile, managers mainly PC) — not started.
 - **Monday sync bridge** — same shape as agents' Phase 4d bridge
-  (`src/lib/sync/agents.ts`). ✅ **Built and deployed 2026-09-17**
-  (was held back on purpose pending review; now live). `src/lib/sync/
-  properties.ts` — inbound `syncPropertiesFromMonday()` pulls every
-  Properties Raw Data item into the `properties` table (so listings
-  entered the old way, or via the Superform this wizard replaces, show up
-  here too), matched/linked by a new `PropertyRecord.mondayItemId`;
-  outbound `mirrorPropertyToMonday()` pushes a wizard-created property
-  back to the same board, called synchronously right after
-  `createProperty()` in `review/actions.ts` (never throws — dead-letters
-  to Redis on failure, same as `mirrorAgentToMonday`). `/api/sync/
-  properties` (POST, `SYNC_SECRET`-guarded) + `.github/workflows/
-  sync-properties.yml` (daily cron via GitHub Actions, same secret as
-  `sync-agents.yml` — nothing new to configure). **Verified live on
-  first run**: 295 created, 12 skipped (no matching agent), 7 skipped (no
-  deal type), 0 errors — the full 314-item board. **Scope limit**: only
-  the fields already reconciled in `PROPERTIES_BOARD` round-trip (address,
-  owner contact, commission %/VAT, dealType, rooms/size/price) — the
-  wizard's full ~90-field inventory (media, descriptions, technical,
-  ratings) has no reconciled Monday column mapping and does not sync
-  either direction yet.
+  (`src/lib/sync/agents.ts`). Built and deployed 2026-09-17 (was held back
+  on purpose pending review; now live). `src/lib/sync/properties.ts` —
+  inbound `syncPropertiesFromMonday()` pulls every Properties Raw Data
+  item into the `properties` table (so listings entered the old way, or
+  via the Superform this wizard replaces, show up here too),
+  matched/linked by a new `PropertyRecord.mondayItemId`; outbound
+  `mirrorPropertyToMonday()` pushes a wizard-created property back to the
+  same board, called synchronously right after `createProperty()` in
+  `review/actions.ts` (never throws — dead-letters to Redis on failure,
+  same as `mirrorAgentToMonday`). `/api/sync/properties` (POST,
+  `SYNC_SECRET`-guarded) + `.github/workflows/sync-properties.yml` (daily
+  cron via GitHub Actions, same secret as `sync-agents.yml`). The first
+  manual run reported 295 created / 12 skipped (no matching agent) / 7
+  skipped (no deal type) / 0 errors — the full 314-item board — but
+  **Levi reports the synced data looks wrong once it's actually on
+  screen in the app (2026-09-17)**. Not yet diagnosed or fixed — **needs
+  real work**: exact symptom not yet pinned down (which page, which
+  field(s)). **Scope limit** regardless: only the fields already
+  reconciled in `PROPERTIES_BOARD` round-trip (address, owner contact,
+  commission %/VAT, dealType, rooms/size/price) — the wizard's full
+  ~90-field inventory (media, descriptions, technical, ratings) has no
+  reconciled Monday column mapping and does not sync either direction yet.
 - **Demo/seed tooling**: `scripts/seed-demo-gantt.mjs` — idempotent,
   reversible (`--write` / `--remove`) fictitious Gantt data for
   demoing/testing the color bands against real agents/office. Not part

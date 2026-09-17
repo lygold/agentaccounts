@@ -43,10 +43,16 @@ auto-deploys on push to `main`).
 - **Monday.com sync bridge for properties** — two-way: inbound daily cron
   pulls Properties Raw Data into the app; outbound mirrors new
   wizard-created listings back to Monday. (Same bridge pattern already
-  live for agents since Phase 4.)
+  live for agents since Phase 4.) Deployed and technically running, but
+  **reported broken** — see below.
 
 ## What's in progress / not started
 
+- **Monday sync bridge for properties is broken**: it deployed and ran (295
+  Monday listings pulled in on the first run, no errors reported at the
+  API level), but Levi reports the synced data looks wrong once it's
+  actually viewed in the app. Not yet diagnosed — exact symptom/page not
+  pinned down. Needs real investigation before this bridge can be trusted.
 - **Property edit gaps**: media and internal-ratings editing aren't on the
   edit page yet.
 - **Gantt polish**: flagged by the office as "a bit rough" (dates/display) —
