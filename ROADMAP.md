@@ -6,6 +6,9 @@ planning docs live in [`docs/archive/`](docs/archive/) — where they disagree
 with this file, this file wins.
 
 Last reworked: 2026-09-09. Phase 4 closed + Phase 5/6 expanded 2026-09-10.
+Phase 9 (native property wizard + Gantt + Monday sync bridge) brought
+current 2026-09-17 — see §3 and the Phase 9 section for what's actually
+live today.
 
 ---
 
@@ -71,10 +74,27 @@ getting there and then going further.
 | **3** | Role-based access (manager-only writes; agent/team-leader read-only), VAT-aware ledger (`amount` incl + `amountExVat`), auto-commission (bracket-blended by YTD tier), service-layer extraction | ✅ done |
 | **3.5** | Deploy hardening: server env baked into the build via `next.config.ts` for Amplify SSR, IAM policy fixes, login verified end-to-end in prod. David Weiser's real 2026 ledger imported and reconciled (₪23,286.36 incl / ₪19,734.20 excl) | ✅ done |
 | **4** | App owns its agent directory: `agents` table, admin CRUD, auth reads it (not Monday), id-based scoping + agent picker, Daf Kesher ⇄ app sync bridge + daily cron, office-check hardening (4f). Weiser ledger backfilled into `agent-account`. | ✅ done |
+| **5** | Multi-tenancy hardening (5a/5b: office-scoped GSIs, write-time office assertion). 5c–5e (offices table, per-office GI creds/VAT, platform super-admin) deliberately deferred until office #2 is near. | ✅ 5a/5b done, 5c–5e deferred |
+| **6** | Green Invoice income/expense engine: production GI, webhook + poll fallback, agent monthly expenses (recurring + bulk import), `billAgentExpenses`. | ✅ done |
+| **7** | Daily report (north star) — office-expenses, bank-transactions/balances, RE/MAX Israel receipts, `/reports/daily` 3-section report. WhatsApp handoff notifications not built. | ✅ core done, WhatsApp handoffs pending |
+| **8** | Deal-intake wizard merged in (`/deals/new`, 18 steps, AI upload extraction), replacing sikkumPigisha. `/sikkum` deep link live. | ✅ done, sikkumPigisha not yet decommissioned (8f) |
+| **9** | Native property wizard (`/properties/new`, full field parity), property status/detail/edit pages, secretary notifications, Gantt exclusivity view (now the default `/properties` landing page), Monday sync bridge for properties. | ✅ shipped and deployed 2026-09-17 — see the Phase 9 section for exact scope/gaps |
 
 **What works today:** deploy at `main.d2aqfzo6esnq4n.amplifyapp.com`, OTP login,
 role-scoped dashboard / deals / per-agent ledger, deal creation with auto-billing,
-log-payment → auto-commission, Green Invoice 300 + receipt creation.
+log-payment → auto-commission, Green Invoice 300 + receipt creation, the full
+deal-intake wizard (`/deals/new`), the daily accounting report
+(`/reports/daily`), and — as of this week — a native property-listing wizard
+(`/properties/new`), property status/detail/edit pages with secretary
+notifications, an exclusivity Gantt view (`/properties`, the default landing
+page for the properties area — the flat list moved to `/properties/list`),
+and a two-way Monday sync bridge for properties (live, verified: 295 existing
+Monday listings pulled in on first run).
+
+**Build/deploy infra**: Amplify build time optimized 2026-09-16 (skip nvm's
+default-packages reinstall in `amplify.yml` — ~58s/build saved, ~4m42s → ~3m44s).
+Free tier is 1,000 build-minutes/month; this app has used a small fraction of
+that across its whole history — deploy cost is a non-issue at current pace.
 
 **Known debt carried forward** (each addressed in a phase below):
 - ~~Identity read from Monday; app-role column missing~~ → **fixed Phase 4**
@@ -650,18 +670,82 @@ that row). No Monday write in this phase.
     so moving into the real structure later (revisit delegation, or some
     other reconciliation) is a relocation, not a restructuring.
 - **9b/9c/9d — the wizard itself:** ✅ done, all 10 steps, deployed and
-  live at `/properties/new`. Deal type → signed-contract picker (prefills
-  owner/address/commission via `listSellersWithCommissionForAgent`, same
-  `agent.mondayItemId` caveat as the deal wizard) → address (Places,
-  editable after) → commission → property type/referral/external agent →
-  media (Drive uploads) → descriptions (HE/EN + Yad2) → technical details
-  → internal ratings (office-only) → review → creates a real
+  live at `/properties/new`. Deal type → **contract-pick** (redesigned —
+  see below) → address (Places, editable after) → commission (+
+  exclusivity dates) → property type/referral/external agent → media
+  (Drive uploads) → descriptions (HE/EN + Yad2) → technical details →
+  internal ratings (office-only) → review → creates a real
   `PropertyRecord`. Property type / referral source option lists are a
   reasonable standard set, not reconciled against Monday's exact dropdown
-  values — both are plain strings, easy to adjust later.
+  values — both are plain strings, easy to adjust later. All dropdowns
+  are searchable (`components/ui/searchable-select.tsx`, RTL-aware).
+- **Live-testing fixes** (2026-09-16, from Levi's first real run-through):
+  a nav entry + `/properties` list page (there was previously no way to
+  even find the wizard); address auto-fill now splits the trailing
+  building number into `buildingNumber` instead of leaving it stuck on
+  `street` (`src/lib/property-wizard/address-parse.ts`), and
+  `apartmentNumber` is required (agents enter `0` if not applicable); a
+  real i18n bug where `messages/{he,en}.json` had flat dotted keys
+  (`"propertyType.apartment"`) instead of nested objects, so next-intl
+  silently rendered the raw key path instead of the translation — fixed
+  by real nesting; the media step crashed on any upload because Next's
+  server actions default to a 1MB body limit — raised to 50MB
+  (`next.config.ts`).
+- **Exclusivity data model** (2026-09-16, corrected from Levi's real
+  Monday data): a haskama (agreement to pay commission, can stand alone)
+  and a biladiut (exclusive advertising rights, ~6 months, never exists
+  without an accompanying haskama) are two separate rows on Monday's
+  Signed Contracts board for the same client+property — commission
+  always comes from the haskama row specifically, exclusivity dates from
+  the biladiut row (`listSellersForPropertyWizard`,
+  `src/lib/wizard/monday/clients.ts`). **Contract-pick step redesigned**:
+  the agent first states whether this listing is exclusive
+  (biladiut) or agreement-only (haskama), *then* picks from a list
+  already filtered to that bucket — the server re-verifies the picked
+  contract actually belongs to the claimed bucket before trusting it.
+  `PropertyRecord` gained `exclusivityStartDate`/`exclusivityEndDate`
+  (prefilled from the biladiut row, always editable) and `contractType`.
+- **Property status, detail, and edit pages** (2026-09-16/17):
+  `PropertyStatus` (`active | sold | rented | off_market | withdrawn`) is
+  a new required field, independent of the contract's own exclusivity
+  state. `/properties/[id]` (detail — owner/commission/exclusivity/media/
+  technical, internal ratings manager-only, update history) and
+  `/properties/[id]/edit` (owning agent or any manager). Editing anything
+  triggers **`notifyPropertyUpdated()`**
+  (`src/lib/services/property-notify.ts`): saves immediately, records a
+  diff-based change summary, and notifies the secretary — in-app (a
+  capped Redis feed at `/admin/notifications`, manager-only) plus
+  email/WhatsApp, each independently killable via
+  `PROPERTY_NOTIFY_EMAIL_ENABLED` / `PROPERTY_NOTIFY_WHATSAPP_ENABLED`
+  env vars (default on). WhatsApp needs a Meta-approved template
+  (`META_WABA_PROPERTY_UPDATE_TEMPLATE_NAME`) before it can actually
+  send — until then it's treated as "channel not configured," never a
+  hard failure. Email goes through a new generic Make.com webhook
+  (`MAKE_NOTIFICATION_WEBHOOK_URL`), separate from the existing OTP-only
+  one. Media/internal-ratings editing is **not yet built** on the edit
+  page (deferred).
+- **Exclusivity Gantt view** (2026-09-17) — `/properties` is now the
+  **default** properties view (a lightweight custom Gantt, no charting
+  library); the flat list moved to `/properties/list` (linked from the
+  Gantt and vice versa). One route serves manager (sees everyone) and
+  agent (sees own + team) via the existing `allowedAgentIds` scoping.
+  Bars are colored by % of the exclusivity period elapsed (<50% green,
+  50–75% yellow, 76–90% orange, 90%+ red — `src/lib/services/
+  property-gantt.ts`), thickness scales inversely with how many bars are
+  shown, and month gridlines run down through every bar via a CSS grid
+  (label column and chart column are separate grid columns, so a
+  gridline never drifts under the name column — an earlier bug). Haskama-
+  only (non-exclusive) listings appear as a plain list below the chart.
+  All/Sales/Rental tabs on both the Gantt and the list. **Known rough
+  edges, not yet fixed** (Levi, 2026-09-17): overall Gantt polish still
+  needed (dates/display "a bit rough" — no specifics pinned down yet);
+  a separate CSS bug where the exclusivity end-date label overlaps the
+  owner-name area on some property page (not the Gantt — exact page not
+  yet identified). Whole-site mobile optimization is explicitly deferred
+  (agents mainly use mobile, managers mainly PC) — not started.
 - **Monday sync bridge** — same shape as agents' Phase 4d bridge
-  (`src/lib/sync/agents.ts`): built, **not yet deployed** (code committed
-  locally, held back on purpose pending review). `src/lib/sync/
+  (`src/lib/sync/agents.ts`). ✅ **Built and deployed 2026-09-17**
+  (was held back on purpose pending review; now live). `src/lib/sync/
   properties.ts` — inbound `syncPropertiesFromMonday()` pulls every
   Properties Raw Data item into the `properties` table (so listings
   entered the old way, or via the Superform this wizard replaces, show up
@@ -671,13 +755,57 @@ that row). No Monday write in this phase.
   `createProperty()` in `review/actions.ts` (never throws — dead-letters
   to Redis on failure, same as `mirrorAgentToMonday`). `/api/sync/
   properties` (POST, `SYNC_SECRET`-guarded) + `.github/workflows/
-  sync-properties.yml` (daily cron via GitHub Actions, same mechanism as
-  `sync-agents.yml` — no new secrets needed). **Scope limit**: only the
-  fields already reconciled in `PROPERTIES_BOARD` round-trip (address,
+  sync-properties.yml` (daily cron via GitHub Actions, same secret as
+  `sync-agents.yml` — nothing new to configure). **Verified live on
+  first run**: 295 created, 12 skipped (no matching agent), 7 skipped (no
+  deal type), 0 errors — the full 314-item board. **Scope limit**: only
+  the fields already reconciled in `PROPERTIES_BOARD` round-trip (address,
   owner contact, commission %/VAT, dealType, rooms/size/price) — the
   wizard's full ~90-field inventory (media, descriptions, technical,
   ratings) has no reconciled Monday column mapping and does not sync
   either direction yet.
+- **Demo/seed tooling**: `scripts/seed-demo-gantt.mjs` — idempotent,
+  reversible (`--write` / `--remove`) fictitious Gantt data for
+  demoing/testing the color bands against real agents/office. Not part
+  of the app itself.
+
+**Planned next, not started — team/neighbourhood performance stats**
+(2026-09-17, planning only, no code yet): Levi wants monthly/quarterly/
+custom-range stats (new exclusives, income, deals signed, more TBD) per
+agent *and* per team — where **"team" is actually a neighbourhood
+grouping** (e.g. team 1 = Arnona + Talpiot), not just an org chart. A
+single deal can produce three attributions: the agent personally, the
+agent's own team ("production"), and whichever team owns the property's
+neighbourhood ("area volume") — these two team numbers can differ (an
+agent selling outside their own patch). Decided so far:
+- **Neighbourhood capture**: currently a real gap — `Deal` has no
+  structured neighbourhood field (only a free-text `propertyAddress`),
+  and the deal wizard's Monday-board property picker fetches a
+  neighbourhood value but discards it. Fix: Google Places Autocomplete
+  needs adding to the deal wizard's manual-entry address path too
+  (mirroring the property wizard), and the picker path must stop
+  discarding what it already fetches — persist `Deal.neighbourhood` in
+  both paths, auto-filled but always agent-editable. **Also**: the
+  property wizard's own `PropertyRecord.neighbourhood` field exists in
+  the type but nothing populates it yet — `src/lib/places.ts` only
+  extracts city/street/building number, not the neighbourhood address
+  component. Needs fixing regardless of the stats project.
+- **Historical deals** (everything signed before this ships): no
+  neighbourhood was ever stored — they show as "unassigned" in area
+  stats going forward. Not backfilled.
+- **Area-team resolution is live, not frozen**: unlike `Deal.team` (the
+  agent's own team, which already freezes at creation for permission
+  scoping — unchanged, separate mechanism), a deal's *area*-team is
+  resolved at report-render time from `Deal.neighbourhood` + whatever
+  the neighbourhood→team mapping says *right now*. Redraw a team
+  boundary later and historical area reports shift immediately — nothing
+  to backfill.
+- **Blocked on**: Levi's neighbourhood→team list (promised next). Once
+  that lands: fix Places-neighbourhood extraction in both wizards → add
+  `Deal.neighbourhood` capture → build the neighbourhood→team config →
+  build the actual stats/reports pages (admin: period selector +
+  agent/team/area view toggle; agent personal: own numbers + team
+  numbers with the org/area split visible, for team leaders).
 
 ### Phase 10 — Monday.com full decommission
 
@@ -809,6 +937,14 @@ that row). No Monday write in this phase.
 | — | Backfill | 2026-forward for now; full historical backfill is a later phase. |
 | — | PDF fidelity | "Pretty similar" is fine — a clean rebuild, not byte-identical. |
 | — | Design | One dedicated pass near the end (Phase 11); the public open page not designed until it's greenlit. |
+| — | Property edit fields | Agents can edit their own listing's info, but every edit notifies the secretary (she manually updates ~8 external sites) — no field is "silent." |
+| — | Property notifications | Any field change → save immediately (no approval gate) + notify: in-app (per-property AND a global secretary feed) + email/WhatsApp, each independently killable via env flags. Levi: "I reserve the right to turn off certain notification channels." |
+| — | Commission source (exclusive listings) | Always the **haskama** row specifically, never the biladiut row's duplicate copy, even when they agree. |
+| — | Property status meaning | Listing lifecycle (`active/sold/rented/off_market/withdrawn`) — independent of the contract's own exclusivity window. |
+| — | Gantt default view | `/properties` **is** the Gantt now; the flat list is the alternative, at `/properties/list`. |
+| — | Sikkum/property-generated docs | **Not legally binding** — the summary-of-terms document says so explicitly. Same pattern to apply to referrals later: a click-to-agree consent step ("accepting this referral binds you to a 25% fee") before revealing data. |
+| — | Team/neighbourhood stats — area-team resolution | **Live, not frozen** — a deal's area-team is computed at report time from the current neighbourhood→team mapping, unlike `Deal.team` (agent's own team, which stays frozen for permission-scoping). Redrawing a boundary later reshapes historical area reports immediately. |
+| — | Team/neighbourhood stats — historical deals | **Unassigned, not backfilled** — deals signed before neighbourhood capture existed just show as unassigned in area stats. |
 
 ---
 
@@ -842,6 +978,8 @@ Runs across Phases 4 (Daf Kesher) and 10 (everything else).
 
 - **Git repo root** is `D:\Dev\agentLedger\app` (the `app/` subdir, not its
   parent). Remote: `github.com/lygold/agentaccounts`, branch `main`.
+- **`README.md`** — fast-orientation snapshot (what's live, what's not, how
+  to run it) for a session/dev with no prior context. Points here for detail.
 - **`ROADMAP.md`** (this file) — canonical plan.
 - **`docs/reference/`** — narrow, accurate notes: running locally, role scoping,
   commission auto-calc, the Weiser import, the deals-identity gap, the daily

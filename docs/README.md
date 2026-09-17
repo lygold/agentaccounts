@@ -2,6 +2,8 @@
 
 > **The canonical plan is [`../ROADMAP.md`](../ROADMAP.md).** Start there.
 > Where anything here disagrees with ROADMAP.md, ROADMAP.md wins.
+> For a fast orientation snapshot (what's live, what's not, how to run it),
+> see [`../README.md`](../README.md).
 
 ## `reference/` — current, accurate notes
 
