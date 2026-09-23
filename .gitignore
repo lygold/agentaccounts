@@ -57,3 +57,7 @@ docs/mem/
 # ad-hoc data/report exports dropped in for reference
 example files/
 *.xlsx
+
+# Make.com scenario blueprints + board export dropped in for the referrals
+# feature analysis — the xlsx has real client names/phone numbers
+blueprints/
