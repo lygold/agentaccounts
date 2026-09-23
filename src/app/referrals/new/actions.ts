@@ -89,7 +89,7 @@ export async function submitNewReferral(formData: FormData) {
       void notifyBrokerOfReferral(referral, sendingAgent, receivingAgent);
     }
 
-    redirect("/referrals/new?created=1");
+    redirect("/referrals");
   } catch (e) {
     if (isNextJsRedirect(e)) throw e;
     console.error("submitNewReferral failed:", e);

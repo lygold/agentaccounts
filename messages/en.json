@@ -27,6 +27,7 @@
     "myLedger": "My ledger",
     "deals": "Deals",
     "properties": "Properties",
+    "referrals": "Referrals",
     "notifications": "Property updates",
     "signOut": "Sign out",
     "agents": "Agents"
@@ -120,6 +121,15 @@
     "notifyNote": "Every change saves immediately and the secretary gets notified to update the external sites.",
     "save": "Save"
   },
+  "Referrals": {
+    "title": "Referrals",
+    "newReferral": "New referral",
+    "empty": "No referrals yet.",
+    "toLabel": "To",
+    "fromLabel": "From",
+    "awaitingResponse": "Awaiting your response",
+    "respond": "View & respond"
+  },
   "ReferralNew": {
     "title": "New referral",
     "selectPlaceholder": "Select...",
@@ -177,6 +187,14 @@
       "paid": "paid",
       "overdue": "overdue",
       "dead_debt": "dead debt"
+    },
+    "referralStatus": {
+      "new": "New",
+      "sent": "Sent",
+      "send_failed": "Send failed",
+      "accepted": "Accepted",
+      "declined": "Declined",
+      "duplicate_irrelevant": "Duplicate/irrelevant"
     },
     "dealType": {
       "sale": "Sale",

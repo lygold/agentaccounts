@@ -27,6 +27,7 @@
     "myLedger": "היומן שלי",
     "deals": "עסקאות",
     "properties": "נכסים",
+    "referrals": "הפניות",
     "notifications": "עדכוני נכסים",
     "signOut": "התנתקות",
     "agents": "סוכנים"
@@ -120,6 +121,15 @@
     "notifyNote": "כל שינוי נשמר מיד והמזכירה תקבל התראה לעדכן את האתרים החיצוניים.",
     "save": "שמירה"
   },
+  "Referrals": {
+    "title": "הפניות",
+    "newReferral": "הפניה חדשה",
+    "empty": "אין עדיין הפניות.",
+    "toLabel": "אל",
+    "fromLabel": "מאת",
+    "awaitingResponse": "ממתין/ה לתגובתך",
+    "respond": "לצפייה ומענה"
+  },
   "ReferralNew": {
     "title": "הפניה חדשה",
     "selectPlaceholder": "בחרו...",
@@ -177,6 +187,14 @@
       "paid": "שולם",
       "overdue": "באיחור",
       "dead_debt": "חוב אבוד"
+    },
+    "referralStatus": {
+      "new": "חדש",
+      "sent": "נשלח",
+      "send_failed": "השליחה נכשלה",
+      "accepted": "אושר",
+      "declined": "נדחה",
+      "duplicate_irrelevant": "כפול/לא רלוונטי"
     },
     "dealType": {
       "sale": "מכירה",

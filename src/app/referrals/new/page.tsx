@@ -13,7 +13,7 @@ import { NewReferralForm } from "./referral-form";
 export default async function NewReferralPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; created?: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   const session = await requireSession();
   const params = await searchParams;
@@ -32,9 +32,6 @@ export default async function NewReferralPage({
           <p className="mb-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
             {t("errorSave")}
           </p>
-        )}
-        {params.created === "1" && (
-          <p className="mb-4 rounded-md bg-primary/10 p-3 text-sm">{t("createdMessage")}</p>
         )}
         <NewReferralForm agents={agents} />
       </main>
