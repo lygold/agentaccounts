@@ -644,16 +644,30 @@ export interface ReferralRecord {
 
   /** The agent handing the client off — session.agentId at creation. */
   sendingAgentId: string;
-  /** The agent receiving the client — picked from this office's roster. */
-  receivingAgentId: string;
+  /** The agent receiving the client, picked from this office's roster —
+   *  ONLY for "outgoing_internal" (handing off to one of our own agents).
+   *  Null for plain "outgoing" (an external agent/office, not in our
+   *  agents table at all — see receivingAgentName etc. below) and for
+   *  incoming*. */
+  receivingAgentId: string | null;
+  /** Hand-typed recipient, used when receivingAgentId is null — the
+   *  original Monday board's own שם הסוכן/Phone/שם המשרד שלהם fields for an
+   *  external agent. receivingAgentName is required for "outgoing";
+   *  phone/office/email are optional (a referral with no phone just never
+   *  gets a WhatsApp invite — same send_failed path as a picked agent with
+   *  no phone on file). */
+  receivingAgentName: string | null;
+  receivingAgentPhone: string | null;
+  receivingAgentOffice: string | null;
+  receivingAgentEmail: string | null;
 
   /** `incoming*` referrals are manual-log entries only — no WhatsApp/consent
    *  flow attaches to them, matching the Monday board's own "Check Outgoing"
    *  filter (only outgoing referrals ever triggered the old Make flow). */
   direction: "outgoing" | "outgoing_internal" | "incoming" | "incoming_internal";
-  clientType: "seller" | "buyer" | "landlord" | null;
+  clientType: "seller" | "buyer" | "landlord" | "renter";
   clientName: string;
-  clientPhone: string | null;
+  clientPhone: string;
   clientEmail: string | null;
   notes: string | null;
 

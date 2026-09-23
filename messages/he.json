@@ -149,8 +149,14 @@
     "clientType": {
       "seller": "מוכר",
       "buyer": "קונה",
-      "landlord": "משכיר"
+      "landlord": "משכיר",
+      "renter": "שוכר"
     },
+    "receivingAgentNameLabel": "שם הסוכן/ת",
+    "receivingAgentPhoneLabel": "טלפון",
+    "receivingAgentPhoneNote": "הודעת וואטסאפ תישלח למספר הזה — ודאו שהוא נכון.",
+    "receivingAgentOfficeLabel": "שם המשרד שלהם",
+    "receivingAgentEmailLabel": "אימייל",
     "notesLabel": "הערות",
     "incomingNote": "הפניה נכנסת נרשמת ביומן בלבד — לא נשלחת הודעת וואטסאפ.",
     "submit": "שליחת הפניה",

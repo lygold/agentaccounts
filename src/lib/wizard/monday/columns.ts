@@ -419,6 +419,12 @@ export const STATUS_LABELS = {
     seller: "מוכר",
     buyer: "קונה",
     landlord: "משכיר",
+    /** Added after the board export was captured — "שוכר" may not exist as
+     *  an option on the live column_mm1cjdp8 status column yet. If Monday
+     *  rejects it, the mirror dead-letters that referral same as any other
+     *  failure (src/lib/sync/referrals.ts) rather than blocking the app;
+     *  add the label on the Monday column itself to fix it for real. */
+    renter: "שוכר",
   },
 } as const;
 

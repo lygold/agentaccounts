@@ -13,29 +13,6 @@ let _doc: DynamoDBDocumentClient | null = null;
  */
 export function getDynamoDoc(): DynamoDBDocumentClient {
   if (_doc) return _doc;
-  // TEMPORARY — diagnosing CredentialsProviderError on the feature-refferals
-  // branch's compute (main works fine on the same code path). Remove once
-  // resolved. Never logs credential VALUES, only whether/which mechanisms
-  // are present.
-  console.log("[diag] AWS_LAMBDA_FUNCTION_NAME:", process.env.AWS_LAMBDA_FUNCTION_NAME);
-  console.log("[diag] AWS_EXECUTION_ENV:", process.env.AWS_EXECUTION_ENV);
-  console.log("[diag] AWS_REGION (runtime-reported):", process.env.AWS_REGION);
-  console.log("[diag] DYNAMO_REGION:", process.env.DYNAMO_REGION);
-  console.log(
-    "[diag] AWS_CONTAINER_CREDENTIALS_RELATIVE_URI present:",
-    !!process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI,
-  );
-  console.log(
-    "[diag] AWS_CONTAINER_CREDENTIALS_FULL_URI present:",
-    !!process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
-  );
-  console.log("[diag] AWS_ROLE_ARN present:", !!process.env.AWS_ROLE_ARN);
-  console.log(
-    "[diag] AWS_ACCESS_KEY_ID / SECRET_ACCESS_KEY present:",
-    !!process.env.AWS_ACCESS_KEY_ID,
-    !!process.env.AWS_SECRET_ACCESS_KEY,
-  );
-
   // DYNAMO_REGION lets the tables live in a different region than the app —
   // e.g. an Amplify app not hosted in eu-north-1 still reaches the tables there.
   const region = process.env.DYNAMO_REGION || process.env.AWS_REGION;

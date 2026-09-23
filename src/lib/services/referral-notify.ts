@@ -1,6 +1,7 @@
 import "server-only";
 import { sendNotificationEmail } from "../email/notification-webhook";
 import { sendBrokerReferralTemplate, toMetaPhone } from "../waba/client";
+import type { ReceivingParty } from "../sync/referrals";
 import type { AgentRecord, ReferralRecord } from "../types";
 
 /**
@@ -19,7 +20,7 @@ import type { AgentRecord, ReferralRecord } from "../types";
 export async function notifyBrokerOfReferral(
   referral: ReferralRecord,
   sendingAgent: AgentRecord,
-  receivingAgent: AgentRecord,
+  receivingParty: ReceivingParty,
 ): Promise<void> {
   const phone = process.env.BROKER_PHONE;
   if (phone) {
@@ -27,7 +28,7 @@ export async function notifyBrokerOfReferral(
       await sendBrokerReferralTemplate(
         toMetaPhone(phone),
         sendingAgent.name,
-        receivingAgent.name,
+        receivingParty.name,
         referral.clientName,
       );
     } catch (e) {
@@ -44,7 +45,7 @@ export async function notifyBrokerOfReferral(
         to: email,
         subject: `הפניה חדשה: ${referral.clientName}`,
         body:
-          `${sendingAgent.name} העביר/ה הפניה ל${receivingAgent.name}.\n\n` +
+          `${sendingAgent.name} העביר/ה הפניה ל${receivingParty.name}.\n\n` +
           `לקוח: ${referral.clientName}\n` +
           `כיוון: ${referral.direction}\n` +
           (referral.notes ? `הערות: ${referral.notes}` : ""),

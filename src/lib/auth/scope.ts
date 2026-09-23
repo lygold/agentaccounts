@@ -69,6 +69,6 @@ export function filterReferralsByIds(
 ): ReferralRecord[] {
   if (allowed === "all") return referrals;
   return referrals.filter(
-    (r) => allowed.has(r.sendingAgentId) || allowed.has(r.receivingAgentId),
+    (r) => allowed.has(r.sendingAgentId) || (r.receivingAgentId != null && allowed.has(r.receivingAgentId)),
   );
 }

@@ -149,8 +149,14 @@
     "clientType": {
       "seller": "Seller",
       "buyer": "Buyer",
-      "landlord": "Landlord"
+      "landlord": "Landlord",
+      "renter": "Renter"
     },
+    "receivingAgentNameLabel": "Agent name",
+    "receivingAgentPhoneLabel": "Phone",
+    "receivingAgentPhoneNote": "A WhatsApp message will be sent to this number — make sure it's correct.",
+    "receivingAgentOfficeLabel": "Their office name",
+    "receivingAgentEmailLabel": "Email",
     "notesLabel": "Notes",
     "incomingNote": "An incoming referral is just logged — no WhatsApp message is sent.",
     "submit": "Send referral",

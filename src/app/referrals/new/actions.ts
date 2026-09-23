@@ -12,11 +12,18 @@ import { isNextJsRedirect } from "@/lib/wizard/action-utils";
 
 const Schema = z.object({
   direction: z.enum(["outgoing", "outgoing_internal", "incoming", "incoming_internal"]),
-  receivingAgentId: z.string().min(1),
+  // Only one of these is actually required, depending on direction — see
+  // the by-hand check below (outgoing_internal/incoming*: receivingAgentId
+  // from the picker; plain outgoing: a hand-typed external agent).
+  receivingAgentId: z.string().trim().optional(),
+  receivingAgentName: z.string().trim().optional(),
+  receivingAgentPhone: z.string().trim().optional(),
+  receivingAgentOffice: z.string().trim().optional(),
+  receivingAgentEmail: z.string().trim().optional(),
   clientName: z.string().trim().min(1),
-  clientPhone: z.string().trim().optional(),
+  clientPhone: z.string().trim().min(1),
   clientEmail: z.string().trim().optional(),
-  clientType: z.enum(["seller", "buyer", "landlord"]).optional(),
+  clientType: z.enum(["seller", "buyer", "landlord", "renter"]),
   notes: z.string().trim().optional(),
 });
 
@@ -36,20 +43,38 @@ export async function submitNewReferral(formData: FormData) {
     if (!parsed.success) redirect("/referrals/new?error=save");
     const d = parsed.data;
 
-    const receivingAgent = await getAgentById(d.receivingAgentId);
-    if (!receivingAgent || receivingAgent.officeId !== session.officeId) {
-      redirect("/referrals/new?error=save");
+    // Plain "outgoing" = an external agent/office, not in our own agents
+    // table at all — hand-typed, same fields the old Monday board captured
+    // by hand. "outgoing_internal" (and incoming*, unchanged) still picks
+    // a real AgentRecord from this office's roster.
+    let receivingParty: { name: string; phone: string | null };
+    let receivingAgentId: string | null = null;
+    if (d.direction === "outgoing") {
+      if (!d.receivingAgentName) redirect("/referrals/new?error=save");
+      receivingParty = { name: d.receivingAgentName, phone: orNull(d.receivingAgentPhone) };
+    } else {
+      if (!d.receivingAgentId) redirect("/referrals/new?error=save");
+      const receivingAgent = await getAgentById(d.receivingAgentId);
+      if (!receivingAgent || receivingAgent.officeId !== session.officeId) {
+        redirect("/referrals/new?error=save");
+      }
+      receivingAgentId = d.receivingAgentId;
+      receivingParty = { name: receivingAgent.name, phone: receivingAgent.phone };
     }
 
     let referral = await createReferral({
       officeId: session.officeId,
       dealId: null,
       sendingAgentId: session.agentId,
-      receivingAgentId: d.receivingAgentId,
+      receivingAgentId,
+      receivingAgentName: d.direction === "outgoing" ? receivingParty.name : null,
+      receivingAgentPhone: d.direction === "outgoing" ? receivingParty.phone : null,
+      receivingAgentOffice: d.direction === "outgoing" ? orNull(d.receivingAgentOffice) : null,
+      receivingAgentEmail: d.direction === "outgoing" ? orNull(d.receivingAgentEmail) : null,
       direction: d.direction,
-      clientType: d.clientType ?? null,
+      clientType: d.clientType,
       clientName: d.clientName,
-      clientPhone: orNull(d.clientPhone),
+      clientPhone: d.clientPhone,
       clientEmail: orNull(d.clientEmail),
       notes: orNull(d.notes),
       status: "new",
@@ -62,15 +87,15 @@ export async function submitNewReferral(formData: FormData) {
 
     const isOutgoing = d.direction === "outgoing" || d.direction === "outgoing_internal";
     if (isOutgoing) {
-      if (!receivingAgent.phone) {
-        console.error(`[referrals/new] ${receivingAgent.id} has no phone — cannot send invite`);
+      if (!receivingParty.phone) {
+        console.error(`[referrals/new] ${referral.id} has no receiving phone — cannot send invite`);
         referral =
           (await updateReferral(referral.id, { status: "send_failed" }, session.officeId)) ?? referral;
       } else {
         try {
           await sendReferralInviteTemplate(
-            toMetaPhone(receivingAgent.phone),
-            receivingAgent.name,
+            toMetaPhone(receivingParty.phone),
+            receivingParty.name,
             session.agentName,
             referral.id,
           );
@@ -85,8 +110,8 @@ export async function submitNewReferral(formData: FormData) {
 
     const sendingAgent = await getAgentById(session.agentId);
     if (sendingAgent) {
-      void mirrorReferralToMonday(referral, sendingAgent, receivingAgent);
-      void notifyBrokerOfReferral(referral, sendingAgent, receivingAgent);
+      void mirrorReferralToMonday(referral, sendingAgent, receivingParty);
+      void notifyBrokerOfReferral(referral, sendingAgent, receivingParty);
     }
 
     redirect("/referrals");

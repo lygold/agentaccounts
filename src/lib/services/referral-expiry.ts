@@ -3,6 +3,7 @@ import { listReferralsByOffice, updateReferral } from "../store/referrals";
 import { getAgentById } from "../store/agents";
 import { sendReferralDeclinedTemplate, toMetaPhone } from "../waba/client";
 import { mirrorReferralToMonday } from "../sync/referrals";
+import type { ReceivingParty } from "../sync/referrals";
 import { DEFAULT_OFFICE_ID } from "../office";
 import type { ReferralRecord } from "../types";
 
@@ -34,24 +35,30 @@ export function isReferralExpired(referral: ReferralRecord): boolean {
 export async function expireReferral(referral: ReferralRecord): Promise<ReferralRecord> {
   const updated = (await updateReferral(referral.id, { status: "declined" })) ?? referral;
 
-  const [sendingAgent, receivingAgent] = await Promise.all([
-    getAgentById(referral.sendingAgentId),
-    getAgentById(referral.receivingAgentId),
-  ]);
-  if (sendingAgent?.phone && receivingAgent) {
+  const sendingAgent = await getAgentById(referral.sendingAgentId);
+
+  let receivingParty: ReceivingParty | null = null;
+  if (referral.receivingAgentId) {
+    const receivingAgent = await getAgentById(referral.receivingAgentId);
+    if (receivingAgent) receivingParty = { name: receivingAgent.name, phone: receivingAgent.phone };
+  } else if (referral.receivingAgentName) {
+    receivingParty = { name: referral.receivingAgentName, phone: referral.receivingAgentPhone };
+  }
+
+  if (sendingAgent?.phone && receivingParty) {
     try {
       await sendReferralDeclinedTemplate(
         toMetaPhone(sendingAgent.phone),
         sendingAgent.name,
-        receivingAgent.name,
+        receivingParty.name,
         `לא התקבלה תגובה תוך ${REFERRAL_RESPONSE_WINDOW_HOURS} שעות`,
       );
     } catch (e) {
       console.error("[referral-expiry] sender notice failed:", e);
     }
   }
-  if (sendingAgent && receivingAgent) {
-    void mirrorReferralToMonday(updated, sendingAgent, receivingAgent);
+  if (sendingAgent && receivingParty) {
+    void mirrorReferralToMonday(updated, sendingAgent, receivingParty);
   }
   return updated;
 }

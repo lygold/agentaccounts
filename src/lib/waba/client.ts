@@ -116,7 +116,21 @@ interface TemplateComponent {
   type: "body" | "button";
   sub_type?: "url";
   index?: string;
-  parameters: Array<{ type: "text"; text: string }>;
+  parameters: Array<{ type: "text"; text: string; parameter_name?: string }>;
+}
+
+/** All of the existing office WABA templates use NAMED variables
+ *  (`{{recieving_agent_name}}`, not `{{1}}`) — confirmed from the original
+ *  Make.com blueprints these replace. Meta's Cloud API requires each body
+ *  parameter to carry `parameter_name` matching the template's own
+ *  variable name for a named-variable template, or it rejects the whole
+ *  call with "(#100) Invalid parameter — Parameter name is missing or
+ *  empty". Typos in these names (recieving, cleint, clien) are copied
+ *  verbatim from the live templates — Meta matches by exact string. */
+function named(
+  pairs: Array<[name: string, text: string]>,
+): Array<{ type: "text"; text: string; parameter_name: string }> {
+  return pairs.map(([parameter_name, text]) => ({ type: "text", text, parameter_name }));
 }
 
 /**
@@ -193,7 +207,10 @@ export async function sendReferralInviteTemplate(
     [
       {
         type: "body",
-        parameters: [receivingAgentName, sendingAgentName].map((text) => ({ type: "text", text })),
+        parameters: named([
+          ["recieving_agent_name", receivingAgentName],
+          ["agent_name", sendingAgentName],
+        ]),
       },
       { type: "button", sub_type: "url", index: "0", parameters: [{ type: "text", text: referralId }] },
     ],
@@ -221,15 +238,15 @@ export async function sendReferralDetailsTemplate(
     [
       {
         type: "body",
-        parameters: [
-          params.receivingAgentName,
-          params.clientName,
-          params.clientPhone,
-          params.clientEmail,
-          params.clientType,
-          params.notes,
-          params.sendingAgentName,
-        ].map((text) => ({ type: "text", text })),
+        parameters: named([
+          ["agent", params.receivingAgentName],
+          ["cleint_name", params.clientName],
+          ["clien_phone", params.clientPhone],
+          ["client_email", params.clientEmail],
+          ["type", params.clientType],
+          ["notes", params.notes],
+          ["referrer", params.sendingAgentName],
+        ]),
       },
     ],
   );
@@ -248,7 +265,10 @@ export async function sendReferralAcceptedTemplate(
     [
       {
         type: "body",
-        parameters: [sendingAgentName, receivingAgentName].map((text) => ({ type: "text", text })),
+        parameters: named([
+          ["s_agent_name", sendingAgentName],
+          ["r_agent_name", receivingAgentName],
+        ]),
       },
     ],
   );
@@ -275,17 +295,20 @@ export async function sendReferralDeclinedTemplate(
     [
       {
         type: "body",
-        parameters: [sendingAgentName, receivingAgentName, reason].map((text) => ({
-          type: "text",
-          text,
-        })),
+        parameters: named([
+          ["s_agent_name", sendingAgentName],
+          ["r_agent_name", receivingAgentName],
+          ["reason", reason],
+        ]),
       },
     ],
   );
 }
 
 /** Office-wide visibility ping to the broker on every new referral
- *  (creation only, for now — see src/lib/services/referral-notify.ts). */
+ *  (creation only, for now — see src/lib/services/referral-notify.ts).
+ *  Also still-to-be-created — name its body variables
+ *  {{sending_agent_name}}, {{receiving_agent_name}}, {{client_name}}. */
 export async function sendBrokerReferralTemplate(
   phoneE164: string,
   sendingAgentName: string,
@@ -299,10 +322,11 @@ export async function sendBrokerReferralTemplate(
     [
       {
         type: "body",
-        parameters: [sendingAgentName, receivingAgentName, clientName].map((text) => ({
-          type: "text",
-          text,
-        })),
+        parameters: named([
+          ["sending_agent_name", sendingAgentName],
+          ["receiving_agent_name", receivingAgentName],
+          ["client_name", clientName],
+        ]),
       },
     ],
   );

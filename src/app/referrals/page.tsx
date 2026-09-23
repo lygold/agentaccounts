@@ -44,9 +44,19 @@ export default async function ReferralsPage() {
           <div className="divide-y overflow-hidden rounded-lg border">
             {referrals.map((r) => {
               const iAmSender = r.sendingAgentId === session.agentId;
-              const counterpartId = iAmSender ? r.receivingAgentId : r.sendingAgentId;
-              const counterpartName = nameById.get(counterpartId) ?? "—";
-              const awaitingMyResponse = !iAmSender && AWAITING_RESPONSE_STATUSES.has(r.status);
+              // External "outgoing" recipients have no receivingAgentId at
+              // all (not in our agents table) — fall back to the hand-typed
+              // name on the referral itself.
+              const counterpartName = iAmSender
+                ? (r.receivingAgentId ? nameById.get(r.receivingAgentId) : r.receivingAgentName) ?? "—"
+                : nameById.get(r.sendingAgentId) ?? "—";
+              // Specifically the receiving agent, not just "not the sender"
+              // — a team leader/manager can see a teammate's outgoing
+              // referral too, and shouldn't get a "respond" prompt for
+              // someone else's (or an external recipient's, who was never
+              // an agent in this app to begin with).
+              const awaitingMyResponse =
+                r.receivingAgentId === session.agentId && AWAITING_RESPONSE_STATUSES.has(r.status);
 
               return (
                 <div key={r.id} className="flex items-center justify-between gap-4 p-4">

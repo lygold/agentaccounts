@@ -36,11 +36,21 @@ const DIRECTION_LABEL: Record<ReferralRecord["direction"], string> = {
   incoming_internal: STATUS_LABELS.referralDirection.incomingInternal,
 };
 
-const CLIENT_TYPE_LABEL: Record<NonNullable<ReferralRecord["clientType"]>, string> = {
+const CLIENT_TYPE_LABEL: Record<ReferralRecord["clientType"], string> = {
   seller: STATUS_LABELS.referralClientType.seller,
   buyer: STATUS_LABELS.referralClientType.buyer,
   landlord: STATUS_LABELS.referralClientType.landlord,
+  renter: STATUS_LABELS.referralClientType.renter,
 };
+
+/** The receiving side, for the Monday mirror — either a real AgentRecord's
+ *  name/phone (outgoing_internal) or the hand-typed external fields
+ *  (plain outgoing). Deliberately smaller than AgentRecord: nothing here
+ *  needs the rest of that shape. */
+export interface ReceivingParty {
+  name: string;
+  phone: string | null;
+}
 
 /** `sendingAgentMondayItemId` sets the board_relation column directly in the
  *  same create/update call, same {item_ids:[...]} shape confirmed live for
@@ -49,20 +59,21 @@ const CLIENT_TYPE_LABEL: Record<NonNullable<ReferralRecord["clientType"]>, strin
  *  Kesher). */
 function outboundColumnValues(
   referral: ReferralRecord,
-  receivingAgent: AgentRecord,
+  receivingParty: ReceivingParty,
   sendingAgentMondayItemId?: string,
 ): Record<string, unknown> {
   const cv: Record<string, unknown> = {
     [REFERRALS_BOARD.direction]: { label: DIRECTION_LABEL[referral.direction] },
-    [REFERRALS_BOARD.receivingAgentName]: receivingAgent.name,
+    [REFERRALS_BOARD.receivingAgentName]: receivingParty.name,
   };
-  if (referral.clientType) {
-    cv[REFERRALS_BOARD.clientType] = { label: CLIENT_TYPE_LABEL[referral.clientType] };
-  }
+  cv[REFERRALS_BOARD.clientType] = { label: CLIENT_TYPE_LABEL[referral.clientType] };
   if (referral.clientPhone) cv[REFERRALS_BOARD.clientPhone] = referral.clientPhone;
   if (referral.clientEmail) cv[REFERRALS_BOARD.clientEmail] = referral.clientEmail;
   if (referral.notes) cv[REFERRALS_BOARD.notes] = referral.notes;
-  if (receivingAgent.phone) cv[REFERRALS_BOARD.receivingAgentPhone] = receivingAgent.phone;
+  if (receivingParty.phone) cv[REFERRALS_BOARD.receivingAgentPhone] = receivingParty.phone;
+  if (referral.receivingAgentOffice) {
+    cv[REFERRALS_BOARD.receivingAgentOffice] = referral.receivingAgentOffice;
+  }
   if (sendingAgentMondayItemId) {
     cv[REFERRALS_BOARD.sendingAgentRelation] = { item_ids: [Number(sendingAgentMondayItemId)] };
   }
@@ -71,7 +82,7 @@ function outboundColumnValues(
 
 async function createReferralItem(
   referral: ReferralRecord,
-  receivingAgent: AgentRecord,
+  receivingParty: ReceivingParty,
   sendingAgentMondayItemId?: string,
 ): Promise<string> {
   const data = await mondayQuery<{ create_item: { id: string } }>(
@@ -85,7 +96,7 @@ async function createReferralItem(
     {
       board: getReferralsBoardId(),
       name: referral.clientName || "הפניה חדשה",
-      cv: JSON.stringify(outboundColumnValues(referral, receivingAgent, sendingAgentMondayItemId)),
+      cv: JSON.stringify(outboundColumnValues(referral, receivingParty, sendingAgentMondayItemId)),
     },
   );
   return data.create_item.id;
@@ -93,7 +104,7 @@ async function createReferralItem(
 
 async function updateReferralItem(
   referral: ReferralRecord,
-  receivingAgent: AgentRecord,
+  receivingParty: ReceivingParty,
   sendingAgentMondayItemId?: string,
 ): Promise<void> {
   if (!referral.mondayItemId) throw new Error("updateReferralItem: referral has no mondayItemId");
@@ -108,7 +119,7 @@ async function updateReferralItem(
     {
       board: getReferralsBoardId(),
       item: referral.mondayItemId,
-      cv: JSON.stringify(outboundColumnValues(referral, receivingAgent, sendingAgentMondayItemId)),
+      cv: JSON.stringify(outboundColumnValues(referral, receivingParty, sendingAgentMondayItemId)),
     },
   );
 }
@@ -116,11 +127,11 @@ async function updateReferralItem(
 /** Push a referral (creation or status change) to the Monday board. Never
  *  throws — a failure is dead-lettered to Redis and logged, same pattern as
  *  mirrorPropertyToMonday. Call fire-and-forget
- *  (`void mirrorReferralToMonday(referral, sendingAgent, receivingAgent)`). */
+ *  (`void mirrorReferralToMonday(referral, sendingAgent, receivingParty)`). */
 export async function mirrorReferralToMonday(
   referral: ReferralRecord,
   sendingAgent: AgentRecord,
-  receivingAgent: AgentRecord,
+  receivingParty: ReceivingParty,
 ): Promise<void> {
   if (!mirrorEnabled()) {
     console.info(`[sync] referral mirror disabled — skipped ${referral.id}`);
@@ -130,9 +141,9 @@ export async function mirrorReferralToMonday(
     const sendingAgentMondayItemId = sendingAgent.mondayItemId ?? undefined;
 
     if (referral.mondayItemId) {
-      await updateReferralItem(referral, receivingAgent, sendingAgentMondayItemId);
+      await updateReferralItem(referral, receivingParty, sendingAgentMondayItemId);
     } else {
-      const mondayItemId = await createReferralItem(referral, receivingAgent, sendingAgentMondayItemId);
+      const mondayItemId = await createReferralItem(referral, receivingParty, sendingAgentMondayItemId);
       await updateReferral(referral.id, { mondayItemId }, referral.officeId);
     }
   } catch (e) {

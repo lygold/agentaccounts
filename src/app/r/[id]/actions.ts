@@ -12,6 +12,7 @@ import {
   toMetaPhone,
 } from "@/lib/waba/client";
 import { mirrorReferralToMonday } from "@/lib/sync/referrals";
+import type { ReceivingParty } from "@/lib/sync/referrals";
 import { isReferralExpired, expireReferral } from "@/lib/services/referral-expiry";
 import { STATUS_LABELS } from "@/lib/wizard/monday/columns";
 import { REFERRAL_CONSENT_TEXT_HE, REFERRAL_CONSENT_VERSION } from "@/lib/referral-consent";
@@ -26,10 +27,11 @@ async function getClientIp(): Promise<string> {
   return h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? h.get("x-real-ip") ?? "unknown";
 }
 
-const CLIENT_TYPE_LABEL: Record<NonNullable<ReferralRecord["clientType"]>, string> = {
+const CLIENT_TYPE_LABEL: Record<ReferralRecord["clientType"], string> = {
   seller: STATUS_LABELS.referralClientType.seller,
   buyer: STATUS_LABELS.referralClientType.buyer,
   landlord: STATUS_LABELS.referralClientType.landlord,
+  renter: STATUS_LABELS.referralClientType.renter,
 };
 
 const Schema = z.object({ referralId: z.string().min(1) });
@@ -41,7 +43,10 @@ const Schema = z.object({ referralId: z.string().min(1) });
 interface Respondable {
   referral: ReferralRecord;
   sendingAgent: AgentRecord;
-  receivingAgent: AgentRecord;
+  /** Either the real AgentRecord (outgoing_internal) or the hand-typed
+   *  external fields (plain outgoing) — see receivingAgentId's doc on
+   *  ReferralRecord. */
+  receivingParty: ReceivingParty;
 }
 
 async function loadRespondable(formData: FormData): Promise<Respondable | null> {
@@ -59,12 +64,19 @@ async function loadRespondable(formData: FormData): Promise<Respondable | null> 
     await expireReferral(referral);
     return null;
   }
-  const [sendingAgent, receivingAgent] = await Promise.all([
-    getAgentById(referral.sendingAgentId),
-    getAgentById(referral.receivingAgentId),
-  ]);
-  if (!sendingAgent || !receivingAgent) return null;
-  return { referral, sendingAgent, receivingAgent };
+  const sendingAgent = await getAgentById(referral.sendingAgentId);
+  if (!sendingAgent) return null;
+
+  let receivingParty: ReceivingParty;
+  if (referral.receivingAgentId) {
+    const receivingAgent = await getAgentById(referral.receivingAgentId);
+    if (!receivingAgent) return null;
+    receivingParty = { name: receivingAgent.name, phone: receivingAgent.phone };
+  } else {
+    if (!referral.receivingAgentName) return null;
+    receivingParty = { name: referral.receivingAgentName, phone: referral.receivingAgentPhone };
+  }
+  return { referral, sendingAgent, receivingParty };
 }
 
 export async function acceptReferral(formData: FormData) {
@@ -78,7 +90,7 @@ export async function acceptReferral(formData: FormData) {
 
     const loaded = await loadRespondable(formData);
     if (!loaded) redirect(`/r/${referralId}`);
-    const { referral, sendingAgent, receivingAgent } = loaded;
+    const { referral, sendingAgent, receivingParty } = loaded;
 
     const updated =
       (await updateReferral(referral.id, {
@@ -89,14 +101,14 @@ export async function acceptReferral(formData: FormData) {
         consentVersion: REFERRAL_CONSENT_VERSION,
       })) ?? referral;
 
-    if (receivingAgent.phone) {
+    if (receivingParty.phone) {
       try {
-        await sendReferralDetailsTemplate(toMetaPhone(receivingAgent.phone), {
-          receivingAgentName: receivingAgent.name,
+        await sendReferralDetailsTemplate(toMetaPhone(receivingParty.phone), {
+          receivingAgentName: receivingParty.name,
           clientName: referral.clientName,
-          clientPhone: referral.clientPhone ?? "",
+          clientPhone: referral.clientPhone,
           clientEmail: referral.clientEmail ?? "",
-          clientType: referral.clientType ? CLIENT_TYPE_LABEL[referral.clientType] : "",
+          clientType: CLIENT_TYPE_LABEL[referral.clientType],
           notes: referral.notes ?? "אין הערות נוספות",
           sendingAgentName: sendingAgent.name,
         });
@@ -109,14 +121,14 @@ export async function acceptReferral(formData: FormData) {
         await sendReferralAcceptedTemplate(
           toMetaPhone(sendingAgent.phone),
           sendingAgent.name,
-          receivingAgent.name,
+          receivingParty.name,
         );
       } catch (e) {
         console.error("[r/accept] sender confirmation failed:", e);
       }
     }
 
-    void mirrorReferralToMonday(updated, sendingAgent, receivingAgent);
+    void mirrorReferralToMonday(updated, sendingAgent, receivingParty);
 
     redirect(`/r/${referral.id}`);
   } catch (e) {
@@ -133,7 +145,7 @@ export async function declineReferral(formData: FormData) {
   try {
     const loaded = await loadRespondable(formData);
     if (!loaded) redirect(`/r/${referralId}`);
-    const { referral, sendingAgent, receivingAgent } = loaded;
+    const { referral, sendingAgent, receivingParty } = loaded;
 
     const updated =
       (await updateReferral(referral.id, {
@@ -147,7 +159,7 @@ export async function declineReferral(formData: FormData) {
         await sendReferralDeclinedTemplate(
           toMetaPhone(sendingAgent.phone),
           sendingAgent.name,
-          receivingAgent.name,
+          receivingParty.name,
           "דחה/תה את ההפניה",
         );
       } catch (e) {
@@ -155,7 +167,7 @@ export async function declineReferral(formData: FormData) {
       }
     }
 
-    void mirrorReferralToMonday(updated, sendingAgent, receivingAgent);
+    void mirrorReferralToMonday(updated, sendingAgent, receivingParty);
 
     redirect(`/r/${referral.id}`);
   } catch (e) {

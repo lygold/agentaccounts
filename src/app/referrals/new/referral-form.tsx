@@ -11,7 +11,7 @@ import type { AgentRecord } from "@/lib/types";
 import { submitNewReferral } from "./actions";
 
 const DIRECTIONS = ["outgoing", "outgoing_internal", "incoming", "incoming_internal"] as const;
-const CLIENT_TYPES = ["seller", "buyer", "landlord"] as const;
+const CLIENT_TYPES = ["seller", "buyer", "landlord", "renter"] as const;
 
 export function NewReferralForm({ agents }: { agents: AgentRecord[] }) {
   const t = useTranslations("ReferralNew");
@@ -19,9 +19,16 @@ export function NewReferralForm({ agents }: { agents: AgentRecord[] }) {
   const tClientType = useTranslations("ReferralNew.clientType");
   const [direction, setDirection] = useState<(typeof DIRECTIONS)[number]>("outgoing");
   const isIncoming = direction === "incoming" || direction === "incoming_internal";
+  // Plain "outgoing" = an external agent/office, not in our own roster at
+  // all — hand-typed fields instead of a picker. "outgoing_internal" (and
+  // incoming*, unchanged) still pick a real agent from this office.
+  const isExternal = direction === "outgoing";
 
   const agentOptions = useMemo(
-    () => agents.map((a) => ({ value: a.id, label: a.name })),
+    () =>
+      agents
+        .map((a) => ({ value: a.id, label: a.name }))
+        .sort((a, b) => a.label.localeCompare(b.label, "he")),
     [agents],
   );
 
@@ -45,21 +52,35 @@ export function NewReferralForm({ agents }: { agents: AgentRecord[] }) {
       </Section>
 
       <Section title={t("receivingAgentLabel")}>
-        <SearchableSelect
-          rtl
-          id="receivingAgentId"
-          name="receivingAgentId"
-          options={agentOptions}
-          placeholder={t("selectPlaceholder")}
-          emptyLabel={t("selectPlaceholder")}
-          required
-        />
+        {isExternal ? (
+          <>
+            <Field id="receivingAgentName" label={t("receivingAgentNameLabel")} required />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Field id="receivingAgentPhone" label={t("receivingAgentPhoneLabel")} dir="ltr" />
+                <p className="text-xs text-muted-foreground">{t("receivingAgentPhoneNote")}</p>
+              </div>
+              <Field id="receivingAgentEmail" label={t("receivingAgentEmailLabel")} dir="ltr" />
+            </div>
+            <Field id="receivingAgentOffice" label={t("receivingAgentOfficeLabel")} />
+          </>
+        ) : (
+          <SearchableSelect
+            rtl
+            id="receivingAgentId"
+            name="receivingAgentId"
+            options={agentOptions}
+            placeholder={t("selectPlaceholder")}
+            emptyLabel={t("selectPlaceholder")}
+            required
+          />
+        )}
       </Section>
 
       <Section title={t("clientTitle")}>
         <Field id="clientName" label={t("clientNameLabel")} required />
         <div className="grid grid-cols-2 gap-4">
-          <Field id="clientPhone" label={t("clientPhoneLabel")} dir="ltr" />
+          <Field id="clientPhone" label={t("clientPhoneLabel")} dir="ltr" required />
           <Field id="clientEmail" label={t("clientEmailLabel")} dir="ltr" />
         </div>
         <div className="flex flex-col gap-1.5">
@@ -68,9 +89,12 @@ export function NewReferralForm({ agents }: { agents: AgentRecord[] }) {
             id="clientType"
             name="clientType"
             defaultValue=""
+            required
             className="h-11 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <option value="">{t("selectPlaceholder")}</option>
+            <option value="" disabled>
+              {t("selectPlaceholder")}
+            </option>
             {CLIENT_TYPES.map((v) => (
               <option key={v} value={v}>
                 {tClientType(v)}
