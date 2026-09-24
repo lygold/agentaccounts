@@ -40,11 +40,17 @@ export default async function ReferralDetailPage({
 
   const sendingAgent = await getAgentById(referral.sendingAgentId);
   const iAmSender = referral.sendingAgentId === session.agentId;
+  const receivingAgent = referral.receivingAgentId ? await getAgentById(referral.receivingAgentId) : null;
+  // The phone matters as much as the name here — for a plain "outgoing"
+  // (external) referral it's the ONLY way to tell what number the invite
+  // actually went to, since there's no AgentRecord to look it up
+  // elsewhere. Per Levi: this was missing and needed fixing.
   const counterpartName = iAmSender
-    ? referral.receivingAgentId
-      ? (await getAgentById(referral.receivingAgentId))?.name ?? "—"
-      : (referral.receivingAgentName ?? "—")
-    : sendingAgent?.name ?? "—";
+    ? (receivingAgent?.name ?? referral.receivingAgentName ?? "—")
+    : (sendingAgent?.name ?? "—");
+  const counterpartPhone = iAmSender
+    ? (receivingAgent?.phone ?? referral.receivingAgentPhone)
+    : (sendingAgent?.phone ?? null);
 
   return (
     <div>
@@ -66,6 +72,13 @@ export default async function ReferralDetailPage({
         <Section title={t("handoffTitle")}>
           <Row label={t("directionLabel")} value={tDirection(referral.direction)} />
           <Row label={iAmSender ? t("toLabel") : t("fromLabel")} value={counterpartName} />
+          <Row label={t("counterpartPhoneLabel")} value={counterpartPhone} dir="ltr" />
+          {iAmSender && referral.receivingAgentOffice && (
+            <Row label={t("counterpartOfficeLabel")} value={referral.receivingAgentOffice} />
+          )}
+          {iAmSender && referral.receivingAgentEmail && (
+            <Row label={t("counterpartEmailLabel")} value={referral.receivingAgentEmail} dir="ltr" />
+          )}
           <Row label={t("statusLabel")} value={tStatus(referral.status)} />
           <Row label={t("createdAtLabel")} value={new Date(referral.createdAt).toLocaleString()} dir="ltr" />
           {referral.respondedAt && (
