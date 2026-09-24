@@ -19,7 +19,11 @@ frontend:
         # runtime by default — write the ones the app reads into .env.production
         # so process.env has them at request time. Values are redirected to the
         # file, not printed to the build log.
-        - env | grep -E '^(SESSION_SECRET|UPSTASH_|MONDAY_|META_WABA_|MAKE_|GREEN_INVOICE_|DYNAMODB_TABLE_|DYNAMO_REGION|S3_ATTACHMENTS_BUCKET|BOOTSTRAP_ADMIN_|OFFICE_ID|SYNC_SECRET|ANTHROPIC_API_KEY|GOOGLE_|SECRETARY_|PROPERTY_NOTIFY_|NEXT_PUBLIC_)=' >> .env.production
+        # BROKER_/META_APP_SECRET/META_WEBHOOK_VERIFY_TOKEN added for the
+        # referrals feature (Phase 9) — BROKER_ was missing here entirely
+        # (would've silently never reached the app even if set in Amplify
+        # Console); META_WABA_ alone didn't cover the other two.
+        - env | grep -E '^(SESSION_SECRET|UPSTASH_|MONDAY_|META_WABA_|META_APP_SECRET|META_WEBHOOK_VERIFY_TOKEN|MAKE_|GREEN_INVOICE_|DYNAMODB_TABLE_|DYNAMO_REGION|S3_ATTACHMENTS_BUCKET|BOOTSTRAP_ADMIN_|OFFICE_ID|SYNC_SECRET|ANTHROPIC_API_KEY|GOOGLE_|SECRETARY_|PROPERTY_NOTIFY_|BROKER_|NEXT_PUBLIC_)=' >> .env.production
         - npm run build
   artifacts:
     baseDirectory: .next
