@@ -48,9 +48,4 @@ export const RedisKeys = {
   /** Phase 9 property-intake wizard — separate draft/key from the deal
    *  wizard above (different field set, not a shared module). */
   propertyWizardDraft: (agentId: string) => `al:property-wizard:draft:${agentId}`,
-  /** Capped list (most recent first) of Meta WhatsApp status-callback
-   *  events (sent/delivered/read/failed) — debugging visibility into
-   *  whether a message we think we "sent" actually reached the device.
-   *  See src/app/api/webhooks/whatsapp/route.ts and /admin/whatsapp-debug. */
-  whatsappWebhookEvents: "al:whatsapp:webhook:events",
 };

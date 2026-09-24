@@ -697,26 +697,6 @@ export interface ReferralRecord {
   /** Set once the outbound mirror to the Monday board succeeds. */
   mondayItemId: string | null;
 
-  /** How the lead is actually progressing, post-handoff — a SEPARATE
-   *  concept from `status` above (which tracks the handoff mechanics:
-   *  delivered/accepted/declined). Only meaningful once accepted; null
-   *  until someone sets it. Free text, not a fixed enum — "cold", "client
-   *  stopped looking" etc. were given as examples, not an exhaustive list,
-   *  and a rigid enum would need a code change every time a new label is
-   *  wanted. */
-  leadStatus: string | null;
-  /** Append-only check-in log — "checked in with agent X, going well" —
-   *  same shape/spirit as PropertyRecord.updates. Never trimmed. */
-  activityLog: ReferralActivityEntry[];
-
   createdAt: string;
   updatedAt: string;
-}
-
-export interface ReferralActivityEntry {
-  id: string;
-  authorId: string;
-  authorName: string;
-  body: string;
-  createdAt: string;
 }

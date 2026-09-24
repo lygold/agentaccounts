@@ -1,7 +1,7 @@
 import "server-only";
 import { listReferralsByOffice, updateReferral } from "../store/referrals";
 import { getAgentById } from "../store/agents";
-import { sendReferralStatusTemplate, toMetaPhone } from "../waba/client";
+import { sendReferralDeclinedTemplate, toMetaPhone } from "../waba/client";
 import { mirrorReferralToMonday } from "../sync/referrals";
 import type { ReceivingParty } from "../sync/referrals";
 import { DEFAULT_OFFICE_ID } from "../office";
@@ -47,11 +47,11 @@ export async function expireReferral(referral: ReferralRecord): Promise<Referral
 
   if (sendingAgent?.phone && receivingParty) {
     try {
-      await sendReferralStatusTemplate(
+      await sendReferralDeclinedTemplate(
         toMetaPhone(sendingAgent.phone),
         sendingAgent.name,
         receivingParty.name,
-        `לא אישר/ה תוך ${REFERRAL_RESPONSE_WINDOW_HOURS} שעות`,
+        `לא התקבלה תגובה תוך ${REFERRAL_RESPONSE_WINDOW_HOURS} שעות`,
       );
     } catch (e) {
       console.error("[referral-expiry] sender notice failed:", e);

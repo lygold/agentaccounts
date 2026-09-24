@@ -252,20 +252,11 @@ export async function sendReferralDetailsTemplate(
   );
 }
 
-/** Told the sending agent what happened to their referral — accepted,
- *  declined, or never responded within the 48-hour window (Levi updated
- *  outgoing_referral_update_agent_on_acceptance to a 3rd {{status}}
- *  variable specifically so one template covers all three, replacing what
- *  was originally two separate accepted/declined senders here — there's no
- *  separate "declined" template anymore, this one does it all).
- *  `status` is the Hebrew verb phrase slotted into "{{r_agent_name}}
- *  {{status}} את ההפניה" — see the three call sites (accept/decline/expiry)
- *  for the exact text each uses. */
-export async function sendReferralStatusTemplate(
+/** Confirmation to the sending agent that the receiving agent accepted. */
+export async function sendReferralAcceptedTemplate(
   phoneE164: string,
   sendingAgentName: string,
   receivingAgentName: string,
-  status: string,
 ): Promise<void> {
   await sendReferralTemplate(
     process.env.META_WABA_REFERRAL_ACCEPTED_TEMPLATE_NAME,
@@ -277,7 +268,37 @@ export async function sendReferralStatusTemplate(
         parameters: named([
           ["s_agent_name", sendingAgentName],
           ["r_agent_name", receivingAgentName],
-          ["status", status],
+        ]),
+      },
+    ],
+  );
+}
+
+/** Told the sending agent the receiving agent declined, or never responded
+ *  within the 48-hour window — new behavior, the original Monday/Make flow
+ *  never handled either case. `reason` distinguishes the two in the message
+ *  text itself (see src/lib/services/referral-expiry.ts) since both map to
+ *  the same ReferralRecord.status ("declined") — only `respondedAt` (set vs
+ *  null) tells them apart in storage. One template, not two, covers both:
+ *  still-to-be-created in Meta Business Manager, design its body around
+ *  this 3rd {{reason}} variable. */
+export async function sendReferralDeclinedTemplate(
+  phoneE164: string,
+  sendingAgentName: string,
+  receivingAgentName: string,
+  reason: string,
+): Promise<void> {
+  await sendReferralTemplate(
+    process.env.META_WABA_REFERRAL_DECLINED_TEMPLATE_NAME,
+    "META_WABA_REFERRAL_DECLINED_TEMPLATE_NAME",
+    phoneE164,
+    [
+      {
+        type: "body",
+        parameters: named([
+          ["s_agent_name", sendingAgentName],
+          ["r_agent_name", receivingAgentName],
+          ["reason", reason],
         ]),
       },
     ],
