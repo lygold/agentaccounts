@@ -84,7 +84,10 @@ export function NewReferralForm({ agents }: { agents: AgentRecord[] }) {
           <Field id="clientEmail" label={t("clientEmailLabel")} dir="ltr" />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="clientType">{t("clientTypeLabel")}</Label>
+          <Label htmlFor="clientType">
+            {t("clientTypeLabel")}
+            <RequiredMark />
+          </Label>
           <select
             id="clientType"
             name="clientType"
@@ -137,8 +140,18 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
+      <Label htmlFor={id}>
+        {label}
+        {required && <RequiredMark />}
+      </Label>
       <Input id={id} name={id} dir={dir ?? "rtl"} required={required} />
     </div>
   );
+}
+
+/** Same "* " marker SearchableSelect already shows for its own `required`
+ *  prop — red, matching the brand's --primary (354 78% 49%), per Levi:
+ *  every required field should have one. */
+function RequiredMark() {
+  return <span className="text-primary"> *</span>;
 }
