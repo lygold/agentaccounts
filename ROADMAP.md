@@ -608,7 +608,13 @@ Signed Contracts, Properties, Offers, and Referrals Monday boards.
     dates, signature files, status (`follow-up | accepted | rejected |
     duplicate`). GSI `byAgentId`.
   - **`referrals`** — referring agent/office, contact, % of commission, linked
-    deal/contract. GSI `byDealId`.
+    deal/contract. GSI `byDealId`. **Not yet built** — this specific
+    commission-split concept still doesn't exist. What DOES exist on this
+    same physical table: a separate agent-to-agent lead-handoff feature
+    (replacing the Monday Referrals board + its Make.com scenarios),
+    deliberately kept as a different concept for now — see
+    docs/reference/referrals-status.md for its actual current state
+    (most of it is unverified in production as of 2026-09-24).
   - **`deal-notes`** — append-only: `dealId`, `authorId`, `authorName`, `body`,
     `createdAt`. GSI `byDealId`. Scope own / team / all via `scope.ts`.
 - **Build as plain linked records first.** `deal.propertyId` / `.offerId` /
