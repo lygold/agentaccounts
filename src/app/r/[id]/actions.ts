@@ -5,12 +5,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { getAgentById } from "@/lib/store/agents";
 import { getReferral, updateReferral } from "@/lib/store/referrals";
-import {
-  sendReferralAcceptedTemplate,
-  sendReferralDeclinedTemplate,
-  sendReferralDetailsTemplate,
-  toMetaPhone,
-} from "@/lib/waba/client";
+import { sendReferralStatusTemplate, sendReferralDetailsTemplate, toMetaPhone } from "@/lib/waba/client";
 import { mirrorReferralToMonday } from "@/lib/sync/referrals";
 import type { ReceivingParty } from "@/lib/sync/referrals";
 import { isReferralExpired, expireReferral } from "@/lib/services/referral-expiry";
@@ -118,10 +113,11 @@ export async function acceptReferral(formData: FormData) {
     }
     if (sendingAgent.phone) {
       try {
-        await sendReferralAcceptedTemplate(
+        await sendReferralStatusTemplate(
           toMetaPhone(sendingAgent.phone),
           sendingAgent.name,
           receivingParty.name,
+          "אישר/ה",
         );
       } catch (e) {
         console.error("[r/accept] sender confirmation failed:", e);
@@ -156,11 +152,11 @@ export async function declineReferral(formData: FormData) {
 
     if (sendingAgent.phone) {
       try {
-        await sendReferralDeclinedTemplate(
+        await sendReferralStatusTemplate(
           toMetaPhone(sendingAgent.phone),
           sendingAgent.name,
           receivingParty.name,
-          "דחה/תה את ההפניה",
+          "דחה/דחתה",
         );
       } catch (e) {
         console.error("[r/decline] sender notice failed:", e);

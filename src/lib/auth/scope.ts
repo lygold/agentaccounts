@@ -72,3 +72,17 @@ export function filterReferralsByIds(
     (r) => allowed.has(r.sendingAgentId) || (r.receivingAgentId != null && allowed.has(r.receivingAgentId)),
   );
 }
+
+/** Single-referral guard for the detail page — office first, then the same
+ *  two-sided agent scope as filterReferralsByIds. */
+export async function canSeeReferral(
+  session: SessionPayload,
+  referral: ReferralRecord,
+): Promise<boolean> {
+  if (!sameOffice(referral, session)) return false;
+  const allowed = await allowedAgentIds(session);
+  return (
+    isIdAllowed(allowed, referral.sendingAgentId) ||
+    (referral.receivingAgentId != null && isIdAllowed(allowed, referral.receivingAgentId))
+  );
+}
