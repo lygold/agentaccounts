@@ -1,7 +1,7 @@
 import "server-only";
 import { getById, insert, newId, queryByIndex } from "./dynamo-store";
 import { TABLES } from "./dynamo-client";
-import type { ReferralRecord } from "../types";
+import type { ReferralActivityEntry, ReferralRecord } from "../types";
 
 /**
  * `dealId` is a GSI key (byDealId) — DynamoDB requires a GSI key attribute
@@ -23,6 +23,13 @@ function fromItem(item: Record<string, unknown>): ReferralRecord {
   return {
     ...(item as unknown as ReferralRecord),
     dealId: (item.dealId as string | undefined) ?? null,
+    // Referrals created before leadStatus/activityLog existed (or in the
+    // gap between the two deploys that added the field and the detail
+    // page reading it) have neither attribute in DynamoDB at all — the
+    // type says these are always present, but at runtime they can be
+    // undefined. Defaulting here, once, beats every caller re-guessing.
+    leadStatus: (item.leadStatus as string | undefined) ?? null,
+    activityLog: (item.activityLog as ReferralActivityEntry[] | undefined) ?? [],
   };
 }
 
