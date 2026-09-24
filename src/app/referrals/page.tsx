@@ -11,10 +11,11 @@ const AWAITING_RESPONSE_STATUSES = new Set(["new", "sent", "send_failed"]);
 
 /**
  * "Manage my referrals" (Phase 9) — sent-by-me and sent-to-me in one list,
- * same two-sided scoping as filterReferralsByIds. No per-referral detail
- * page yet; the only action from here is finishing a still-pending
- * response via the same public /r/[id] page the WhatsApp invite opens
- * (works whether or not you're logged in).
+ * same two-sided scoping as filterReferralsByIds. Each row links to
+ * /referrals/[id] for the full detail/management view; the "respond"
+ * button is a separate link to the public /r/[id] page (works whether or
+ * not you're logged in) — kept as a sibling, not nested, since two <a>
+ * tags can't nest.
  */
 export default async function ReferralsPage() {
   const session = await requireSession();
@@ -59,13 +60,13 @@ export default async function ReferralsPage() {
                 r.receivingAgentId === session.agentId && AWAITING_RESPONSE_STATUSES.has(r.status);
 
               return (
-                <div key={r.id} className="flex items-center justify-between gap-4 p-4">
-                  <div>
+                <div key={r.id} className="flex items-center justify-between gap-4 p-4 hover:bg-muted/40">
+                  <Link href={`/referrals/${r.id}`} className="flex-1">
                     <div className="font-medium">{r.clientName}</div>
                     <div className="text-sm text-muted-foreground">
                       {iAmSender ? t("toLabel") : t("fromLabel")} {counterpartName}
                     </div>
-                  </div>
+                  </Link>
                   <div className="flex items-center gap-3">
                     {awaitingMyResponse ? (
                       <Button asChild size="sm" variant="secondary">

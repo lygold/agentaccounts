@@ -83,6 +83,8 @@ export async function submitNewReferral(formData: FormData) {
       consentTextShown: null,
       consentVersion: null,
       mondayItemId: null,
+      leadStatus: null,
+      activityLog: [],
     });
 
     const isOutgoing = d.direction === "outgoing" || d.direction === "outgoing_internal";
