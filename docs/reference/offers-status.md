@@ -11,15 +11,15 @@ covers what the feature is; this tracks what's still open.
 
 ## Known gaps
 
-- **RE/MAX logo not sourced.** `public/remax-logo.png` genuinely doesn't
-  exist — "with logo" silently falls back to no logo in both the PDF
-  (`src/lib/offers/pdf/render.tsx`) and the buyer thank-you page
-  (`src/app/offer/[token]/page.tsx`). Needed: a transparent-background PNG,
-  at least 800×400px (1200×600 preferred), matching the actual RE/MAX
-  Vision lockup's aspect ratio (~2:1) — both call sites auto-scale to fit
-  (140pt wide in the PDF, 64px tall on the web page), so the source file's
-  exact size isn't critical as long as it's high-res enough not to look
-  soft when scaled down.
+- ~~RE/MAX logo not sourced~~ — **resolved 2026-09-27.** `public/remax-logo.png`
+  is in place (transparent RGBA PNG, 1341×672, provided by Levi). Sourcing
+  it exposed two real bugs, both fixed the same day: `@react-pdf/renderer`'s
+  `<Image>` tried to `fetch()` the raw filesystem path string and failed
+  outright (fixed by reading the file into a `Buffer` instead, same
+  pattern as the signature images), and `/remax-logo.png` wasn't in
+  `middleware.ts`'s `PUBLIC_PATHS` — an anonymous buyer's browser loading
+  it on the public thank-you page would've been redirected to `/login`
+  for the image request itself.
 - **`DYNAMODB_TABLE_OFFERS` isn't set in Amplify's env vars for `main`** —
   would break immediately if this branch deployed today. See also
   `NEXT_PUBLIC_APP_URL`, also unset there (affects the buyer link/email —
