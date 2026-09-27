@@ -68,6 +68,9 @@ const SERVER_ENV_KEYS = [
   "META_WABA_PROPERTY_UPDATE_TEMPLATE_NAME",
   "PROPERTY_NOTIFY_EMAIL_ENABLED",
   "PROPERTY_NOTIFY_WHATSAPP_ENABLED",
+  // Not wired into any live code path yet — see src/lib/short-io.ts.
+  "SHORT_IO_API_KEY",
+  "SHORT_IO_DOMAIN",
 ] as const;
 
 const bakedServerEnv: Record<string, string> = {};

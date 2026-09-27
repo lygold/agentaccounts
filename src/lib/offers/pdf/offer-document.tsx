@@ -99,14 +99,14 @@ export interface OfferDocumentProps {
   signature2?: Buffer;
 }
 
-/** Label always shown (blank line if no value) — the negotiation-terms
- *  section of the reference document lists every customary term whether or
- *  not the buyer filled it in, not just the ones that have a value. */
+/** Omitted entirely when there's no value — per Levi, blank negotiation
+ *  terms shouldn't clutter a document the buyer is about to sign. */
 function LabelValue({ label, value }: { label: string; value?: string }) {
+  if (!value) return null;
   return (
     <View style={styles.block}>
       <Text style={styles.label}>{label}</Text>
-      {value && <Text style={styles.value}>{value}</Text>}
+      <Text style={styles.value}>{value}</Text>
     </View>
   );
 }
