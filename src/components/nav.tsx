@@ -28,6 +28,7 @@ export async function Nav() {
         <Link href="/deals">{t("deals")}</Link>
         <Link href="/properties">{t("properties")}</Link>
         <Link href="/offers">{t("offers")}</Link>
+        <Link href="/referrals">{t("referrals")}</Link>
         {showDashboard && <Link href="/admin/notifications">{t("notifications")}</Link>}
         {showAdmin && <Link href="/admin/agents">{t("agents")}</Link>}
       </div>

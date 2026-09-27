@@ -28,6 +28,7 @@
     "deals": "עסקאות",
     "properties": "נכסים",
     "offers": "הצעות מחיר",
+    "referrals": "הפניות",
     "notifications": "עדכוני נכסים",
     "signOut": "התנתקות",
     "agents": "סוכנים"
@@ -192,6 +193,90 @@
     "notifyNote": "כל שינוי נשמר מיד והמזכירה תקבל התראה לעדכן את האתרים החיצוניים.",
     "save": "שמירה"
   },
+  "Referrals": {
+    "title": "הפניות",
+    "newReferral": "הפניה חדשה",
+    "empty": "אין עדיין הפניות.",
+    "toLabel": "אל",
+    "fromLabel": "מאת",
+    "awaitingResponse": "ממתין/ה לתגובתך",
+    "respond": "לצפייה ומענה"
+  },
+  "ReferralDetail": {
+    "backToList": "חזרה להפניות",
+    "clientTitle": "פרטי הלקוח",
+    "clientNameLabel": "שם",
+    "clientPhoneLabel": "טלפון",
+    "clientEmailLabel": "אימייל",
+    "clientTypeLabel": "סוג לקוח",
+    "notesLabel": "הערות שנוספו ביצירת ההפניה",
+    "handoffTitle": "פרטי ההעברה",
+    "directionLabel": "כיוון",
+    "toLabel": "אל",
+    "fromLabel": "מאת",
+    "counterpartPhoneLabel": "טלפון",
+    "counterpartOfficeLabel": "שם המשרד שלהם",
+    "counterpartEmailLabel": "אימייל",
+    "statusLabel": "סטטוס העברה",
+    "createdAtLabel": "נוצר בתאריך",
+    "respondedAtLabel": "תאריך תגובה",
+    "leadStatusTitle": "סטטוס ליד",
+    "leadStatusNone": "לא הוגדר",
+    "leadStatusPlaceholder": "לדוגמה: קר, הלקוח הפסיק לחפש...",
+    "leadStatusSave": "עדכון",
+    "leadStatusQuickActive": "פעיל",
+    "leadStatusQuickCold": "קר",
+    "leadStatusQuickStopped": "הלקוח הפסיק לחפש",
+    "activityTitle": "יומן מעקב",
+    "activityEmpty": "אין עדיין רשומות.",
+    "addNotePlaceholder": "לדוגמה: עשיתי צ'ק-אין עם הסוכן, מתקדם טוב",
+    "addNoteSubmit": "הוספת רשומה"
+  },
+  "ReferralNew": {
+    "title": "הפניה חדשה",
+    "selectPlaceholder": "בחרו...",
+    "directionLabel": "כיוון",
+    "direction": {
+      "outgoing": "יוצא",
+      "outgoing_internal": "יוצא פנים משרדי",
+      "incoming": "נכנס",
+      "incoming_internal": "נכנס פנים משרדי"
+    },
+    "receivingAgentLabel": "לאיזה סוכן/ת מעבירים",
+    "clientTitle": "פרטי הלקוח",
+    "clientNameLabel": "שם הלקוח",
+    "clientPhoneLabel": "טלפון",
+    "clientEmailLabel": "אימייל",
+    "clientTypeLabel": "סוג לקוח",
+    "clientType": {
+      "seller": "מוכר",
+      "buyer": "קונה",
+      "landlord": "משכיר",
+      "renter": "שוכר"
+    },
+    "receivingAgentNameLabel": "שם הסוכן/ת",
+    "receivingAgentPhoneLabel": "טלפון",
+    "receivingAgentPhoneNote": "הודעת וואטסאפ תישלח למספר הזה — ודאו שהוא נכון.",
+    "receivingAgentOfficeLabel": "שם המשרד שלהם",
+    "receivingAgentEmailLabel": "אימייל",
+    "notesLabel": "הערות",
+    "incomingNote": "הפניה נכנסת נרשמת ביומן בלבד — לא נשלחת הודעת וואטסאפ.",
+    "submit": "שליחת הפניה",
+    "errorSave": "שמירת ההפניה נכשלה, נסו שוב.",
+    "createdMessage": "ההפניה נשלחה בהצלחה."
+  },
+  "ReferralRespond": {
+    "inviteTitle": "{name} מרימקס חזון ירושלים רוצה להעביר לך הפניה",
+    "submit": "שלח",
+    "decline": "לא מעוניין/ת הפעם",
+    "acceptedTitle": "תודה! ",
+    "acceptedBody": "פרטי הלקוח נשלחו אליך בוואטסאפ.",
+    "declinedTitle": "בסדר גמור.",
+    "declinedBody": "עדכנו את הסוכן/ת ששלח/ה את ההפניה.",
+    "expiredTitle": "תוקף הקישור פג.",
+    "expiredBody": "לא התקבלה תגובה תוך 48 שעות, וההפניה נחשבת כלא רלוונטית. עדכנו את הסוכן/ת ששלח/ה אותה.",
+    "notFound": "ההפניה לא נמצאה, ייתכן שהקישור שגוי."
+  },
   "Enums": {
     "role": {
       "admin": "מנהל מערכת",
@@ -210,6 +295,14 @@
       "paid": "שולם",
       "overdue": "באיחור",
       "dead_debt": "חוב אבוד"
+    },
+    "referralStatus": {
+      "new": "חדש",
+      "sent": "נשלח",
+      "send_failed": "השליחה נכשלה",
+      "accepted": "אושר",
+      "declined": "נדחה",
+      "duplicate_irrelevant": "כפול/לא רלוונטי"
     },
     "dealType": {
       "sale": "מכירה",

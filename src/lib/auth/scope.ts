@@ -2,7 +2,7 @@ import "server-only";
 import type { SessionPayload } from "./session";
 import { isManager } from "./session-cookie";
 import { listAgentIdsInTeam } from "../store/agents";
-import type { Deal } from "../types";
+import type { Deal, ReferralRecord } from "../types";
 
 /**
  * The set of agent ids a session may see data for — scopes the deals list
@@ -56,4 +56,33 @@ export function filterDealsByIds(deals: Deal[], allowed: Set<string> | "all"): D
 export async function canSeeDeal(session: SessionPayload, deal: Deal): Promise<boolean> {
   if (!sameOffice(deal, session)) return false;
   return isIdAllowed(await allowedAgentIds(session), deal.agentId);
+}
+
+/** A referral has two sides — visible if EITHER the sending or receiving
+ *  agent is in scope, so "manage my referrals" naturally covers both "sent
+ *  by me" and "sent to me" for a plain agent (allowed = {self}), and a team
+ *  leader's own team on either side, same as filterDealsByIds's single-id
+ *  version. */
+export function filterReferralsByIds(
+  referrals: ReferralRecord[],
+  allowed: Set<string> | "all",
+): ReferralRecord[] {
+  if (allowed === "all") return referrals;
+  return referrals.filter(
+    (r) => allowed.has(r.sendingAgentId) || (r.receivingAgentId != null && allowed.has(r.receivingAgentId)),
+  );
+}
+
+/** Single-referral guard for the detail page — office first, then the same
+ *  two-sided agent scope as filterReferralsByIds. */
+export async function canSeeReferral(
+  session: SessionPayload,
+  referral: ReferralRecord,
+): Promise<boolean> {
+  if (!sameOffice(referral, session)) return false;
+  const allowed = await allowedAgentIds(session);
+  return (
+    isIdAllowed(allowed, referral.sendingAgentId) ||
+    (referral.receivingAgentId != null && isIdAllowed(allowed, referral.receivingAgentId))
+  );
 }

@@ -1,0 +1,41 @@
+name: Expire stale referrals
+
+# Phase 9 — a referral nobody responds to within 48 hours is treated as
+# declined (Levi: no reject button in the WhatsApp template, just a response
+# window). Without this cron a referral that's never revisited would sit in
+# "sent" forever with no signal to the sending agent — see
+# src/lib/services/referral-expiry.ts for the full picture. Same
+# repo secret as sync-properties.yml (SYNC_SECRET, optional APP_URL) —
+# nothing new to configure if that one's already set up.
+#
+# Trigger it by hand anytime from the Actions tab ("Run workflow").
+
+on:
+  schedule:
+    - cron: "30 4 * * *" # 04:30 UTC daily — staggered after sync-properties
+  workflow_dispatch:
+
+concurrency:
+  group: expire-referrals
+  cancel-in-progress: false
+
+jobs:
+  expire:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST /api/referrals/expire
+        env:
+          SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
+          APP_URL: ${{ vars.APP_URL || 'https://main.d2aqfzo6esnq4n.amplifyapp.com' }}
+        run: |
+          if [ -z "$SYNC_SECRET" ]; then
+            echo "::error::SYNC_SECRET repo secret is not set"
+            exit 1
+          fi
+          code=$(curl -sS -o /tmp/body.json -w '%{http_code}' \
+            --retry 3 --retry-delay 10 --retry-all-errors --max-time 120 \
+            -X POST "$APP_URL/api/referrals/expire" \
+            -H "Authorization: Bearer $SYNC_SECRET")
+          echo "HTTP $code"
+          cat /tmp/body.json; echo
+          test "$code" = "200"

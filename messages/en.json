@@ -28,6 +28,7 @@
     "deals": "Deals",
     "properties": "Properties",
     "offers": "Offers",
+    "referrals": "Referrals",
     "notifications": "Property updates",
     "signOut": "Sign out",
     "agents": "Agents"
@@ -192,6 +193,90 @@
     "notifyNote": "Every change saves immediately and the secretary gets notified to update the external sites.",
     "save": "Save"
   },
+  "Referrals": {
+    "title": "Referrals",
+    "newReferral": "New referral",
+    "empty": "No referrals yet.",
+    "toLabel": "To",
+    "fromLabel": "From",
+    "awaitingResponse": "Awaiting your response",
+    "respond": "View & respond"
+  },
+  "ReferralDetail": {
+    "backToList": "Back to referrals",
+    "clientTitle": "Client details",
+    "clientNameLabel": "Name",
+    "clientPhoneLabel": "Phone",
+    "clientEmailLabel": "Email",
+    "clientTypeLabel": "Client type",
+    "notesLabel": "Notes added at creation",
+    "handoffTitle": "Handoff details",
+    "directionLabel": "Direction",
+    "toLabel": "To",
+    "fromLabel": "From",
+    "counterpartPhoneLabel": "Phone",
+    "counterpartOfficeLabel": "Their office name",
+    "counterpartEmailLabel": "Email",
+    "statusLabel": "Handoff status",
+    "createdAtLabel": "Created",
+    "respondedAtLabel": "Responded",
+    "leadStatusTitle": "Lead status",
+    "leadStatusNone": "Not set",
+    "leadStatusPlaceholder": "e.g. cold, client stopped looking...",
+    "leadStatusSave": "Update",
+    "leadStatusQuickActive": "Active",
+    "leadStatusQuickCold": "Cold",
+    "leadStatusQuickStopped": "Client stopped looking",
+    "activityTitle": "Activity log",
+    "activityEmpty": "No entries yet.",
+    "addNotePlaceholder": "e.g. checked in with the agent, going well",
+    "addNoteSubmit": "Add entry"
+  },
+  "ReferralNew": {
+    "title": "New referral",
+    "selectPlaceholder": "Select...",
+    "directionLabel": "Direction",
+    "direction": {
+      "outgoing": "Outgoing",
+      "outgoing_internal": "Outgoing (internal office)",
+      "incoming": "Incoming",
+      "incoming_internal": "Incoming (internal office)"
+    },
+    "receivingAgentLabel": "Hand off to",
+    "clientTitle": "Client details",
+    "clientNameLabel": "Client name",
+    "clientPhoneLabel": "Phone",
+    "clientEmailLabel": "Email",
+    "clientTypeLabel": "Client type",
+    "clientType": {
+      "seller": "Seller",
+      "buyer": "Buyer",
+      "landlord": "Landlord",
+      "renter": "Renter"
+    },
+    "receivingAgentNameLabel": "Agent name",
+    "receivingAgentPhoneLabel": "Phone",
+    "receivingAgentPhoneNote": "A WhatsApp message will be sent to this number — make sure it's correct.",
+    "receivingAgentOfficeLabel": "Their office name",
+    "receivingAgentEmailLabel": "Email",
+    "notesLabel": "Notes",
+    "incomingNote": "An incoming referral is just logged — no WhatsApp message is sent.",
+    "submit": "Send referral",
+    "errorSave": "Saving the referral failed, please try again.",
+    "createdMessage": "Referral sent."
+  },
+  "ReferralRespond": {
+    "inviteTitle": "{name} from RE/MAX Vision Jerusalem wants to pass you a referral",
+    "submit": "Send",
+    "decline": "Not this time",
+    "acceptedTitle": "Thanks!",
+    "acceptedBody": "The client's details were sent to you on WhatsApp.",
+    "declinedTitle": "No problem.",
+    "declinedBody": "We let the sending agent know.",
+    "expiredTitle": "This link has expired.",
+    "expiredBody": "No response came in within 48 hours, so this referral is treated as no longer relevant. We let the sending agent know.",
+    "notFound": "This referral wasn't found — the link may be wrong."
+  },
   "Enums": {
     "role": {
       "admin": "admin",
@@ -210,6 +295,14 @@
       "paid": "paid",
       "overdue": "overdue",
       "dead_debt": "dead debt"
+    },
+    "referralStatus": {
+      "new": "New",
+      "sent": "Sent",
+      "send_failed": "Send failed",
+      "accepted": "Accepted",
+      "declined": "Declined",
+      "duplicate_irrelevant": "Duplicate/irrelevant"
     },
     "dealType": {
       "sale": "Sale",

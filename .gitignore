@@ -58,7 +58,7 @@ docs/mem/
 example files/
 *.xlsx
 
-# Make.com scenario blueprints + a board export dropped in for the offers
-# feature — real client/business data, same reasoning as the referrals
-# branch's blueprints/ exclusion.
+# Make.com scenario blueprints + board exports dropped in for the offers
+# and referrals features — real client/business data (the xlsx has real
+# client names/phone numbers).
 blueprints/

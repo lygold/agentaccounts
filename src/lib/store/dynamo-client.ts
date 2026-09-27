@@ -86,6 +86,12 @@ export const TABLES = {
    *  replacing the Make.com/Monday.com pipeline. Physical table:
    *  agent-ledger-offers. */
   offers: () => requireTableName("DYNAMODB_TABLE_OFFERS", process.env.DYNAMODB_TABLE_OFFERS),
+  /** Agent-to-agent lead handoffs (Phase 9), replacing the Monday
+   *  "Referrals" board. Physical table: agent-ledger-referrals
+   *  (pre-provisioned; see scripts/create-tables.mjs for the officeId GSI
+   *  this feature added). */
+  referrals: () =>
+    requireTableName("DYNAMODB_TABLE_REFERRALS", process.env.DYNAMODB_TABLE_REFERRALS),
 };
 
 /** Value is passed in via a *static* `process.env.X` read (not a dynamic
