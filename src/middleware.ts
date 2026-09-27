@@ -6,7 +6,11 @@ import { SESSION_COOKIE, verifySession } from "@/lib/auth/session";
 // list/detail) is the buyer-facing purchase-offer link: no session, the
 // unguessable token in the URL itself is the auth. See OfferRecord's doc
 // comment in lib/types.ts and src/app/offer/[token]/page.tsx.
-const PUBLIC_PATHS = ["/login", "/api/", "/offer/"];
+// /remax-logo.png: the middleware's matcher (below) only exempts
+// _next/static/_next/image/favicon.ico, not public/ assets in general — an
+// anonymous buyer's browser loading this logo <img> on the /offer/ thank-you
+// page would otherwise get redirected to /login for the image request itself.
+const PUBLIC_PATHS = ["/login", "/api/", "/offer/", "/remax-logo.png"];
 
 /** Memorable one-click deep links agents can be sent (WhatsApp, printed,
  *  bookmarked) — always land on the destination, through login first if

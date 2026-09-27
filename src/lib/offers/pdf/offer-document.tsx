@@ -82,7 +82,7 @@ const COPY = {
 
 export interface OfferDocumentProps {
   language: DocLanguage;
-  logoSrc?: string;
+  logoSrc?: Buffer;
   buyerName: string;
   buyerIdNumber: string;
   buyerName2?: string;
