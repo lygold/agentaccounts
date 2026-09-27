@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { setLocale } from "@/i18n/actions";
 import { locales, localeNames, type Locale } from "@/i18n/locales";
 
@@ -24,7 +24,14 @@ import { locales, localeNames, type Locale } from "@/i18n/locales";
  */
 export function LocaleToggle({ current }: { current: Locale }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
+
+  // The public buyer-facing offer page has its own fixed language (the
+  // agent's choice, baked into the signed PDF) — letting the buyer switch
+  // the site-wide cookie here would just be confusing on a page with no
+  // other site chrome to switch anyway.
+  if (pathname?.startsWith("/offer/")) return null;
 
   function onChange(next: string) {
     if (next === current || !locales.includes(next as Locale)) return;

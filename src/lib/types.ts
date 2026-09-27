@@ -622,3 +622,87 @@ export interface PropertyRecord {
   createdAt: string;
   updatedAt: string;
 }
+
+/** Purchase-offer triage state. `new` is deliberately distinct from
+ *  `follow_up`: a freshly-signed offer nobody has looked at yet is not the
+ *  same as one staff reviewed and decided is still worth chasing.
+ *  `rejected_too_low`/`rejected_not_relevant` are kept separate (not a
+ *  single `rejected`) — the reason matters for managing the pipeline.
+ *  Confirmed with Levi 2026-09-17. */
+export type OfferStatus =
+  | "new"
+  | "follow_up"
+  | "accepted"
+  | "rejected_too_low"
+  | "rejected_not_relevant"
+  | "duplicate";
+
+/**
+ * A buyer's purchase offer on a listing — replaces the Make.com/Monday.com
+ * "הצעת מחיר" pipeline (two chained scenarios + four static Monday Forms).
+ * Two-stage lifecycle on one row:
+ *   1. The agent picks one of their own properties (propertyAddress/
+ *      ownerName are snapshotted from it here, not a live join — same
+ *      snapshot-at-creation approach as the rest of the app — and stay
+ *      plain editable fields, not locked) and gets a shareable `token`
+ *      link. `submittedAt` is unset at this point.
+ *   2. The buyer opens that public link (see middleware.ts's PUBLIC_PATHS
+ *      — no session, the token itself is the auth), fills in offer terms,
+ *      signs, and submits — which stamps `submittedAt`, generates the PDF
+ *      (src/lib/offers/pdf), and sets status to "new".
+ * Physical table: agent-ledger-offers (GSIs: byAgentId, byOfficeId, byToken).
+ */
+export interface OfferRecord {
+  id: string;
+  officeId: string;
+  /** The agent who requested the link — this app's own agt_<uuid>. */
+  agentId: string;
+  agentName: string;
+  /** Null when the agent used "my property doesn't appear" — the offer is
+   *  then a free-standing address/owner pair, not linked to a PropertyRecord. */
+  propertyId: string | null;
+
+  propertyAddress: string;
+  ownerName: string;
+
+  language: DocLanguage;
+  withLogo: boolean;
+
+  /** Random, unguessable — the public buyer URL (/offer/[token]) uses this,
+   *  never `id`. */
+  token: string;
+  tokenCreatedAt: string;
+  /** Set once the buyer completes and signs. Undefined = "link sent,
+   *  awaiting buyer" — distinct from any OfferStatus value. */
+  submittedAt?: string;
+
+  // --- Buyer-entered (Stage 2), absent until submittedAt is set ---
+  buyerName?: string;
+  buyerIdNumber?: string;
+  /** Optional second buyer/co-signer. */
+  buyerName2?: string;
+  buyerIdNumber2?: string;
+  price?: number;
+  paymentTerms?: string;
+  requestedTransferDate?: string;
+  /** Possibility of extending the transfer date until this date. */
+  extendedTransferDate?: string;
+  contentsToLeave?: string;
+  notes?: string;
+
+  /** S3 keys, private bucket — see src/lib/offers/storage.ts. */
+  signature1S3Key?: string;
+  signature2S3Key?: string;
+  pdfS3Key?: string;
+  pdfGeneratedAt?: string;
+
+  /** Undefined until submittedAt is set (then "new"); staff can move it
+   *  through the rest of OfferStatus afterward. */
+  status?: OfferStatus;
+  statusUpdatedAt?: string;
+  /** agentId of whoever last changed status. */
+  statusUpdatedBy?: string;
+
+  createdAt: string;
+  updatedAt: string;
+}

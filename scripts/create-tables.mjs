@@ -58,9 +58,17 @@ const TABLES = [
     gsis: [["byAgentId", "agentId"]],
   },
   {
+    // Purchase offers (הצעת מחיר) — Phase 9, replaces the Make.com/Monday.com
+    // pipeline. byToken backs the public buyer-facing link's lookup
+    // (src/app/offer/[token]) — must not scan. If this table already exists
+    // without officeId/token GSIs, run scripts/add-offer-gsis.mjs.
     name: "agent-ledger-offers",
-    attrs: { id: S, agentId: S },
-    gsis: [["byAgentId", "agentId"]],
+    attrs: { id: S, agentId: S, officeId: S, createdAt: S, token: S },
+    gsis: [
+      ["byAgentId", "agentId"],
+      ["byOfficeId", "officeId", "createdAt"],
+      ["byToken", "token"],
+    ],
   },
   {
     name: "agent-ledger-referrals",

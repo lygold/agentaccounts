@@ -604,9 +604,29 @@ Signed Contracts, Properties, Offers, and Referrals Monday boards.
     properties.ts`, `byOfficeId` GSI added) — see "Native property intake"
     progress note below; this is the same table, now with the full ~90-field
     Superform/Monday-parity inventory rather than the short list above.
-  - **`offers`** (הצעת מחיר) — buyer(s), property, price, payment terms, transfer
-    dates, signature files, status (`follow-up | accepted | rejected |
-    duplicate`). GSI `byAgentId`.
+  - **`offers`** (הצעת מחיר) — ✅ **built** (feature-offers branch, 2026-09-17):
+    `OfferRecord`/`OfferStatus` in `src/lib/types.ts`, `src/lib/store/
+    offers.ts`, GSIs `byAgentId`/`byOfficeId`/`byToken`. Granular status —
+    `new | follow_up | accepted | rejected_too_low | rejected_not_relevant |
+    duplicate` (not the flattened `rejected` originally sketched here — the
+    reject reason matters for managing the pipeline, confirmed with Levi).
+    Fully native, replacing the Make.com/Monday.com pipeline below: the agent
+    picks one of *their own* properties at `/offers/new` (auto-fills address/
+    owner from it, still editable) and gets a shareable `/offer/[token]`
+    link — public, no session, the token is the auth (see `middleware.ts`).
+    The buyer fills in offer terms and signs there (`src/components/
+    signature-pad.tsx`, plain `<canvas>`, no library); submitting renders
+    the PDF in-app (`src/lib/offers/pdf/`, `@react-pdf/renderer` — the first
+    user of in-app PDF generation in this codebase, establishing the pattern
+    for the daily-report export and the deal summary-of-terms PDF too),
+    stores it on S3 (`src/lib/offers/storage.ts`), and emails the agent
+    (`src/lib/services/offer-notify.ts`). **Deferred, not built**: the old
+    Monday board's "notify Ariyel the instant a raw offer lands" ping — a
+    real requirement, not Make plumbing, needs its own design (candidate:
+    fold into the WhatsApp-notification list in Phase 7). **Not sourced
+    yet**: the actual RE/MAX logo file for the "with logo" branding option
+    (`src/lib/offers/pdf/render.tsx`'s `LOGO_PATH` — silently falls back to
+    no logo until it's dropped in).
   - **`referrals`** — referring agent/office, contact, % of commission, linked
     deal/contract. GSI `byDealId`.
   - **`deal-notes`** — append-only: `dealId`, `authorId`, `authorName`, `body`,
@@ -618,11 +638,12 @@ Signed Contracts, Properties, Offers, and Referrals Monday boards.
   manual step is genuinely annoying. First candidate: deal signed → property
   "Signed". The pipeline is meant to run forwards (signed contract/client →
   made offer → accepted → in negotiation → signed) **and talk backwards**.
-- **Offers Google Form** (`forms.gle/D1XK8vxst8R7dsN2A`): agent fills it → gets a
-  prefilled link → sends to the buyer → buyer fills details + signs → sends back.
-  Make scenarios exist (Levi to share) — determines whether offers sync
-  automatically or are re-entered. When the buyer is ours (~0.1% via form), the
-  agent hand-fills an offer doc instead.
+- ~~**Offers Google Form** (`forms.gle/D1XK8vxst8R7dsN2A`): agent fills it → gets
+  a prefilled link → sends to the buyer → buyer fills details + signs → sends
+  back. Make scenarios exist (Levi to share) — determines whether offers sync
+  automatically or are re-entered.~~ **Superseded** — see the `offers` bullet
+  above; the native `/offers/new` → `/offer/[token]` flow replaces this Google
+  Form and both chained Make.com scenarios entirely.
 - **"Add / update property" form** — prefill owner from the seller's signed
   contract, Google Maps address autocomplete, price + attribute edits, photo
   upload.

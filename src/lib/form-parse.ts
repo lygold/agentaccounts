@@ -15,6 +15,36 @@ export const DealSchema = z.object({
   signingDate: z.string().trim().optional(),
 });
 
+/** Unlike form-parse's other optional-field helper (optionalText, above),
+ *  this field can be entirely ABSENT from the FormData, not just empty — the
+ *  offer form only renders buyerName2/buyerIdNumber2 in the DOM once the
+ *  "add a second buyer" toggle is on, and `formData.get()` for a field with
+ *  no matching input returns null, not "". Preprocess normalizes
+ *  null/""/undefined to undefined before the string schema ever sees them —
+ *  z.string().optional() alone accepts undefined but rejects null. */
+const optionalTrimmed = (max: number) =>
+  z.preprocess(
+    (v) => (v === null || v === "" ? undefined : v),
+    z.string().trim().max(max).optional(),
+  );
+
+/** The buyer-facing public offer form (src/app/offer/[token]). Buyer 2's
+ *  fields are only required together with buyer 2's signature — enforced by
+ *  the caller (submitOffer), not here, since signatures arrive as separate
+ *  uploaded files, not zod-checkable form fields. */
+export const OfferSubmitSchema = z.object({
+  buyerName: z.string().trim().min(1),
+  buyerIdNumber: z.string().trim().min(1),
+  buyerName2: optionalTrimmed(120),
+  buyerIdNumber2: optionalTrimmed(60),
+  price: z.coerce.number().positive(),
+  paymentTerms: optionalTrimmed(2000),
+  requestedTransferDate: optionalTrimmed(20),
+  extendedTransferDate: optionalTrimmed(20),
+  contentsToLeave: optionalTrimmed(2000),
+  notes: optionalTrimmed(2000),
+});
+
 export const IncomeEntrySchema = z.object({
   amount: z.coerce.number().positive(),
   receivedDate: z.string().trim().min(1),

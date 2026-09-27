@@ -27,6 +27,7 @@
     "myLedger": "היומן שלי",
     "deals": "עסקאות",
     "properties": "נכסים",
+    "offers": "הצעות מחיר",
     "notifications": "עדכוני נכסים",
     "signOut": "התנתקות",
     "agents": "סוכנים"
@@ -44,6 +45,77 @@
     "noAddress": "—",
     "tabAll": "הכל",
     "viewGantt": "תצוגת ציר זמן"
+  },
+  "Offers": {
+    "title": "הצעות מחיר",
+    "newOffer": "הצעה חדשה",
+    "empty": "אין עדיין הצעות מחיר.",
+    "tabAll": "הכל",
+    "awaitingBuyer": "ממתין לקונה"
+  },
+  "OfferNew": {
+    "title": "יצירת קישור להצעת מחיר",
+    "noProperties": "אין לכם עדיין נכסים — הוסיפו נכס תחילה.",
+    "noAddress": "—",
+    "pickerLabel": "נכס",
+    "searchPlaceholder": "חיפוש בנכסים שלכם...",
+    "noMatches": "אין תוצאות.",
+    "addressLabel": "כתובת הנכס",
+    "ownerLabel": "בעלים",
+    "languageLabel": "שפת הטופס לקונה",
+    "logoLabel": "מיתוג",
+    "withLogo": "עם לוגו רימקס",
+    "withoutLogo": "בלי לוגו",
+    "submit": "יצירת קישור",
+    "propertyNotListed": "הנכס שלי לא מופיע",
+    "propertyNotListedWarning": "לתשומת לבכם: ללא בחירת נכס, ההצעה לא תקושר לאחד הנכסים שלכם."
+  },
+  "OfferDetail": {
+    "shareTitle": "קישור לקונה",
+    "shareHint": "שלחו את הקישור הזה לקונה — הוא ימלא את פרטי ההצעה ויחתום.",
+    "statusTitle": "סטטוס",
+    "saveStatus": "שמירה",
+    "buyerTitle": "קונה",
+    "buyerNameLabel": "שם",
+    "buyerIdLabel": "ת.ז./דרכון",
+    "buyerName2Label": "קונה נוסף",
+    "buyerId2Label": "ת.ז./דרכון של הקונה הנוסף",
+    "termsTitle": "תנאי ההצעה",
+    "priceLabel": "מחיר",
+    "paymentTermsLabel": "תנאי תשלום",
+    "requestedTransferDateLabel": "תאריך מסירה מבוקש",
+    "extendedTransferDateLabel": "אפשרות הארכה עד",
+    "contentsToLeaveLabel": "תכולה שתישאר",
+    "notesLabel": "הערות",
+    "pdfTitle": "מסמך חתום",
+    "viewPdf": "צפייה ב-PDF"
+  },
+  "OfferPublic": {
+    "title": "הצעת מחיר",
+    "notFound": "הקישור הזה אינו תקין.",
+    "thankYouTitle": "תודה על שיתוף הפעולה, בהצלחה.",
+    "viewSubmission": "לצפייה בהצעה שהוגשה",
+    "clickHere": "לחצו כאן",
+    "addressLabel": "נכס",
+    "ownerLabel": "בעלים",
+    "buyerNameLabel": "שמכם",
+    "buyerIdLabel": "ת.ז./דרכון",
+    "addSecondBuyer": "+ הוספת קונה נוסף",
+    "buyerName2Label": "שם הקונה הנוסף",
+    "buyerId2Label": "ת.ז./דרכון של הקונה הנוסף",
+    "priceLabel": "מחיר הרכישה",
+    "paymentTermsLabel": "תנאי תשלום",
+    "requestedTransferDateLabel": "תאריך מסירה מבוקש",
+    "extendedTransferDateLabel": "אפשרות להארכת מועד המסירה עד",
+    "contentsToLeaveLabel": "תכולה שתישאר בדירה",
+    "notesLabel": "הערות נוספות",
+    "signatureLabel": "חתימה",
+    "signature2Label": "חתימת הקונה הנוסף",
+    "submit": "שליחת ההצעה",
+    "saveFailed": "משהו השתבש בשליחת ההצעה. נסו שוב."
+  },
+  "SignaturePad": {
+    "clear": "ניקוי"
   },
   "PropertyGantt": {
     "title": "ציר זמן בלעדיויות",
@@ -149,6 +221,14 @@
       "rented": "הושכר",
       "off_market": "ירד מהשוק",
       "withdrawn": "בוטל"
+    },
+    "offerStatus": {
+      "new": "חדש",
+      "follow_up": "מעקב",
+      "accepted": "התקבל",
+      "rejected_too_low": "נדחה — מחיר נמוך מדי",
+      "rejected_not_relevant": "נדחה — לא רלוונטי",
+      "duplicate": "כפילות"
     },
     "side": {
       "seller": "מוכר",
@@ -758,7 +838,9 @@
     "hebrew": "עברית",
     "english": "אנגלית",
     "twoPersonCapNote": "מקסימום שני אנשים בטופס זה. עבור יותר מ-2, שלחו את הפרטים ל-levi@remaxjerusalem.com",
-    "saveFailed": "שמירת הנתונים נכשלה. נסו שוב — אם הבעיה חוזרת, צרו קשר עם המשרד."
+    "saveFailed": "שמירת הנתונים נכשלה. נסו שוב — אם הבעיה חוזרת, צרו קשר עם המשרד.",
+    "copyLink": "העתקת קישור",
+    "copied": "הועתק!"
   },
   "SigningDateStep": {
     "internalNote": "לשימוש פנימי במשרד בלבד — לא יופיע במסמך.",

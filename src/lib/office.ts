@@ -16,3 +16,11 @@ export const DEFAULT_OFFICE_ID = process.env.OFFICE_ID ?? "remax-jerusalem";
  */
 export const DEAL_INTAKE_URL =
   process.env.NEXT_PUBLIC_DEAL_INTAKE_URL ?? "https://main.d398ynovmjstlh.amplifyapp.com/";
+
+/** This app's own deployed base URL, no trailing slash — for building
+ *  absolute links in notification emails/WhatsApp messages (e.g. the offers
+ *  buyer link, or a link back to /offers/[id]). Same fallback domain as
+ *  DEAL_INTAKE_URL's default, since that's this app's own Amplify domain. */
+export const APP_BASE_URL = (
+  process.env.NEXT_PUBLIC_APP_URL ?? "https://main.d398ynovmjstlh.amplifyapp.com"
+).replace(/\/$/, "");

@@ -27,6 +27,7 @@
     "myLedger": "My ledger",
     "deals": "Deals",
     "properties": "Properties",
+    "offers": "Offers",
     "notifications": "Property updates",
     "signOut": "Sign out",
     "agents": "Agents"
@@ -44,6 +45,77 @@
     "noAddress": "—",
     "tabAll": "All",
     "viewGantt": "Timeline view"
+  },
+  "Offers": {
+    "title": "Offers",
+    "newOffer": "New offer",
+    "empty": "No offers yet.",
+    "tabAll": "All",
+    "awaitingBuyer": "Awaiting buyer"
+  },
+  "OfferNew": {
+    "title": "Request an offer link",
+    "noProperties": "You have no properties yet — add one first.",
+    "noAddress": "—",
+    "pickerLabel": "Property",
+    "searchPlaceholder": "Search your properties...",
+    "noMatches": "No matches.",
+    "addressLabel": "Property address",
+    "ownerLabel": "Owner",
+    "languageLabel": "Buyer form language",
+    "logoLabel": "Branding",
+    "withLogo": "With RE/MAX logo",
+    "withoutLogo": "Without logo",
+    "submit": "Generate link",
+    "propertyNotListed": "My property doesn't appear",
+    "propertyNotListedWarning": "Note: without picking a property, this offer won't be linked to one of your listings."
+  },
+  "OfferDetail": {
+    "shareTitle": "Buyer link",
+    "shareHint": "Send this link to the buyer — they'll fill in the offer terms and sign.",
+    "statusTitle": "Status",
+    "saveStatus": "Save",
+    "buyerTitle": "Buyer",
+    "buyerNameLabel": "Name",
+    "buyerIdLabel": "ID/Passport",
+    "buyerName2Label": "Second buyer",
+    "buyerId2Label": "Second buyer ID/Passport",
+    "termsTitle": "Offer terms",
+    "priceLabel": "Price",
+    "paymentTermsLabel": "Payment terms",
+    "requestedTransferDateLabel": "Requested transfer date",
+    "extendedTransferDateLabel": "Extension possible until",
+    "contentsToLeaveLabel": "Contents to leave",
+    "notesLabel": "Notes",
+    "pdfTitle": "Signed document",
+    "viewPdf": "View PDF"
+  },
+  "OfferPublic": {
+    "title": "Purchase offer",
+    "notFound": "This link isn't valid.",
+    "thankYouTitle": "Thank you for your cooperation, good luck.",
+    "viewSubmission": "To view your submission",
+    "clickHere": "click here",
+    "addressLabel": "Property",
+    "ownerLabel": "Owner",
+    "buyerNameLabel": "Your name",
+    "buyerIdLabel": "ID/Passport no.",
+    "addSecondBuyer": "+ Add a second buyer",
+    "buyerName2Label": "Second buyer's name",
+    "buyerId2Label": "Second buyer's ID/Passport no.",
+    "priceLabel": "Purchase price",
+    "paymentTermsLabel": "Payment terms",
+    "requestedTransferDateLabel": "Requested transfer date",
+    "extendedTransferDateLabel": "Possibility of extending the transfer date until",
+    "contentsToLeaveLabel": "Contents to leave in the apartment",
+    "notesLabel": "Additional notes",
+    "signatureLabel": "Signature",
+    "signature2Label": "Second buyer's signature",
+    "submit": "Submit offer",
+    "saveFailed": "Something went wrong submitting your offer. Please try again."
+  },
+  "SignaturePad": {
+    "clear": "Clear"
   },
   "PropertyGantt": {
     "title": "Exclusivity timeline",
@@ -149,6 +221,14 @@
       "rented": "Rented",
       "off_market": "Off market",
       "withdrawn": "Withdrawn"
+    },
+    "offerStatus": {
+      "new": "New",
+      "follow_up": "Follow up",
+      "accepted": "Accepted",
+      "rejected_too_low": "Rejected — too low",
+      "rejected_not_relevant": "Rejected — not relevant",
+      "duplicate": "Duplicate"
     },
     "side": {
       "seller": "Seller",
@@ -758,7 +838,9 @@
     "hebrew": "Hebrew",
     "english": "English",
     "twoPersonCapNote": "Maximum two people on this form. For more than 2, send the details to levi@remaxjerusalem.com",
-    "saveFailed": "We couldn't save your data. Try again — if it keeps happening, contact the office."
+    "saveFailed": "We couldn't save your data. Try again — if it keeps happening, contact the office.",
+    "copyLink": "Copy link",
+    "copied": "Copied!"
   },
   "SigningDateStep": {
     "internalNote": "For internal office use only — won't appear in the document.",

@@ -57,3 +57,8 @@ docs/mem/
 # ad-hoc data/report exports dropped in for reference
 example files/
 *.xlsx
+
+# Make.com scenario blueprints + a board export dropped in for the offers
+# feature — real client/business data, same reasoning as the referrals
+# branch's blueprints/ exclusion.
+blueprints/

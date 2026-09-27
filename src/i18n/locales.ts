@@ -20,3 +20,13 @@ export const localeNames: Record<Locale, string> = {
 export function isRtlLocale(locale: Locale): boolean {
   return locale === "he";
 }
+
+/** A handful of documents (offers, deals) carry their own fixed
+ *  `DocLanguage` ("hebrew"/"english", chosen once and baked into a signed
+ *  PDF) independent of the viewer's site-wide `locale` cookie above — a
+ *  buyer filling in a Hebrew offer form must see Hebrew regardless of what
+ *  their own browser's cookie says. Type-only import: this file stays free
+ *  of any runtime dependency on lib/types. */
+export function docLanguageToLocale(lang: import("../lib/types").DocLanguage): Locale {
+  return lang === "hebrew" ? "he" : "en";
+}

@@ -82,6 +82,10 @@ export const TABLES = {
    *  scoping in scripts/add-office-gsis.mjs). */
   properties: () =>
     requireTableName("DYNAMODB_TABLE_PROPERTIES", process.env.DYNAMODB_TABLE_PROPERTIES),
+  /** Purchase offers (Phase 9) — created by the native offers feature,
+   *  replacing the Make.com/Monday.com pipeline. Physical table:
+   *  agent-ledger-offers. */
+  offers: () => requireTableName("DYNAMODB_TABLE_OFFERS", process.env.DYNAMODB_TABLE_OFFERS),
 };
 
 /** Value is passed in via a *static* `process.env.X` read (not a dynamic
