@@ -1,13 +1,11 @@
 import path from "node:path";
 import { Document, Page, View, Text, Image, StyleSheet, Font } from "@react-pdf/renderer";
+import { appAssetPath } from "../../app-asset-path";
 import type { DocLanguage } from "../../types";
 
-// Resolved from process.cwd() rather than a "./public/..." relative string —
-// this module runs server-side, and a path relative to the source file
-// wouldn't survive Next.js's server bundling. process.cwd() is the app root
-// on Amplify's Next.js compute, same assumption other server-side readers
-// of public/ in this codebase would need to make.
-const FONT_DIR = path.join(process.cwd(), "public", "fonts");
+// See app-asset-path.ts — NOT process.cwd(), confirmed unreliable here by
+// direct production evidence (2026-09-28).
+const FONT_DIR = appAssetPath("fonts");
 
 // Used for BOTH languages, not just Hebrew — @react-pdf/renderer's built-in
 // "Helvetica" standard font relies on pdfkit loading font data files off

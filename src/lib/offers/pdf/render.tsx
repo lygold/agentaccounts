@@ -1,13 +1,15 @@
 import "server-only";
-import path from "node:path";
 import { existsSync, readFileSync } from "node:fs";
 import { renderToBuffer } from "@react-pdf/renderer";
+import { appAssetPath } from "../../app-asset-path";
 import type { OfferRecord } from "../../types";
 import { OfferDocument } from "./offer-document";
 
 // If this file is missing, "with logo" silently falls back to no logo
 // rather than failing the whole PDF — see the withLogo handling below.
-const LOGO_PATH = path.join(process.cwd(), "public", "remax-logo.png");
+// See app-asset-path.ts — NOT process.cwd(), confirmed unreliable here by
+// direct production evidence (2026-09-28).
+const LOGO_PATH = appAssetPath("remax-logo.png");
 
 export interface RenderOfferPdfInput {
   offer: OfferRecord;

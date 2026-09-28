@@ -1,13 +1,15 @@
-import path from "node:path";
 import { existsSync } from "node:fs";
 import { createTranslator, NextIntlClientProvider } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { getOfferByToken } from "@/lib/store/offers";
 import { getAttachmentUrl } from "@/lib/s3-attachments";
 import { docLanguageToLocale, isRtlLocale } from "@/i18n/locales";
+import { appAssetPath } from "@/lib/app-asset-path";
 import { OfferPublicForm } from "./offer-public-form";
 
-const LOGO_PATH = path.join(process.cwd(), "public", "remax-logo.png");
+// See lib/app-asset-path.ts — NOT process.cwd(), confirmed unreliable here
+// by direct production evidence (2026-09-28).
+const LOGO_PATH = appAssetPath("remax-logo.png");
 
 /**
  * Stage 2, buyer-facing — NO session, NO <Nav/> (the buyer is not an app

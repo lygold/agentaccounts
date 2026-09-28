@@ -104,8 +104,16 @@ const nextConfig: NextConfig = {
   // pick, it's pdfkit's own internal default. Applied broadly (not scoped
   // to just the offer routes) since these are tiny font-metric files, not
   // real font binaries — negligible bundle-size cost either way.
+  // Belt-and-suspenders alongside src/lib/app-asset-path.ts (which reads
+  // these from /var/task directly, not process.cwd()) — forces these files
+  // into the trace explicitly in case Amplify's own public/ -> /var/task
+  // copy ever has a gap this fix's one diagnostic round didn't surface.
   outputFileTracingIncludes: {
-    "/**": ["./node_modules/pdfkit/js/standard-fonts/**/*"],
+    "/**": [
+      "./node_modules/pdfkit/js/standard-fonts/**/*",
+      "./public/fonts/**/*",
+      "./public/remax-logo.png",
+    ],
   },
   // Next's default server-action body limit is 1MB — the property
   // wizard's media step submits multiple photos/documents in one request
