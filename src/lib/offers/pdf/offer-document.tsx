@@ -9,18 +9,25 @@ import type { DocLanguage } from "../../types";
 // of public/ in this codebase would need to make.
 const FONT_DIR = path.join(process.cwd(), "public", "fonts");
 
-// @react-pdf/renderer's built-in Helvetica font has no Hebrew glyphs — a
-// Hebrew-capable font is required for the Hebrew-language document or every
-// Hebrew field just renders blank boxes. Noto Sans Hebrew is Google's
-// standard for this; bundled as a static asset (public/fonts) rather than
-// fetched at render time so this doesn't depend on an external host being
-// reachable from wherever the PDF is rendered (Amplify's compute).
+// Used for BOTH languages, not just Hebrew — @react-pdf/renderer's built-in
+// "Helvetica" standard font relies on pdfkit loading font data files off
+// disk at render time (not a normal `import`), which Next.js's build-time
+// file tracing can't see, so those files never make it into Amplify's
+// Lambda bundle: every submission failed in production with
+// `Cannot find module '.../pdfkit/js/standard-fonts/Helvetica.cjs'`, 100%
+// reproducible, confirmed 2026-09-28. Noto Sans Hebrew has full Latin
+// coverage too, so using it everywhere sidesteps pdfkit's standard-font
+// loading entirely rather than trying to coax Next's tracer into bundling
+// pdfkit's internals (fragile — depends on pdfkit's own file layout, which
+// could shift on any version bump). Bundled as a static asset (public/fonts)
+// rather than fetched at render time so this doesn't depend on an external
+// host being reachable from wherever the PDF is rendered.
 // Google ships this family only as a single [wdth,wght] variable font, not
 // separate static weight files — @react-pdf/renderer's font engine renders a
 // variable font at its default instance regardless of which registered
 // entry resolves the lookup, so "Bold" is the same physical file/weight as
-// "Regular" here. That's a real limitation (no visually-bold Hebrew text),
-// not a bug; swap in real static Regular/Bold TTFs later if that matters.
+// "Regular" here. That's a real limitation (no visually-bold text), not a
+// bug; swap in real static Regular/Bold TTFs later if that matters.
 Font.register({
   family: "NotoSansHebrew",
   fonts: [
@@ -34,8 +41,14 @@ Font.register({
 // buyers already know (a real sample was used as the reference for this
 // rewrite), not the two-column label/value grid this file used before.
 const styles = StyleSheet.create({
-  page: { padding: 48, fontSize: 11, lineHeight: 1.6, fontFamily: "Helvetica", textAlign: "center" },
-  pageHebrew: { fontFamily: "NotoSansHebrew", direction: "rtl" },
+  page: {
+    padding: 48,
+    fontSize: 11,
+    lineHeight: 1.6,
+    fontFamily: "NotoSansHebrew",
+    textAlign: "center",
+  },
+  pageHebrew: { direction: "rtl" },
   logo: { width: 140, marginBottom: 16, alignSelf: "center" },
   title: { fontSize: 16, fontWeight: "bold", marginBottom: 2 },
   subtitle: { fontSize: 11, color: "#555", marginBottom: 24 },
