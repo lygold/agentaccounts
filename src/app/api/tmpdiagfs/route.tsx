@@ -1,5 +1,6 @@
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
+import { Document, Page, Text, Font, renderToBuffer } from "@react-pdf/renderer";
 
 // TEMPORARY diagnostic route — not a fix, just ground truth about the
 // production filesystem layout, to figure out why process.cwd()-based
@@ -57,6 +58,35 @@ export async function GET() {
   if (typeof __dirname !== "undefined") {
     report.dirname_listing = safeReaddir(__dirname);
     report.dirname_parent_listing = safeReaddir(path.join(__dirname, ".."));
+  }
+
+  // Exact same operation type (open()) as what actually failed in
+  // production — existsSync alone doesn't prove readFileSync also works.
+  const fontPath = path.join(process.cwd(), "public", "fonts", "NotoSansHebrew-Regular.ttf");
+  try {
+    const stat = statSync(fontPath);
+    report.font_stat_size = stat.size;
+    const buf = readFileSync(fontPath);
+    report.font_readFileSync_bytes = buf.length;
+  } catch (e) {
+    report.font_readFileSync_error = `${(e as Error).name}: ${(e as Error).message}`;
+  }
+
+  // The actual, real thing that failed: register this exact font the same
+  // way offer-document.tsx does, then render a real PDF using it.
+  try {
+    Font.register({ family: "DiagNotoSansHebrew", fonts: [{ src: fontPath }] });
+    const buf = await renderToBuffer(
+      <Document>
+        <Page size="A4" style={{ fontFamily: "DiagNotoSansHebrew" }}>
+          <Text>diagnostic test render</Text>
+        </Page>
+      </Document>,
+    );
+    report.real_render_succeeded = true;
+    report.real_render_bytes = buf.length;
+  } catch (e) {
+    report.real_render_error = `${(e as Error).name}: ${(e as Error).message}`;
   }
 
   return Response.json(report);
