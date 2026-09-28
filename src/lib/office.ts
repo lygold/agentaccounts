@@ -19,8 +19,13 @@ export const DEAL_INTAKE_URL =
 
 /** This app's own deployed base URL, no trailing slash — for building
  *  absolute links in notification emails/WhatsApp messages (e.g. the offers
- *  buyer link, or a link back to /offers/[id]). Same fallback domain as
- *  DEAL_INTAKE_URL's default, since that's this app's own Amplify domain. */
+ *  buyer link, or a link back to /offers/[id]). The fallback here used to
+ *  copy DEAL_INTAKE_URL's default (d398ynovmjstlh) — wrong: that domain is
+ *  sikkumPigisha's own separate app, not this one (this app's real domain
+ *  is d2aqfzo6esnq4n). Confirmed live 2026-09-28: with NEXT_PUBLIC_APP_URL
+ *  actually set in Amplify this fallback never fires, but it was a real
+ *  footgun waiting for whenever that env var goes missing — every buyer
+ *  link/notify email would have silently pointed at the wrong app. */
 export const APP_BASE_URL = (
-  process.env.NEXT_PUBLIC_APP_URL ?? "https://main.d398ynovmjstlh.amplifyapp.com"
+  process.env.NEXT_PUBLIC_APP_URL ?? "https://main.d2aqfzo6esnq4n.amplifyapp.com"
 ).replace(/\/$/, "");
