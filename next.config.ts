@@ -91,6 +91,22 @@ for (const key of SERVER_ENV_KEYS) {
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   env: bakedServerEnv,
+  // pdfkit (used internally by @react-pdf/renderer for the offer PDF)
+  // unconditionally loads its "Helvetica" standard font at PDFDocument
+  // construction time — PDFKit's own initFonts() defaults to it regardless
+  // of what font the actual document content uses — via a dynamic
+  // require('#standard-fonts/Helvetica') Next's build-time file tracing
+  // can't see. Without this, those files never made it into Amplify's
+  // Lambda bundle: every single offer submission failed in production with
+  // "Cannot find module '.../pdfkit/js/standard-fonts/Helvetica.cjs'",
+  // confirmed even for Hebrew-language offers whose own content never
+  // references Helvetica — proof this isn't about which font our styles
+  // pick, it's pdfkit's own internal default. Applied broadly (not scoped
+  // to just the offer routes) since these are tiny font-metric files, not
+  // real font binaries — negligible bundle-size cost either way.
+  outputFileTracingIncludes: {
+    "/**": ["./node_modules/pdfkit/js/standard-fonts/**/*"],
+  },
   // Next's default server-action body limit is 1MB — the property
   // wizard's media step submits multiple photos/documents in one request
   // (server actions accept File objects in FormData directly), and phone
