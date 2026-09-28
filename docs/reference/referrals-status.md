@@ -6,6 +6,41 @@ metadata:
   modified: 2026-09-24
 ---
 
+## Update, later the same day (2026-09-24, evening)
+
+Two of the "not confirmed" items below got fixed and pushed to `main`
+(commits `7d42d6f`, `9388bdd`, `5001ef5`): the details message and
+accepted-confirmation now send successfully (root causes: an empty-string
+`clientEmail` param Meta rejects, and the accepted-template having grown a
+3rd `{{status}}` var in Meta Business Manager that the code hadn't caught
+up to), and `/referrals/[id]` + the red required-field markers were
+reapplied from the revert. See git log for the full detail — the
+"Built, but NOT confirmed" and "What got reverted" sections below are
+stale on those specific points but left as-is rather than rewritten.
+
+**Newly found, NOT fixed yet** (found testing the reapplied detail page,
+2026-09-24 evening — deliberately not fixed this session, just recorded):
+
+- **Quick-set lead-status buttons always clear the status instead of
+  setting it** — `/referrals/[id]`, the blue "Active"/"Cold"/"client
+  stopped looking" buttons. Root cause is confirmed, not a guess:
+  `updateReferralLeadStatus` in `src/app/referrals/[id]/actions.ts` parses
+  via `Object.fromEntries(formData.entries())`. The form has *two* fields
+  both named `leadStatus` — the quick buttons and the free-text `Input`
+  below them. `Object.fromEntries` keeps the *last* duplicate key it sees,
+  not the first, and the empty free-text `Input` always sits after the
+  buttons in the DOM — so its empty string always wins over whichever
+  button was actually clicked, saving `leadStatus: null` every time. Fix
+  needs the two controls to stop sharing a form-field name (or the action
+  to dedupe/prefer the clicked control before zod-parsing).
+- **Lead status has no history** — typing a new status just overwrites the
+  old one in place (this part is as-designed: `leadStatus` is a single
+  current-value field, not a log). But nothing records *that it changed*
+  anywhere, including the separate append-only "Activity log" section
+  right below it on the same page — a status change and a check-in note
+  are two disconnected things today. Worth deciding whether a status
+  change should auto-append an activity-log entry.
+
 **Read this before trusting any other referrals doc/comment about what this
 feature does.** Built fast over one long session with a lot of live
 production debugging; this is the honest state as of the revert, not the
