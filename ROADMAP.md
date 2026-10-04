@@ -78,7 +78,7 @@ getting there and then going further.
 | **6** | Green Invoice income/expense engine: production GI, webhook + poll fallback, agent monthly expenses (recurring + bulk import), `billAgentExpenses`. | ✅ done |
 | **7** | Daily report (north star) — office-expenses, bank-transactions/balances, RE/MAX Israel receipts, `/reports/daily` 3-section report. WhatsApp handoff notifications not built. | ✅ core done, WhatsApp handoffs pending |
 | **8** | Deal-intake wizard merged in (`/deals/new`, 18 steps, AI upload extraction), replacing sikkumPigisha. `/sikkum` deep link live. | ✅ done, sikkumPigisha not yet decommissioned (8f) |
-| **9** | Native property wizard (`/properties/new`, full field parity), property status/detail/edit pages, secretary notifications, Gantt exclusivity view (now the default `/properties` landing page), Monday sync bridge for properties. | ✅ mostly shipped and deployed 2026-09-17 — **except the sync bridge, reported broken (data looks wrong on screen), needs work** — see the Phase 9 section |
+| **9** | Native property wizard (`/properties/new`, full field parity), property status/detail/edit pages, secretary notifications, Gantt exclusivity view (now the default `/properties` landing page), Monday sync bridge for properties. **Also**: native purchase-offer flow (`/offers`, `/offer/[token]`), native agent-referral handoff (`/referrals`, `/r/[id]`) — both replace their old Make.com/Monday.com pipelines. | ✅ properties mostly shipped and deployed 2026-09-17 — **except the sync bridge, reported broken (data looks wrong on screen), needs work**; ✅ offers + referrals fully merged to `main` and deployed 2026-09-28, each with real known gaps — see the Phase 9 section and `docs/reference/offers-status.md` / `referrals-status.md` |
 
 **What works today:** deploy at `main.d2aqfzo6esnq4n.amplifyapp.com`, OTP login,
 role-scoped dashboard / deals / per-agent ledger, deal creation with auto-billing,
@@ -91,7 +91,13 @@ page for the properties area — the flat list moved to `/properties/list`),
 and a two-way Monday sync bridge for properties (deployed and pulled in 295
 existing Monday listings on first run — **but Levi reports the synced data
 looks wrong on screen; not yet diagnosed, needs real work**, see the Phase 9
-section).
+section). As of 2026-09-28, also a native purchase-offer flow
+(`/offers/new` → `/offer/[token]`, with in-app PDF generation and S3
+storage) and a native agent-referral handoff flow (`/referrals/new` →
+`/r/[id]` consent → `/referrals/[id]` lead management) — see the Phase 9
+section and `docs/reference/offers-status.md` /
+`docs/reference/referrals-status.md` for each feature's real, current gaps
+(a few things are confirmed broken, not just "unverified").
 
 **Build/deploy infra**: Amplify build time optimized 2026-09-16 (skip nvm's
 default-packages reinstall in `amplify.yml` — ~58s/build saved, ~4m42s → ~3m44s).
@@ -604,37 +610,52 @@ Signed Contracts, Properties, Offers, and Referrals Monday boards.
     properties.ts`, `byOfficeId` GSI added) — see "Native property intake"
     progress note below; this is the same table, now with the full ~90-field
     Superform/Monday-parity inventory rather than the short list above.
-  - **`offers`** (הצעת מחיר) — ✅ **built** (feature-offers branch, 2026-09-17):
-    `OfferRecord`/`OfferStatus` in `src/lib/types.ts`, `src/lib/store/
-    offers.ts`, GSIs `byAgentId`/`byOfficeId`/`byToken`. Granular status —
-    `new | follow_up | accepted | rejected_too_low | rejected_not_relevant |
-    duplicate` (not the flattened `rejected` originally sketched here — the
-    reject reason matters for managing the pipeline, confirmed with Levi).
-    Fully native, replacing the Make.com/Monday.com pipeline below: the agent
-    picks one of *their own* properties at `/offers/new` (auto-fills address/
-    owner from it, still editable) and gets a shareable `/offer/[token]`
-    link — public, no session, the token is the auth (see `middleware.ts`).
-    The buyer fills in offer terms and signs there (`src/components/
-    signature-pad.tsx`, plain `<canvas>`, no library); submitting renders
-    the PDF in-app (`src/lib/offers/pdf/`, `@react-pdf/renderer` — the first
-    user of in-app PDF generation in this codebase, establishing the pattern
-    for the daily-report export and the deal summary-of-terms PDF too),
-    stores it on S3 (`src/lib/offers/storage.ts`), and emails the agent
-    (`src/lib/services/offer-notify.ts`). **Deferred, not built**: the old
-    Monday board's "notify Ariyel the instant a raw offer lands" ping — a
-    real requirement, not Make plumbing, needs its own design (candidate:
-    fold into the WhatsApp-notification list in Phase 7). **Not sourced
-    yet**: the actual RE/MAX logo file for the "with logo" branding option
-    (`src/lib/offers/pdf/render.tsx`'s `LOGO_PATH` — silently falls back to
-    no logo until it's dropped in).
+  - **`offers`** (הצעת מחיר) — ✅ **built and deployed** (merged to `main`
+    2026-09-28): `OfferRecord`/`OfferStatus` in `src/lib/types.ts`,
+    `src/lib/store/offers.ts`, GSIs `byAgentId`/`byOfficeId`/`byToken`.
+    Granular status — `new | follow_up | accepted | rejected_too_low |
+    rejected_not_relevant | duplicate` (not the flattened `rejected`
+    originally sketched here — the reject reason matters for managing the
+    pipeline, confirmed with Levi). Fully native, replacing the
+    Make.com/Monday.com pipeline below (zero Monday writes anywhere in this
+    flow): the agent picks one of *their own* properties at `/offers/new`
+    (auto-fills address/owner from it, still editable, or hand-types it via
+    a "my property doesn't appear" manual-entry fallback) and gets a
+    shareable `/offer/[token]` link — public, no session, the token is the
+    auth (see `middleware.ts`). The buyer fills in offer terms and signs
+    there (`src/components/signature-pad.tsx`, plain `<canvas>`, no
+    library); submitting renders the PDF in-app (`src/lib/offers/pdf/`,
+    `@react-pdf/renderer` — the first user of in-app PDF generation in this
+    codebase, establishing the pattern for the daily-report export and the
+    deal summary-of-terms PDF too), stores it on S3
+    (`src/lib/offers/storage.ts`), and emails the agent
+    (`src/lib/services/offer-notify.ts`). First production traffic exposed
+    and fixed a string of real bugs (pdfkit's standard-fonts crash, an
+    `ENOENT` on `public/fonts/*` under Amplify's SSR compute, a wrong
+    `APP_BASE_URL` fallback domain) — see `docs/reference/offers-status.md`
+    for the full list and what's still open (logo missing on the buyer
+    form page itself, the dormant `short-io.ts` link-shortening, the
+    undecided 24h→`follow_up` auto-transition). **Deferred, not built**:
+    the old Monday board's "notify Ariyel the instant a raw offer lands"
+    ping — a real requirement, not Make plumbing, needs its own design
+    (candidate: fold into the WhatsApp-notification list in Phase 7).
   - **`referrals`** — referring agent/office, contact, % of commission, linked
     deal/contract. GSI `byDealId`. **Not yet built** — this specific
     commission-split concept still doesn't exist. What DOES exist on this
     same physical table: a separate agent-to-agent lead-handoff feature
-    (replacing the Monday Referrals board + its Make.com scenarios),
-    deliberately kept as a different concept for now — see
-    docs/reference/referrals-status.md for its actual current state
-    (most of it is unverified in production as of 2026-09-24).
+    (`/referrals/new` → `/r/[id]` consent → `/referrals/[id]` lead
+    management), replacing the Monday Referrals board + its Make.com
+    scenarios, deliberately kept as a different concept for now. ✅ **built
+    and deployed** (merged to `main` 2026-09-28) — see
+    docs/reference/referrals-status.md for its actual current state as of
+    2026-10-04: core creation/invite/consent/accept-decline flow confirmed
+    working, but the Monday outbound mirror is **confirmed broken**
+    (`MONDAY_REFERRALS_BOARD_ID` unset — every referral action hits it and
+    dead-letters), the quick-set lead-status buttons on `/referrals/[id]`
+    have a diagnosed-but-unfixed bug that always clears the status instead
+    of setting it, and a few other things (broker notification, WhatsApp
+    delivery confirmation to the sending agent, the 48h auto-expiry cron)
+    remain unverified in production.
   - **`deal-notes`** — append-only: `dealId`, `authorId`, `authorName`, `body`,
     `createdAt`. GSI `byDealId`. Scope own / team / all via `scope.ts`.
 - **Build as plain linked records first.** `deal.propertyId` / `.offerId` /
@@ -991,7 +1012,16 @@ Runs across Phases 4 (Daf Kesher) and 10 (everything else).
 - [x] `scope.ts` matches by `agentId`; deals store real `agentId` + `team`
 - [ ] sikkumPigisha retired (Phase 8) — nothing else reads Daf Kesher
 - [ ] Pipeline entities live (Phase 9) — Signed Contracts / Properties / Offers /
-      Referrals boards no longer written
+      Referrals boards no longer written. Verified 2026-10-04, still
+      correctly unchecked: **Offers** is the only one of the four fully off
+      Monday (zero Monday code path at all in `src/app/offers/`,
+      `src/app/offer/`, `src/lib/offers/`) — **Properties** still writes
+      outbound via the sync bridge (`mirrorPropertyToMonday`), **Referrals**
+      still writes outbound via its own mirror (`mirrorReferralToMonday`,
+      currently broken — see `docs/reference/referrals-status.md`) by
+      design during the transition, and **Signed Contracts** isn't a native
+      entity yet at all (the wizard's contract-pick step still reads
+      haskama/biladiut rows from Monday).
 - [ ] Wizard writes go to DynamoDB only; Make PDF replaced or bridged
 - [ ] Announce cutover date to the office
 - [ ] Freeze Monday edits → final sync → flip app to DynamoDB-only
