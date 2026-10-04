@@ -74,6 +74,10 @@ export default async function OfferPublicPage({
 
   return (
     <main dir={dir} lang={locale} className="mx-auto max-w-lg p-6">
+      {showLogo && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src="/remax-logo.png" alt="RE/MAX" className="mb-2 h-16 w-auto" />
+      )}
       <h1 className="mb-1 text-xl font-bold">{t("title")}</h1>
       <p className="mb-6 text-sm text-muted-foreground">{offer.propertyAddress}</p>
       {error && <p className="mb-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">{t("saveFailed")}</p>}

@@ -10,7 +10,14 @@ import { isNextJsRedirect } from "@/lib/wizard/action-utils";
 import type { ReferralActivityEntry } from "@/lib/types";
 
 const NoteSchema = z.object({ referralId: z.string().min(1), body: z.string().trim().min(1) });
-const StatusSchema = z.object({ referralId: z.string().min(1), leadStatus: z.string().trim() });
+const StatusSchema = z.object({
+  referralId: z.string().min(1),
+  // Two separate controls in the same form submit under different names —
+  // leadStatus from whichever quick-set button was clicked, leadStatusText
+  // from the free-text input — so neither one silently clobbers the other.
+  leadStatus: z.string().trim().optional(),
+  leadStatusText: z.string().trim().optional(),
+});
 
 /** Client info (name/phone/email/type/notes-from-creation) is deliberately
  *  never editable from here — per Levi, this is a read-only record of what
@@ -55,6 +62,7 @@ export async function updateReferralLeadStatus(formData: FormData) {
     const parsed = StatusSchema.safeParse(Object.fromEntries(formData.entries()));
     if (!parsed.success) redirect(`/referrals/${referralId}?error=status`);
     const d = parsed.data;
+    const newStatus = d.leadStatus || d.leadStatusText || "";
 
     const referral = await getReferral(d.referralId);
     if (!referral) notFound();
@@ -62,7 +70,7 @@ export async function updateReferralLeadStatus(formData: FormData) {
 
     await updateReferral(
       referral.id,
-      { leadStatus: d.leadStatus.length > 0 ? d.leadStatus : null },
+      { leadStatus: newStatus.length > 0 ? newStatus : null },
       referral.officeId,
     );
 

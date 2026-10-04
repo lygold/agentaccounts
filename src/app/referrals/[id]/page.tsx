@@ -102,7 +102,7 @@ export default async function ReferralDetailPage({
               ))}
             </div>
             <div className="flex gap-2">
-              <Input name="leadStatus" placeholder={t("leadStatusPlaceholder")} className="flex-1" />
+              <Input name="leadStatusText" placeholder={t("leadStatusPlaceholder")} className="flex-1" />
               <Button type="submit">{t("leadStatusSave")}</Button>
             </div>
           </form>
