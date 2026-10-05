@@ -22,6 +22,11 @@ interface Strings {
   waitForUploads: string;
 }
 
+/** Shared by every <MediaUploader> on the page. The wizard draft is a single
+ *  read-modify-write blob, so two fields recording a file at the same moment
+ *  could overwrite each other's update and silently drop a photo. */
+let uploadQueue: Promise<void> = Promise.resolve();
+
 function fmt(template: string, values: Record<string, string | number>): string {
   return template.replace(/\{(\w+)\}/g, (_, k: string) => String(values[k] ?? ""));
 }
@@ -76,24 +81,31 @@ export function MediaUploader({
     setProgress({ done: 0, total: files.length });
     const failures: string[] = [];
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      try {
-        const type = file.type || "application/octet-stream";
-        const req = await requestMediaUpload({ name: file.name, type, size: file.size });
-        if (!req.ok) throw new Error(req.error);
+    // Run behind the shared queue: only one file is ever being recorded on the
+    // draft at a time, across every field on the page.
+    const job = uploadQueue.then(async () => {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        try {
+          const type = file.type || "application/octet-stream";
+          const req = await requestMediaUpload({ name: file.name, type, size: file.size });
+          if (!req.ok) throw new Error(req.error);
 
-        const put = await fetch(req.url, { method: "PUT", headers: req.headers, body: file });
-        if (!put.ok) throw new Error(`storage ${put.status}`);
+          const put = await fetch(req.url, { method: "PUT", headers: req.headers, body: file });
+          if (!put.ok) throw new Error(`storage ${put.status}`);
 
-        const done = await finalizeMediaUpload(category, req.key, { name: file.name, type });
-        if (!done.ok) throw new Error(done.error);
-        setItems((prev) => [...prev, { name: done.name, thumbUrl: done.thumbUrl }]);
-      } catch (err) {
-        failures.push(fmt(strings.failed, { name: file.name, reason: err instanceof Error ? err.message : "error" }));
+          const done = await finalizeMediaUpload(category, req.key, { name: file.name, type });
+          if (!done.ok) throw new Error(done.error);
+          setItems((prev) => [...prev, { name: done.name, thumbUrl: done.thumbUrl }]);
+        } catch (err) {
+          console.error("[media-uploader]", file.name, err);
+          failures.push(fmt(strings.failed, { name: file.name, reason: err instanceof Error ? err.message : "error" }));
+        }
+        setProgress({ done: i + 1, total: files.length });
       }
-      setProgress({ done: i + 1, total: files.length });
-    }
+    });
+    uploadQueue = job.catch(() => {});
+    await job;
 
     setErrors(failures);
     setProgress(null);

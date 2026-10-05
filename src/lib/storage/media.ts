@@ -134,7 +134,10 @@ export async function generateDerivatives(
     ["thumb", thumbKey],
   ] as const) {
     const spec = DERIVATIVES[variant];
-    const out = await sharp(body, { limitInputPixels: 268_402_689 })
+    // failOn "none": some phone JPEGs carry a header quirk ("Invalid SOS
+    // parameters for sequential JPEG") that strict decoding rejects but that
+    // decodes and resizes fine when tolerated.
+    const out = await sharp(body, { failOn: "none", limitInputPixels: 268_402_689 })
       .rotate() // apply EXIF orientation, then drop the tag
       .resize({ width: spec.width, withoutEnlargement: true })
       .webp({ quality: spec.quality })
