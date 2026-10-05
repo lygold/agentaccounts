@@ -201,7 +201,17 @@ arrive until then.
 - **Read access:** the service account must be able to *read* the real folder.
   Writing there failed (zero storage quota; delegation parked), but reading
   needs no quota — sharing the real top folder with the service-account email
-  as **Viewer** should be enough, no delegation. Not tested here; verify first.
+  as **Viewer** should be enough, no delegation. **Verified 2026-10-05:** the
+  service account sees the real folder (owner ari@remaxjerusalem.com; folder id
+  `1YWCp9bnT-rf5v_rcQlEbIsi1X3q2bwZX`) with year folders 2026/2025/2024/2023,
+  50+ property folders per year named `{street} {building}-{apt}`, and files
+  with `size` + `md5Checksum` (so change detection works). Sample property:
+  13 JPEGs of ~250–360 KB each (~4 MB/property — smaller than the 3 MB × 25
+  assumed in the cost model). The 2023 folder also has status folders
+  (`B נמכר+הושכר`, `C פג תוקף + מבוטל`, …) — decide whether to descend into
+  them. Caveats: Drive intermittently returns HTTP 500 on `files.list`
+  (`sharedWithMe` + `corpora=allDrives`, and some My Drive listings) — retry with
+  backoff and avoid `corpora=allDrives` for My Drive parents.
 - **Cost/limits:** the copy is a one-time Drive API read per file, then served
   from CloudFront. Do the copy as a background job (not inside the page
   request) so a large folder doesn't time out; show the Drive-sourced state
