@@ -156,7 +156,12 @@
     "noUpdates": "אין עדכונים עדיין",
     "notifiedEmail": "נשלח אימייל למזכירה",
     "notifiedWhatsapp": "נשלח וואטסאפ למזכירה",
-    "downloadOriginal": "מקור"
+    "downloadOriginal": "מקור",
+    "driveSyncing": "מסנכרן מהדרייב… {copied} מתוך {total}",
+    "driveSynced": "מסונכרן עם הדרייב",
+    "driveNoMatch": "לא נמצאה תיקייה מתאימה בדרייב",
+    "driveRefresh": "רענן מהדרייב",
+    "driveFailed": "סנכרון הדרייב נכשל"
   },
   "PropertyEdit": {
     "title": "עריכת נכס",

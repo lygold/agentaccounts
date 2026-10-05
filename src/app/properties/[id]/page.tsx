@@ -5,6 +5,8 @@ import { requireSession, isManager } from "@/lib/auth/session-cookie";
 import { allowedAgentIds, isIdAllowed } from "@/lib/auth/scope";
 import { getProperty } from "@/lib/store/properties";
 import { getMediaUrl } from "@/lib/storage/media";
+import { SYNC_TTL_MS } from "@/lib/storage/drive-sync";
+import { DriveSync } from "@/components/drive-sync";
 import type { MediaFileRef } from "@/lib/types";
 import { Nav } from "@/components/nav";
 import { Button } from "@/components/ui/button";
@@ -24,6 +26,15 @@ export default async function PropertyDetailPage({
 
   const t = await getTranslations("PropertyDetail");
   const media = property.media;
+  const driveAutoRun =
+    !property.driveSyncedAt || Date.now() - Date.parse(property.driveSyncedAt) > SYNC_TTL_MS;
+  const driveStrings = {
+    syncing: t.raw("driveSyncing") as string,
+    synced: t("driveSynced"),
+    noMatch: t("driveNoMatch"),
+    refresh: t("driveRefresh"),
+    failed: t("driveFailed"),
+  };
   const withUrls = async (refs: MediaFileRef[] | undefined) =>
     Promise.all(
       (refs ?? []).map(async (r) => ({
@@ -94,6 +105,9 @@ export default async function PropertyDetailPage({
         </Section>
 
         <Section title={t("mediaTitle")}>
+          <div className="col-span-2">
+            <DriveSync propertyId={property.id} autoRun={driveAutoRun} strings={driveStrings} />
+          </div>
           <PhotoGrid label={t("mainPhotosLabel")} items={mainPhotos} originalLabel={t("downloadOriginal")} />
           <PhotoGrid label={t("additionalPhotosLabel")} items={additionalPhotos} originalLabel={t("downloadOriginal")} />
           {[...mediaForms, ...mediaDocuments].map((f) => (
@@ -102,7 +116,7 @@ export default async function PropertyDetailPage({
               href={f.original}
               target="_blank"
               rel="noopener noreferrer"
-              className="block text-sm text-secondary underline-offset-4 hover:underline"
+              className="col-span-2 block text-sm text-secondary underline-offset-4 hover:underline"
             >
               {f.ref.name}
             </a>
@@ -205,7 +219,7 @@ function PhotoGrid({
 }) {
   if (!items.length) return null;
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="col-span-2 flex flex-col gap-1.5">
       <span className="text-xs text-muted-foreground">
         {label} ({items.length})
       </span>

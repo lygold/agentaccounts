@@ -1,6 +1,6 @@
 # Storage architecture — media & document files
 
-> **Status: agreed direction (2026-10-04); slices 1–3 built (storage module, CDN, property wizard + detail page); Drive backfill and Drive backup not yet.** Replaces the Phase 9a
+> **Status: agreed direction (2026-10-04); slices 1–4 built (storage module, CDN, property wizard + detail page, Drive backfill); Drive backup export not yet.** Replaces the Phase 9a
 > "Drive is the source of truth" approach for *new* work. ROADMAP.md still wins
 > if it disagrees; this doc should be linked from there when the work is
 > scheduled. Origin: the exploration brief in
@@ -232,6 +232,33 @@ arrive until then.
     first (not verified for any site).
   - Our own website is the exception: publish to it directly from the app
     (feed or API we control), no scraping.
+
+### Built (slice 4) — how it behaves
+
+`src/lib/storage/drive-sync.ts` + `<DriveSync>` on `/properties/[id]`:
+- **Trigger:** opening a property whose last sync is older than 10 min (or never),
+  plus a "Refresh from Drive" button. Batches of 6 files per call so a big
+  folder can't time out; the client loops until done and then refreshes.
+- **Match:** an in-memory index of every property folder under the real root
+  (years newest-first, 2023-style `B נמכר…` status folders skipped), names
+  normalised (Hebrew quote variants, spaces). Candidates: `{street} {bldg}-{apt}`;
+  with no apartment: `{street} {bldg}-0`, then `{street} {bldg}`. All four years
+  are searched; newest year wins. No match → `driveMatch: "not_found"`.
+- **Copy:** new or changed files only (Drive `md5Checksum`); originals +
+  resized copies; Google Docs/Sheets skipped (no bytes). Images land in
+  `additionalPhotos` (Drive has no "main photo"), everything else in
+  `documents`. Files > 40 MB skipped. A per-property Redis lock stops two tabs
+  syncing at once.
+- **Drive is never modified.** A file later removed from Drive keeps our copy,
+  flagged `driveMissing` (not yet shown in the UI). A *changed* file replaces
+  its ref; the old objects are orphaned in the bucket (no delete yet).
+- **Loop guard for slice 5:** files carrying the Drive `appProperties` key
+  `agentledgerKey` are ignored by the sync — the backup export must set it on
+  every file it writes, or the sync would re-import our own backup copies.
+- **Tested live** (2026-10-05) on `דניאל 5-1`: 13 files (11 photos + 2 PDFs)
+  copied in 3 batches, second sync copied 0, unknown address → no match, other
+  office rejected, photos render from CloudFront in the browser. First batch is
+  slow (~20 s) because it builds the folder index.
 
 ## Cheap wins (independent of the migration)
 

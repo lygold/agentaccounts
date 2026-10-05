@@ -86,9 +86,15 @@ export async function completeUpload(
   };
 
   if (IMAGE_TYPES.has(meta.type)) {
-    const derivatives = await generateDerivatives(key);
-    ref.galleryKey = derivatives.galleryKey;
-    ref.thumbKey = derivatives.thumbKey;
+    // A format sharp can't decode (e.g. some HEIC) must not lose the upload:
+    // keep the original and serve it as-is.
+    try {
+      const derivatives = await generateDerivatives(key);
+      ref.galleryKey = derivatives.galleryKey;
+      ref.thumbKey = derivatives.thumbKey;
+    } catch (e) {
+      console.error(`[storage] derivatives failed for ${key}:`, e);
+    }
   }
   return ref;
 }

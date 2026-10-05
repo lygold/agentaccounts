@@ -75,7 +75,7 @@ let cachedToken: { token: string; expiresAt: number } | null = null;
  *  account's private key, trade it for an OAuth2 access token. Cached in
  *  module scope (like getDynamoDoc/getS3) and refreshed a minute before
  *  actual expiry. */
-async function getAccessToken(): Promise<string> {
+export async function getAccessToken(): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   if (cachedToken && cachedToken.expiresAt - 60 > now) return cachedToken.token;
 

@@ -156,7 +156,12 @@
     "noUpdates": "No updates yet",
     "notifiedEmail": "Secretary emailed",
     "notifiedWhatsapp": "Secretary WhatsApp’d",
-    "downloadOriginal": "Original"
+    "downloadOriginal": "Original",
+    "driveSyncing": "Syncing from Drive… {copied} of {total}",
+    "driveSynced": "Synced with Drive",
+    "driveNoMatch": "No matching folder found in Drive",
+    "driveRefresh": "Refresh from Drive",
+    "driveFailed": "Drive sync failed"
   },
   "PropertyEdit": {
     "title": "Edit property",

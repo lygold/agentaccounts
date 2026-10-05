@@ -887,7 +887,8 @@ before agentLedger is offered to a second office.
   **Amplify console needs the 3 `CLOUDFRONT_*` env vars**); (3) ✅ wizard media step on the new
   path (browser→S3 upload, thumbnails in the wizard, photo grid + "Original"
   links on `/properties/[id]`; legacy Drive-ref properties still render counts;
-  tested in a real browser); (4) Drive → S3 lazy backfill/sync; (5) Drive backup connector.
+  tested in a real browser); (4) ✅ Drive → S3 lazy backfill/sync (`src/lib/storage/drive-sync.ts` +
+  `<DriveSync>` on `/properties/[id]`; tested live against the real folder); (5) Drive backup connector.
 - **Open:** real Drive folder shared with the service account as Viewer
   (untested); deleted-in-Drive behaviour; Shared Drive backup coverage.
 

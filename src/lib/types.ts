@@ -480,6 +480,8 @@ export interface MediaFileRef {
   /** Drive's md5Checksum / modifiedTime at copy time, for change detection. */
   driveMd5?: string;
   driveModifiedTime?: string;
+  /** The file was removed from Drive after we copied it; our copy is kept. */
+  driveMissing?: boolean;
 }
 
 /** A property's files in our bucket, grouped by the wizard's four uploads. */
@@ -552,6 +554,8 @@ export interface PropertyRecord {
    *  own id. */
   mediaFolderId?: string;
   media?: PropertyMedia;
+  driveSyncedAt?: string;
+  driveMatch?: "found" | "not_found";
 
   // --- Legacy media (Google Drive refs, never raw bytes — see DriveFileRef).
   //     Old properties only; new uploads go to `media` above. ---
