@@ -626,7 +626,8 @@ export interface PropertyRecord {
   bedrooms?: number;
   toilets?: number;
   bathrooms?: number;
-  masterSuite?: boolean;
+  /** יחידת הורים - the Monday dropdown label (כן / לא). */
+  masterSuite?: string;
   floor?: number;
   floorsTotal?: number;
   levels?: string;
@@ -634,28 +635,34 @@ export interface PropertyRecord {
   plotSizeSqm?: number;
   /** מחיר מבוקש — the asking price. */
   askingPrice?: number;
-  /** מחיר התחלה — starting price, if different from asking. */
+  /** מחיר התחלה — what the listing STARTED at. Agents are only asked the
+   *  asking price; this is set once to that first value and then never
+   *  changes - later price changes only move `askingPrice`, so this stays the
+   *  record of the starting price. */
   startingPrice?: number;
+  /** The yes/no-style answers below are stored as the exact Monday dropdown
+   *  label the agent picked (see src/lib/property-wizard/options.ts), e.g.
+   *  elevator "מעלית שבת", balcony "מרפסת גג" - richer than a boolean. */
   condition?: string;
-  elevator?: boolean;
-  balcony?: boolean;
+  elevator?: string;
+  balcony?: string;
   balconySizeSqm?: number;
-  garden?: boolean;
+  garden?: string;
   gardenSizeSqm?: number;
-  ac?: boolean;
-  parking?: boolean;
+  ac?: string;
+  parking?: string;
   parkingCount?: number;
-  storage?: boolean;
+  storage?: string;
   storageSizeSqm?: number;
-  /** ממ"ד — safe room. */
-  safeRoom?: boolean;
+  /** ממ"ד — safe room (כן / לא). */
+  safeRoom?: string;
   additionalFeatures?: string[];
 
   // --- Internal ratings (office-only — never published/exported) ---
-  sellabilityRating?: number; // 0-9
-  sellerMotivation?: number; // 0-9
-  priceToCmaMatch?: number; // 0-9
-  ownerPressureToSell?: number; // 0-9
+  sellabilityRating?: number; // 0-10
+  sellerMotivation?: number; // 0-10
+  priceToCmaMatch?: number; // 0-10
+  ownerPressureToSell?: number; // 0-10
   trueCmaValue?: number;
   estimatedMonthsToSell?: number;
   letterGrade?: "A" | "B" | "C" | "D";
@@ -666,6 +673,11 @@ export interface PropertyRecord {
    *  this is the property's own history, unlike the capped aggregated
    *  feed in Redis. */
   updates?: PropertyUpdateEntry[];
+
+  /** ADMIN-ONLY bookkeeping for the Monday mirror (agents never see Monday):
+   *  the last push error, cleared on success. */
+  mondaySyncError?: string;
+  mondaySyncAt?: string;
 
   createdAt: string;
   updatedAt: string;

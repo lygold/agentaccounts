@@ -24,6 +24,9 @@ export default async function PropertyDetailsPage() {
             externalReferringAgentOffice: draft.externalReferringAgentOffice,
             externalReferringAgentPhone: draft.externalReferringAgentPhone,
             referralPercentOfCommission: draft.referralPercentOfCommission,
+            ownerName: draft.ownerName,
+            ownerPhone: draft.ownerPhone,
+            ownerEmail: draft.ownerEmail,
           }}
         />
       </div>

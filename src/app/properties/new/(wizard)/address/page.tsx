@@ -19,6 +19,8 @@ export default async function PropertyAddressPage() {
           initial={{
             formattedAddress: draft.formattedAddress,
             city: draft.city,
+            neighbourhood: draft.neighbourhood,
+            publishNotes: draft.publishNotes,
             street: draft.street,
             buildingNumber: draft.buildingNumber,
             entrance: draft.entrance,

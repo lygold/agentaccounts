@@ -6,6 +6,12 @@ import { createProperty, listPropertiesByOffice, updateProperty } from "../store
 import { DEFAULT_OFFICE_ID } from "../office";
 import { getRedis, RedisKeys } from "../redis";
 import type { PropertyRecord } from "../types";
+import { buildCoreColumns, buildPropertyColumns, propertyItemName } from "./property-columns";
+import {
+  clearMondaySyncAlert,
+  mondaySyncAlertCount,
+  raiseMondaySyncAlert,
+} from "../services/admin-alerts";
 
 /**
  * Phase 9 — Monday.com sync bridge for properties, same shape as
@@ -24,14 +30,9 @@ import type { PropertyRecord } from "../types";
  * call it right after createProperty() in the wizard's review/actions.ts.
  * Disable with MONDAY_SYNC_ENABLED=false (same flag agents' mirror uses).
  *
- * SCOPE LIMIT: only the fields already reconciled in PROPERTIES_BOARD
- * (src/lib/wizard/monday/columns.ts) round-trip — address, owner contact,
- * commission %/VAT, dealType, rooms/size/price. The wizard's full ~90-field
- * inventory (media, descriptions, technical details, internal ratings) has
- * no reconciled Monday column mapping yet and does NOT sync either
- * direction. Extending this to full fidelity means walking the real board
- * columns and confirming each one live, same as PROPERTIES_BOARD's existing
- * entries were — a separate, larger effort, not attempted here.
+ * OUTBOUND SCOPE: every wizard field with a Monday column is written (see
+ * property-columns.ts); the file columns are not (photos/forms live in storage
+ * + Drive). INBOUND still only reads the 13 fields it always did.
  */
 
 interface RawColumn {
@@ -276,65 +277,7 @@ function mirrorEnabled(): boolean {
   return process.env.MONDAY_SYNC_ENABLED !== "false";
 }
 
-function itemName(property: PropertyRecord): string {
-  return (
-    [
-      property.street,
-      property.buildingNumber,
-      property.apartmentNumber ? `דירה ${property.apartmentNumber}` : null,
-    ]
-      .filter(Boolean)
-      .join(" ") || "נכס חדש"
-  );
-}
-
-/** `agentMondayItemId` sets the board_relation column directly in the same
- *  create/update call — {item_ids:[...]} is the confirmed live write shape
- *  for connect_boards columns (see src/lib/wizard/monday/clients.ts's own
- *  contact-creation write for the same pattern). Omitted (not written)
- *  when the agent has no Monday item of their own yet. */
-function outboundColumnValues(
-  property: PropertyRecord,
-  agentMondayItemId?: string,
-): Record<string, unknown> {
-  const cv: Record<string, unknown> = {
-    [PROPERTIES_BOARD.meta.dealType]: {
-      label:
-        property.dealType === "rental" ? STATUS_LABELS.dealType.rental : STATUS_LABELS.dealType.sale,
-    },
-    [PROPERTIES_BOARD.meta.listingStatus]: { label: STATUS_LABELS.listingStatus.active },
-  };
-  if (agentMondayItemId) {
-    cv[PROPERTIES_BOARD.meta.agentRelation] = { item_ids: [Number(agentMondayItemId)] };
-  }
-  if (property.neighbourhood) cv[PROPERTIES_BOARD.property.neighbourhood] = property.neighbourhood;
-  if (property.street) cv[PROPERTIES_BOARD.property.street] = property.street;
-  if (property.buildingNumber) cv[PROPERTIES_BOARD.property.buildingNumber] = property.buildingNumber;
-  if (property.apartmentNumber) cv[PROPERTIES_BOARD.property.apartmentNumber] = property.apartmentNumber;
-  if (property.rooms != null) cv[PROPERTIES_BOARD.property.rooms] = property.rooms;
-  if (property.sizeSqm != null) cv[PROPERTIES_BOARD.property.sizeSqm] = property.sizeSqm;
-  if (property.askingPrice != null) cv[PROPERTIES_BOARD.property.price] = property.askingPrice;
-  if (property.ownerName) cv[PROPERTIES_BOARD.ownerSide.name] = property.ownerName;
-  if (property.ownerPhone) cv[PROPERTIES_BOARD.ownerSide.phone] = property.ownerPhone;
-  if (property.ownerEmail) cv[PROPERTIES_BOARD.ownerSide.email] = property.ownerEmail;
-  if (property.dealType === "sale" && property.commissionPercent != null) {
-    cv[PROPERTIES_BOARD.commission.saleCommissionPercent] = property.commissionPercent;
-  }
-  if (property.commissionVatMode) {
-    cv[PROPERTIES_BOARD.commission.vatMode] = {
-      label:
-        property.commissionVatMode === "included"
-          ? STATUS_LABELS.vatMode.included
-          : STATUS_LABELS.vatMode.plus,
-    };
-  }
-  return cv;
-}
-
-async function createPropertyItem(
-  property: PropertyRecord,
-  agentMondayItemId?: string,
-): Promise<string> {
+async function createPropertyItem(name: string, cv: Record<string, unknown>): Promise<string> {
   const data = await mondayQuery<{ create_item: { id: string } }>(
     /* GraphQL */ `
       mutation ($board: ID!, $name: String!, $cv: JSON!) {
@@ -343,17 +286,12 @@ async function createPropertyItem(
         }
       }
     `,
-    {
-      board: getPropertiesBoardId(),
-      name: itemName(property),
-      cv: JSON.stringify(outboundColumnValues(property, agentMondayItemId)),
-    },
+    { board: getPropertiesBoardId(), name, cv: JSON.stringify(cv) },
   );
   return data.create_item.id;
 }
 
-async function updatePropertyItem(property: PropertyRecord, agentMondayItemId?: string): Promise<void> {
-  if (!property.mondayItemId) throw new Error("updatePropertyItem: property has no mondayItemId");
+async function updatePropertyItem(itemId: string, cv: Record<string, unknown>): Promise<void> {
   await mondayQuery(
     /* GraphQL */ `
       mutation ($board: ID!, $item: ID!, $cv: JSON!) {
@@ -362,56 +300,102 @@ async function updatePropertyItem(property: PropertyRecord, agentMondayItemId?: 
         }
       }
     `,
-    {
-      board: getPropertiesBoardId(),
-      item: property.mondayItemId,
-      cv: JSON.stringify(outboundColumnValues(property, agentMondayItemId)),
-    },
+    { board: getPropertiesBoardId(), item: itemId, cv: JSON.stringify(cv) },
   );
 }
 
-/** Push a wizard-created property to the Properties Raw Data board. Never
- *  throws — a failure is dead-lettered to Redis and logged, same pattern
- *  as mirrorAgentToMonday. Call fire-and-forget right after createProperty()
- *  (`void mirrorPropertyToMonday(property)`). */
-export async function mirrorPropertyToMonday(property: PropertyRecord): Promise<void> {
+export interface MirrorResult {
+  /** Everything was written. */
+  ok: boolean;
+  /** The item exists on Monday but with core fields only. */
+  partial: boolean;
+  mondayItemId?: string;
+  error?: string;
+  /** Values that could not be expressed in their column (reported, not dropped silently). */
+  skipped: string[];
+}
+
+/** Push a property to the Properties Raw Data board - every wizard field mapped
+ *  to its real column (see property-columns.ts). Never throws.
+ *
+ *  If Monday rejects the full set, the item is still created with core fields
+ *  (so it is not missing from the board) and the failure is flagged as partial.
+ *  Either way a failure is recorded on the property, kept in the dead-letter
+ *  history and raised as an ADMIN-ONLY alert (admin-alerts.ts); a success
+ *  clears them. Disable with MONDAY_SYNC_ENABLED=false. */
+export async function mirrorPropertyToMonday(property: PropertyRecord): Promise<MirrorResult> {
   if (!mirrorEnabled()) {
-    console.info(`[sync] property mirror disabled — skipped ${property.id}`);
-    return;
+    console.info(`[sync] property mirror disabled - skipped ${property.id}`);
+    return { ok: true, partial: false, skipped: [] };
   }
+
+  const name = propertyItemName(property);
+  let agentMondayItemId: string | undefined;
+  let mondayItemId = property.mondayItemId;
+  let fullError: string | undefined;
+
   try {
     const agents = await listAgentsByOffice(property.officeId, { includeArchived: true });
-    const agentMondayItemId =
-      agents.find((a) => a.id === property.agentId)?.mondayItemId ?? undefined;
-
-    if (property.mondayItemId) {
-      await updatePropertyItem(property, agentMondayItemId);
-    } else {
-      const mondayItemId = await createPropertyItem(property, agentMondayItemId);
-      await updateProperty(property.id, { mondayItemId }, property.officeId);
-    }
+    agentMondayItemId = agents.find((a) => a.id === property.agentId)?.mondayItemId ?? undefined;
   } catch (e) {
-    const entry = JSON.stringify({
-      propertyId: property.id,
-      address: itemName(property),
-      error: e instanceof Error ? e.message : String(e),
-      at: new Date().toISOString(),
-    });
-    console.error("[sync] mirror property to Monday failed:", entry);
+    console.error("[sync] could not look up the agent's Monday id:", e);
+  }
+
+  const { values, skipped } = buildPropertyColumns(property, agentMondayItemId);
+  if (skipped.length > 0) console.warn(`[sync] ${property.id}: ${skipped.join("; ")}`);
+
+  // 1) the full set
+  try {
+    if (mondayItemId) await updatePropertyItem(mondayItemId, values);
+    else mondayItemId = await createPropertyItem(name, values);
+  } catch (e) {
+    fullError = e instanceof Error ? e.message : String(e);
+  }
+
+  // 2) rejected: still get the item onto the board with the core fields
+  let partial = false;
+  if (fullError && !mondayItemId) {
     try {
-      const redis = getRedis();
-      await redis.lpush(RedisKeys.propertyMirrorDeadletter, entry);
-      await redis.ltrim(RedisKeys.propertyMirrorDeadletter, 0, 199);
-    } catch (redisErr) {
-      console.error("[sync] could not dead-letter the failure:", redisErr);
+      mondayItemId = await createPropertyItem(name, buildCoreColumns(property, agentMondayItemId));
+      partial = true;
+    } catch (e) {
+      fullError = `${fullError} | core fallback also failed: ${e instanceof Error ? e.message : String(e)}`;
     }
   }
+
+  const now = new Date().toISOString();
+  try {
+    await updateProperty(
+      property.id,
+      {
+        mondayItemId: mondayItemId ?? property.mondayItemId,
+        mondaySyncAt: now,
+        mondaySyncError: fullError, // undefined clears a previous error
+      },
+      property.officeId,
+    );
+  } catch (e) {
+    console.error("[sync] could not record the Monday sync result on the property:", e);
+  }
+
+  if (!fullError) {
+    await clearMondaySyncAlert(property.id);
+    return { ok: true, partial: false, mondayItemId, skipped };
+  }
+
+  const entry = JSON.stringify({ propertyId: property.id, address: name, error: fullError, partial, at: now });
+  console.error("[sync] mirror property to Monday failed:", entry);
+  try {
+    const redis = getRedis();
+    await redis.lpush(RedisKeys.propertyMirrorDeadletter, entry);
+    await redis.ltrim(RedisKeys.propertyMirrorDeadletter, 0, 199);
+  } catch (redisErr) {
+    console.error("[sync] could not dead-letter the failure:", redisErr);
+  }
+  await raiseMondaySyncAlert(property, fullError, partial);
+  return { ok: false, partial, mondayItemId, error: fullError, skipped };
 }
 
 export async function propertyMirrorFailureCount(): Promise<number> {
-  try {
-    return await getRedis().llen(RedisKeys.propertyMirrorDeadletter);
-  } catch {
-    return 0;
-  }
+  return mondaySyncAlertCount();
 }

@@ -5,6 +5,7 @@ import { requireSession } from "@/lib/auth/session-cookie";
 import { loadPropertyDraft, savePropertyDraft, emptyPropertyDraft } from "@/lib/property-wizard/draft";
 import { createProperty } from "@/lib/store/properties";
 import { mirrorPropertyToMonday } from "@/lib/sync/properties";
+import { missingAll, missingQuery } from "@/lib/property-wizard/required";
 import { propertyStepHref } from "@/lib/property-wizard/steps";
 import { isNextJsRedirect } from "@/lib/wizard/action-utils";
 
@@ -14,6 +15,13 @@ export async function submitPropertyReview() {
     const draft = await loadPropertyDraft(session.agentId);
     if (!draft.dealType || !draft.street || !draft.buildingNumber) {
       redirect(propertyStepHref("address"));
+    }
+
+    // Final gate: every mandatory question from the original questionnaire must
+    // be answered. (Each step enforces its own too; this catches skipped steps.)
+    const missing = missingAll(draft);
+    if (missing.length > 0) {
+      redirect(propertyStepHref("review") + missingQuery([...new Set(missing.map((m) => m.key))]));
     }
 
     const property = await createProperty({
@@ -26,6 +34,8 @@ export async function submitPropertyReview() {
       sourceContractMondayId: draft.sourceContractMondayId,
       sourceContractRole: draft.sourceContractRole,
       city: draft.city,
+      neighbourhood: draft.neighbourhood,
+      publishNotes: draft.publishNotes,
       street: draft.street,
       buildingNumber: draft.buildingNumber,
       entrance: draft.entrance,
@@ -73,7 +83,9 @@ export async function submitPropertyReview() {
       sizeSqm: draft.sizeSqm,
       plotSizeSqm: draft.plotSizeSqm,
       askingPrice: draft.askingPrice,
-      startingPrice: draft.startingPrice,
+      // Agents are asked only the asking price; the starting price is that first
+      // value, recorded once. Later price changes only move askingPrice.
+      startingPrice: draft.askingPrice,
       condition: draft.condition,
       elevator: draft.elevator,
       balcony: draft.balcony,

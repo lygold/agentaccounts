@@ -33,7 +33,6 @@ const Schema = z.object({
   sizeSqm: z.coerce.number().optional().or(z.literal("")),
   floor: z.coerce.number().optional().or(z.literal("")),
   askingPrice: z.coerce.number().optional().or(z.literal("")),
-  startingPrice: z.coerce.number().optional().or(z.literal("")),
   condition: z.string().trim().optional(),
 });
 
@@ -80,9 +79,15 @@ export async function submitPropertyEdit(formData: FormData) {
       sizeSqm: orUndef(d.sizeSqm),
       floor: orUndef(d.floor),
       askingPrice: orUndef(d.askingPrice),
-      startingPrice: orUndef(d.startingPrice),
       condition: orUndef(d.condition),
     };
+
+    // Starting price is a record of where the listing began: never editable, and
+    // for older properties that never had one it is filled in on the first price
+    // change (the price they had before, else the new one).
+    if (property.startingPrice == null && patch.askingPrice != null) {
+      patch.startingPrice = property.askingPrice ?? patch.askingPrice;
+    }
 
     const changes = summarizeChanges(property, patch);
     const updated = await updateProperty(d.propertyId, patch, session.officeId);

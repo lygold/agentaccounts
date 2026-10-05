@@ -3,8 +3,9 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireSession } from "@/lib/auth/session-cookie";
-import { advancePropertyDraft } from "@/lib/property-wizard/draft";
-import { nextPropertyStep, propertyStepHref } from "@/lib/property-wizard/steps";
+import { saveStepOrReportMissing } from "@/lib/property-wizard/gate";
+import { propertyStepHref } from "@/lib/property-wizard/steps";
+import { parseYesNo } from "@/lib/yes-no";
 import { isNextJsRedirect } from "@/lib/wizard/action-utils";
 
 const Schema = z.object({
@@ -21,20 +22,19 @@ export async function submitPropertyDescriptions(formData: FormData) {
   try {
     const session = await requireSession();
     const parsed = Schema.safeParse(Object.fromEntries(formData.entries()));
-    if (!parsed.success) return;
+    if (!parsed.success) redirect(propertyStepHref("descriptions") + "?error=save");
     const d = parsed.data;
-    const useSeparateYad2 = d.useSeparateYad2Description === "on";
+    const separate = parseYesNo(d.useSeparateYad2Description);
 
-    await advancePropertyDraft(session.agentId, "descriptions", {
+    await saveStepOrReportMissing(session.agentId, "descriptions", {
       titleHe: d.titleHe || undefined,
       titleEn: d.titleEn || undefined,
-      useSeparateYad2Description: useSeparateYad2,
+      useSeparateYad2Description: separate,
       descriptionHe: d.descriptionHe || undefined,
-      descriptionYad2: useSeparateYad2 ? d.descriptionYad2 || undefined : undefined,
+      descriptionYad2: separate ? d.descriptionYad2 || undefined : undefined,
       descriptionEn: d.descriptionEn || undefined,
       yad2Package: d.yad2Package || undefined,
     });
-    redirect(propertyStepHref(nextPropertyStep("descriptions")!));
   } catch (e) {
     if (isNextJsRedirect(e)) throw e;
     console.error("submitPropertyDescriptions failed:", e);

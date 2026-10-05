@@ -3,82 +3,81 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireSession } from "@/lib/auth/session-cookie";
-import { advancePropertyDraft } from "@/lib/property-wizard/draft";
-import { nextPropertyStep, propertyStepHref } from "@/lib/property-wizard/steps";
+import { saveStepOrReportMissing } from "@/lib/property-wizard/gate";
+import { ADDITIONAL_FEATURES } from "@/lib/property-wizard/options";
+import { propertyStepHref } from "@/lib/property-wizard/steps";
 import { isNextJsRedirect } from "@/lib/wizard/action-utils";
 
 const numOpt = z.coerce.number().optional().or(z.literal(""));
+const str = z.string().trim().optional();
 
 const Schema = z.object({
   rooms: numOpt,
   bedrooms: numOpt,
   toilets: numOpt,
   bathrooms: numOpt,
+  masterSuite: str,
   floor: numOpt,
   floorsTotal: numOpt,
-  levels: z.string().trim().optional(),
+  levels: str,
   sizeSqm: numOpt,
   plotSizeSqm: numOpt,
   askingPrice: numOpt,
-  startingPrice: numOpt,
-  condition: z.string().trim().optional(),
-  elevator: z.string().optional(),
-  ac: z.string().optional(),
-  safeRoom: z.string().optional(),
-  balcony: z.string().optional(),
+  condition: str,
+  elevator: str,
+  ac: str,
+  safeRoom: str,
+  balcony: str,
   balconySizeSqm: numOpt,
-  garden: z.string().optional(),
+  garden: str,
   gardenSizeSqm: numOpt,
-  parking: z.string().optional(),
+  parking: str,
   parkingCount: numOpt,
-  storage: z.string().optional(),
+  storage: str,
   storageSizeSqm: numOpt,
-  additionalFeatures: z.string().trim().optional(),
 });
 
 function n(v: number | "" | undefined): number | undefined {
   return v === "" || v === undefined ? undefined : v;
-}
-function b(v: string | undefined): boolean {
-  return v === "on";
 }
 
 export async function submitPropertyTechnical(formData: FormData) {
   try {
     const session = await requireSession();
     const parsed = Schema.safeParse(Object.fromEntries(formData.entries()));
-    if (!parsed.success) return;
+    if (!parsed.success) redirect(propertyStepHref("technical") + "?error=save");
     const d = parsed.data;
 
-    await advancePropertyDraft(session.agentId, "technical", {
+    // Multi-select: only labels the board actually has.
+    const allowed = new Set<string>(ADDITIONAL_FEATURES);
+    const features = formData.getAll("additionalFeatures").map(String).filter((f) => allowed.has(f));
+
+    await saveStepOrReportMissing(session.agentId, "technical", {
       rooms: n(d.rooms),
       bedrooms: n(d.bedrooms),
       toilets: n(d.toilets),
       bathrooms: n(d.bathrooms),
+      masterSuite: d.masterSuite || undefined,
       floor: n(d.floor),
       floorsTotal: n(d.floorsTotal),
       levels: d.levels || undefined,
       sizeSqm: n(d.sizeSqm),
       plotSizeSqm: n(d.plotSizeSqm),
       askingPrice: n(d.askingPrice),
-      startingPrice: n(d.startingPrice),
       condition: d.condition || undefined,
-      elevator: b(d.elevator),
-      ac: b(d.ac),
-      safeRoom: b(d.safeRoom),
-      balcony: b(d.balcony),
+      elevator: d.elevator || undefined,
+      ac: d.ac || undefined,
+      safeRoom: d.safeRoom || undefined,
+      balcony: d.balcony || undefined,
       balconySizeSqm: n(d.balconySizeSqm),
-      garden: b(d.garden),
+      garden: d.garden || undefined,
       gardenSizeSqm: n(d.gardenSizeSqm),
-      parking: b(d.parking),
+      parking: d.parking || undefined,
       parkingCount: n(d.parkingCount),
-      storage: b(d.storage),
+      storage: d.storage || undefined,
       storageSizeSqm: n(d.storageSizeSqm),
-      additionalFeatures: d.additionalFeatures
-        ? d.additionalFeatures.split(",").map((s) => s.trim()).filter(Boolean)
-        : undefined,
+      additionalFeatures: features.length > 0 ? features : undefined,
     });
-    redirect(propertyStepHref(nextPropertyStep("technical")!));
   } catch (e) {
     if (isNextJsRedirect(e)) throw e;
     console.error("submitPropertyTechnical failed:", e);

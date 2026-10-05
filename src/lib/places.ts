@@ -89,6 +89,7 @@ export interface PlaceAddressDetails {
   city?: string;
   street?: string;
   buildingNumber?: string;
+  neighbourhood?: string;
 }
 
 type AddressComponent = { types: string[]; longText?: string; shortText?: string };
@@ -134,5 +135,9 @@ export async function getPlaceAddressDetails(
     city: componentText(components, "locality"),
     street: componentText(components, "route"),
     buildingNumber: componentText(components, "street_number"),
+    // Not every Israeli address carries one; when Google has it, prefill - the
+    // agent can always edit or fill it in (it is a required question).
+    neighbourhood:
+      componentText(components, "neighborhood") ?? componentText(components, "sublocality_level_1"),
   };
 }

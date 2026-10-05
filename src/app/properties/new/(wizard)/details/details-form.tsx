@@ -7,6 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { PROPERTY_WIZARD_FORM_ID } from "@/lib/property-wizard/steps";
+import {
+  OTHER_SOURCES,
+  PROPERTY_TYPES,
+  REFERRAL_EXTERNAL_AGENT,
+  REFERRAL_NONE,
+  REFERRAL_OFFICE_AGENT,
+  REFERRAL_SOURCES,
+} from "@/lib/property-wizard/options";
 import { submitPropertyDetails } from "./actions";
 
 interface Initial {
@@ -17,29 +25,30 @@ interface Initial {
   externalReferringAgentOffice?: string;
   externalReferringAgentPhone?: string;
   referralPercentOfCommission?: number;
+  ownerName?: string;
+  ownerPhone?: string;
+  ownerEmail?: string;
 }
 
-/** Property type / referral source / external referring agent — the
- *  "how did this listing come to us" step. Type/source option lists are
- *  a reasonable standard set, not pulled from Monday's exact dropdown
- *  values (not reconciled against those yet) — fine as a v1, easy to
- *  adjust later without touching the data model (both are plain strings
- *  on PropertyRecord, not enums). */
+/** Property type / referral source / owner - the "how did this listing come
+ *  to us" step. Every option list is the Monday board's own (see
+ *  src/lib/property-wizard/options.ts), and the stored value is that label.
+ *  Conditional questions follow the original questionnaire: "לא" asks where
+ *  the client came from; the two referral choices ask for the percentage,
+ *  external agent also the agent's details. */
 export function DetailsStepForm({ initial }: { initial: Initial }) {
   const t = useTranslations("PropertyDetailsStep");
   const common = useTranslations("Common");
   const [referralSource, setReferralSource] = useState(initial.referralSource ?? "");
-  const isOther = referralSource === "other";
-  const isExternalAgent = referralSource === "externalAgent";
+  // "לא" (not a referral) asks where the client DID come from; the two
+  // referral choices ask for the referral percentage, external also the agent.
+  const isOther = referralSource === REFERRAL_NONE;
+  const isExternalAgent = referralSource === REFERRAL_EXTERNAL_AGENT;
+  const isReferral = isExternalAgent || referralSource === REFERRAL_OFFICE_AGENT;
 
-  const propertyTypeOptions = useMemo(() => {
-    const raw = t.raw("propertyType") as Record<string, string>;
-    return Object.entries(raw).map(([value, label]) => ({ value, label }));
-  }, [t]);
-  const referralSourceOptions = useMemo(() => {
-    const raw = t.raw("referralSource") as Record<string, string>;
-    return Object.entries(raw).map(([value, label]) => ({ value, label }));
-  }, [t]);
+  const propertyTypeOptions = useMemo(() => PROPERTY_TYPES.map((v) => ({ value: v, label: v })), []);
+  const referralSourceOptions = useMemo(() => REFERRAL_SOURCES.map((v) => ({ value: v, label: v })), []);
+  const otherSourceOptions = useMemo(() => OTHER_SOURCES.map((v) => ({ value: v, label: v })), []);
 
   return (
     <form id={PROPERTY_WIZARD_FORM_ID} action={submitPropertyDetails} className="flex flex-col gap-4">
@@ -47,6 +56,7 @@ export function DetailsStepForm({ initial }: { initial: Initial }) {
         rtl
         id="propertyType"
         name="propertyType"
+        required
         label={t("propertyTypeLabel")}
         options={propertyTypeOptions}
         defaultValue={initial.propertyType}
@@ -58,6 +68,7 @@ export function DetailsStepForm({ initial }: { initial: Initial }) {
         rtl
         id="referralSource"
         name="referralSource"
+        required
         label={t("referralSourceLabel")}
         options={referralSourceOptions}
         defaultValue={initial.referralSource}
@@ -67,10 +78,17 @@ export function DetailsStepForm({ initial }: { initial: Initial }) {
       />
 
       {isOther && (
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="referralSourceOther">{t("referralSourceOtherLabel")}</Label>
-          <Input id="referralSourceOther" name="referralSourceOther" defaultValue={initial.referralSourceOther ?? ""} dir="rtl" />
-        </div>
+        <SearchableSelect
+          rtl
+          id="referralSourceOther"
+          name="referralSourceOther"
+          required
+          label={t("referralSourceOtherLabel")}
+          options={otherSourceOptions}
+          defaultValue={initial.referralSourceOther}
+          placeholder={t("selectPlaceholder")}
+          emptyLabel={t("selectPlaceholder")}
+        />
       )}
 
       {isExternalAgent && (
@@ -105,22 +123,52 @@ export function DetailsStepForm({ initial }: { initial: Initial }) {
               />
             </div>
           </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="referralPercentOfCommission">{t("referralPercentLabel")}</Label>
-            <Input
-              id="referralPercentOfCommission"
-              name="referralPercentOfCommission"
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              min="0"
-              max="100"
-              dir="ltr"
-              defaultValue={initial.referralPercentOfCommission?.toString() ?? ""}
-            />
-          </div>
         </div>
       )}
+
+      {isReferral && (
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="referralPercentOfCommission">{t("referralPercentLabel")}</Label>
+          <Input
+            id="referralPercentOfCommission"
+            name="referralPercentOfCommission"
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            min="0"
+            max="100"
+            dir="ltr"
+            defaultValue={initial.referralPercentOfCommission?.toString() ?? ""}
+          />
+        </div>
+      )}
+
+      <div className="flex flex-col gap-3 rounded-md border p-3">
+        <p className="text-sm font-medium">{t("ownerSectionTitle")}</p>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="ownerName">
+            {t("ownerNameLabel")}
+            <span className="text-primary"> *</span>
+          </Label>
+          <Input id="ownerName" name="ownerName" required dir="rtl" defaultValue={initial.ownerName ?? ""} />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="ownerPhone">
+              {t("ownerPhoneLabel")}
+              <span className="text-primary"> *</span>
+            </Label>
+            <Input id="ownerPhone" name="ownerPhone" required type="tel" dir="ltr" defaultValue={initial.ownerPhone ?? ""} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="ownerEmail">
+              {t("ownerEmailLabel")}
+              <span className="text-primary"> *</span>
+            </Label>
+            <Input id="ownerEmail" name="ownerEmail" required type="email" dir="ltr" defaultValue={initial.ownerEmail ?? ""} />
+          </div>
+        </div>
+      </div>
 
       <Button type="submit" size="lg">
         {common("continue")}

@@ -6,12 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { YesNoRadios } from "@/components/yes-no-radios";
 import { PROPERTY_WIZARD_FORM_ID } from "@/lib/property-wizard/steps";
 import { submitPropertyDescriptions } from "./actions";
 
 interface Initial {
   titleHe?: string;
   titleEn?: string;
+  /** undefined = not answered yet. */
   useSeparateYad2Description?: boolean;
   descriptionHe?: string;
   descriptionYad2?: string;
@@ -22,13 +24,16 @@ interface Initial {
 export function DescriptionsStepForm({ initial }: { initial: Initial }) {
   const t = useTranslations("PropertyDescriptionsStep");
   const common = useTranslations("Common");
-  const [separateYad2, setSeparateYad2] = useState(initial.useSeparateYad2Description ?? false);
+  const [separateYad2, setSeparateYad2] = useState(initial.useSeparateYad2Description === true);
 
   return (
     <form id={PROPERTY_WIZARD_FORM_ID} action={submitPropertyDescriptions} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="titleHe">{t("titleHeLabel")}</Label>
-        <Input id="titleHe" name="titleHe" dir="rtl" defaultValue={initial.titleHe ?? ""} />
+        <Label htmlFor="titleHe">
+          {t("titleHeLabel")}
+          <span className="text-primary"> *</span>
+        </Label>
+        <Input id="titleHe" name="titleHe" required dir="rtl" defaultValue={initial.titleHe ?? ""} />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="titleEn">{t("titleEnLabel")}</Label>
@@ -36,25 +41,29 @@ export function DescriptionsStepForm({ initial }: { initial: Initial }) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="descriptionHe">{t("descriptionHeLabel")}</Label>
-        <Textarea id="descriptionHe" name="descriptionHe" rows={5} dir="rtl" defaultValue={initial.descriptionHe ?? ""} />
+        <Label htmlFor="descriptionHe">
+          {t("descriptionHeLabel")}
+          <span className="text-primary"> *</span>
+        </Label>
+        <Textarea id="descriptionHe" name="descriptionHe" required rows={5} dir="rtl" defaultValue={initial.descriptionHe ?? ""} />
       </div>
 
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          name="useSeparateYad2Description"
-          checked={separateYad2}
-          onChange={(e) => setSeparateYad2(e.target.checked)}
-          className="h-4 w-4"
-        />
-        {t("separateYad2Label")}
-      </label>
+      <YesNoRadios
+        name="useSeparateYad2Description"
+        label={t("separateYad2Label")}
+        value={initial.useSeparateYad2Description}
+        yesLabel={t("yes")}
+        noLabel={t("no")}
+        onChange={setSeparateYad2}
+      />
 
       {separateYad2 && (
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="descriptionYad2">{t("descriptionYad2Label")}</Label>
-          <Textarea id="descriptionYad2" name="descriptionYad2" rows={5} dir="rtl" defaultValue={initial.descriptionYad2 ?? ""} />
+          <Label htmlFor="descriptionYad2">
+            {t("descriptionYad2Label")}
+            <span className="text-primary"> *</span>
+          </Label>
+          <Textarea id="descriptionYad2" name="descriptionYad2" required rows={5} dir="rtl" defaultValue={initial.descriptionYad2 ?? ""} />
         </div>
       )}
 

@@ -31,7 +31,8 @@
     "referrals": "Referrals",
     "notifications": "Property updates",
     "signOut": "Sign out",
-    "agents": "Agents"
+    "agents": "Agents",
+    "mondaySync": "Monday sync"
   },
   "SecretaryFeed": {
     "title": "Property updates",
@@ -729,7 +730,10 @@
     "buildingNumberLabel": "Building number",
     "entranceLabel": "Entrance",
     "apartmentNumberLabel": "Apartment number",
-    "apartmentNumberHint": "If not relevant (e.g. a private house), enter 0"
+    "apartmentNumberHint": "If not relevant (e.g. a private house), enter 0",
+    "neighbourhoodLabel": "Neighbourhood",
+    "publishNotesLabel": "What to publish of the address",
+    "selectPlaceholder": "Select..."
   },
   "PropertyMediaStep": {
     "prompt": "Upload photos and documents for the listing",
@@ -748,7 +752,11 @@
     "uploadFailed": "{name}: upload failed ({reason})",
     "alreadyUploadedTemplate": "{count} uploaded",
     "waitForUploads": "Please wait for the uploads to finish.",
-    "continue": "Continue"
+    "continue": "Continue",
+    "copyrightQuestion": "Do you hold the copyright on all the photos you uploaded?",
+    "renderingsQuestion": "Do you have renderings?",
+    "yes": "Yes",
+    "no": "No"
   },
   "PropertyDetailsStep": {
     "prompt": "A few more details about the property and deal",
@@ -767,7 +775,7 @@
       "land": "Land",
       "other": "Other"
     },
-    "referralSourceLabel": "How did this listing come to us?",
+    "referralSourceLabel": "Did the client come from a referral?",
     "referralSource": {
       "website": "Website",
       "socialMedia": "Social media",
@@ -777,11 +785,15 @@
       "externalAgent": "Another agent/office",
       "other": "Other"
     },
-    "referralSourceOtherLabel": "Details",
+    "referralSourceOtherLabel": "Where did the client come from?",
     "externalAgentNameLabel": "Agent name",
     "externalAgentOfficeLabel": "Office name",
     "externalAgentPhoneLabel": "Phone",
-    "referralPercentLabel": "% of commission"
+    "referralPercentLabel": "% of commission",
+    "ownerSectionTitle": "Property owner",
+    "ownerNameLabel": "Owner name",
+    "ownerPhoneLabel": "Owner phone",
+    "ownerEmailLabel": "Owner email"
   },
   "PropertyCommissionStep": {
     "prompt": "What commission was agreed for this listing?",
@@ -799,13 +811,15 @@
     "titleHeLabel": "Hebrew title",
     "titleEnLabel": "English title",
     "descriptionHeLabel": "Hebrew description",
-    "separateYad2Label": "Separate Yad2 description",
+    "separateYad2Label": "I want to write two different Hebrew descriptions (Yad2 and Madlan cut at 400 characters)",
     "descriptionYad2Label": "Yad2 description",
     "descriptionEnLabel": "English description",
     "yad2PackageLabel": "Yad2 upgrade",
     "yad2PackageNone": "No upgrade",
     "yad2PackagePremium": "Premium",
-    "yad2PackageUltra": "Ultra"
+    "yad2PackageUltra": "Ultra",
+    "yes": "Yes",
+    "no": "No"
   },
   "PropertyTechnicalStep": {
     "prompt": "Technical details about the property",
@@ -836,15 +850,20 @@
     "parkingLabel": "Parking",
     "storageLabel": "Storage",
     "additionalFeaturesLabel": "Additional features",
-    "additionalFeaturesPlaceholder": "Comma-separated"
+    "additionalFeaturesPlaceholder": "Comma-separated",
+    "masterSuiteLabel": "Master suite",
+    "balconySizeLabel": "Balcony size (sqm, optional)",
+    "gardenSizeLabel": "Garden size (sqm, optional)",
+    "parkingCountLabel": "Number of spots (optional)",
+    "storageSizeLabel": "Storage size (sqm, optional)"
   },
   "PropertyRatingsStep": {
     "prompt": "Internal rating — office eyes only, never published",
     "selectPlaceholder": "Select...",
-    "sellabilityLabel": "Sellability rating (0-9)",
-    "sellerMotivationLabel": "Seller motivation (0-9)",
-    "priceToCmaMatchLabel": "Price-to-market match (0-9)",
-    "ownerPressureLabel": "Owner pressure to sell (0-9)",
+    "sellabilityLabel": "Property rating (0-10)",
+    "sellerMotivationLabel": "Seller motivation (0-10)",
+    "priceToCmaMatchLabel": "Price-to-market match (0-10)",
+    "ownerPressureLabel": "Owner pressure to sell (0-10)",
     "trueCmaValueLabel": "True market value",
     "estimatedMonthsLabel": "Estimated months to sell",
     "letterGradeLabel": "Overall grade"
@@ -1142,5 +1161,64 @@
     "referralOfficeNameLabel": "Referring office name",
     "referralPhoneLabel": "Referring agent's phone",
     "referralCommissionLabel": "Referral commission"
+  },
+  "PropertyMissing": {
+    "prefix": "Please fill in: ",
+    "reviewTitle": "Some required questions are still unanswered:",
+    "dealType": "Deal type",
+    "contractType": "Contract type",
+    "city": "City",
+    "neighbourhood": "Neighbourhood",
+    "street": "Street",
+    "buildingNumber": "Building number",
+    "apartmentNumber": "Apartment number",
+    "commissionPercent": "Commission %",
+    "commissionVatMode": "VAT",
+    "propertyType": "Property type",
+    "referralSource": "Did the client come from a referral?",
+    "referralSourceOther": "Where the client came from",
+    "ownerName": "Owner name",
+    "ownerPhone": "Owner phone",
+    "ownerEmail": "Owner email",
+    "mainPhotos": "Main photo",
+    "additionalPhotos": "Additional photos",
+    "forms": "Forms (exclusivity / consent)",
+    "copyrightConfirmed": "Copyright on the photos",
+    "renderingsConfirmed": "Renderings",
+    "titleHe": "Hebrew title",
+    "useSeparateYad2Description": "Two different Hebrew descriptions?",
+    "descriptionHe": "Hebrew description",
+    "descriptionYad2": "Yad2 description",
+    "rooms": "Rooms",
+    "bedrooms": "Bedrooms",
+    "toilets": "Toilets",
+    "masterSuite": "Master suite",
+    "floor": "Floor",
+    "floorsTotal": "Floors total",
+    "sizeSqm": "Size (sqm)",
+    "askingPrice": "Asking price",
+    "condition": "Condition",
+    "elevator": "Elevator",
+    "balcony": "Balcony",
+    "ac": "A/C",
+    "parking": "Parking",
+    "storage": "Storage",
+    "safeRoom": "Safe room",
+    "sellabilityRating": "Sellability rating",
+    "sellerMotivation": "Seller motivation",
+    "priceToCmaMatch": "Price-to-market match",
+    "ownerPressureToSell": "Owner pressure to sell",
+    "trueCmaValue": "True market value",
+    "estimatedMonthsToSell": "Estimated months to sell",
+    "letterGrade": "Overall grade"
+  },
+  "MondaySync": {
+    "title": "Monday sync",
+    "retry": "Retry",
+    "retryAll": "Retry all ({n})",
+    "allGood": "Every property has reached Monday.",
+    "neverPushed": "Not pushed to Monday yet.",
+    "partial": "Partially synced (core fields only)",
+    "emailNotConfigured": "Email alerts are not set up (MAKE_NOTIFICATION_WEBHOOK_URL). Failures appear here and as a badge in the menu only."
   }
 }

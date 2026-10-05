@@ -5,6 +5,7 @@ import { loadPropertyDraft, patchPropertyDraft, type PropertyDraft } from "@/lib
 import { randomUUID } from "node:crypto";
 import { storeServerFile, getMediaUrl } from "@/lib/storage/media";
 import { MediaUploader, type UploadedItem } from "@/components/media-uploader";
+import { YesNoRadios } from "@/components/yes-no-radios";
 import type { MediaFileRef, PropertyMedia, PropertyMediaCategory } from "@/lib/types";
 import { getSignedContractFile } from "@/lib/wizard/monday";
 import { PropertyWizardChrome } from "@/components/property-wizard-chrome";
@@ -83,6 +84,7 @@ export default async function PropertyMediaPage() {
 
         <MediaUploader
           category="mainPhotos"
+          required
           id="mainPhotos"
           label={t("mainPhotosLabel")}
           accept="image/*"
@@ -91,6 +93,7 @@ export default async function PropertyMediaPage() {
         />
         <MediaUploader
           category="additionalPhotos"
+          required
           id="additionalPhotos"
           label={t("additionalPhotosLabel")}
           accept="image/*"
@@ -98,19 +101,24 @@ export default async function PropertyMediaPage() {
           strings={strings}
         />
 
-        <div className="flex flex-col gap-2 rounded-md border p-3">
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" name="copyrightConfirmed" defaultChecked={draft.copyrightConfirmed} className="h-4 w-4" />
-            {t("copyrightLabel")}
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" name="renderingsConfirmed" defaultChecked={draft.renderingsConfirmed} className="h-4 w-4" />
-            {t("renderingsLabel")}
-          </label>
-        </div>
+        <YesNoRadios
+          name="copyrightConfirmed"
+          label={t("copyrightQuestion")}
+          value={draft.copyrightConfirmed}
+          yesLabel={t("yes")}
+          noLabel={t("no")}
+        />
+        <YesNoRadios
+          name="renderingsConfirmed"
+          label={t("renderingsQuestion")}
+          value={draft.renderingsConfirmed}
+          yesLabel={t("yes")}
+          noLabel={t("no")}
+        />
 
         <MediaUploader
           category="forms"
+          required
           id="forms"
           label={t("formsLabel")}
           accept="application/pdf,image/*"

@@ -41,6 +41,7 @@ export function MediaUploader({
   accept,
   initial,
   strings,
+  required,
 }: {
   category: PropertyMediaCategory;
   id: string;
@@ -48,6 +49,8 @@ export function MediaUploader({
   accept: string;
   initial: UploadedItem[];
   strings: Strings;
+  /** Show the mandatory marker; the wizard enforces it when Continue is pressed. */
+  required?: boolean;
 }) {
   const [items, setItems] = useState<UploadedItem[]>(initial);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
@@ -114,7 +117,10 @@ export function MediaUploader({
 
   return (
     <div className="flex flex-col gap-1.5" data-media-busy={progress ? "true" : "false"}>
-      <Label htmlFor={id}>{label}</Label>
+      <Label htmlFor={id}>
+        {label}
+        {required && <span className="text-primary"> *</span>}
+      </Label>
       <input
         ref={inputRef}
         id={id}

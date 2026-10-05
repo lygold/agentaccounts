@@ -31,7 +31,8 @@
     "referrals": "הפניות",
     "notifications": "עדכוני נכסים",
     "signOut": "התנתקות",
-    "agents": "סוכנים"
+    "agents": "סוכנים",
+    "mondaySync": "סנכרון Monday"
   },
   "SecretaryFeed": {
     "title": "עדכוני נכסים",
@@ -729,7 +730,10 @@
     "buildingNumberLabel": "מספר בית",
     "entranceLabel": "כניסה",
     "apartmentNumberLabel": "מספר דירה",
-    "apartmentNumberHint": "אם לא רלוונטי (למשל בית פרטי), כתבו 0"
+    "apartmentNumberHint": "אם לא רלוונטי (למשל בית פרטי), כתבו 0",
+    "neighbourhoodLabel": "שכונה",
+    "publishNotesLabel": "מה לפרסם מהכתובת",
+    "selectPlaceholder": "בחר..."
   },
   "PropertyMediaStep": {
     "prompt": "העלאת תמונות ומסמכים לנכס",
@@ -748,7 +752,11 @@
     "uploadFailed": "{name}: ההעלאה נכשלה ({reason})",
     "alreadyUploadedTemplate": "{count} הועלו",
     "waitForUploads": "נא להמתין לסיום ההעלאות.",
-    "continue": "המשך"
+    "continue": "המשך",
+    "copyrightQuestion": "האם יש לך זכויות יוצרים על כל התמונות ששלחת?",
+    "renderingsQuestion": "האם יש לך הדמיות?",
+    "yes": "כן",
+    "no": "לא"
   },
   "PropertyDetailsStep": {
     "prompt": "עוד כמה פרטים על הנכס והעסקה",
@@ -767,7 +775,7 @@
       "land": "מגרש",
       "other": "אחר"
     },
-    "referralSourceLabel": "איך הגיע אלינו הנכס?",
+    "referralSourceLabel": "האם הלקוח הגיע מהפניה",
     "referralSource": {
       "website": "אתר אינטרנט",
       "socialMedia": "רשתות חברתיות",
@@ -777,11 +785,15 @@
       "externalAgent": "מתווך/משרד אחר",
       "other": "אחר"
     },
-    "referralSourceOtherLabel": "פירוט",
+    "referralSourceOtherLabel": "מקור הגעת הלקוח",
     "externalAgentNameLabel": "שם המתווך",
     "externalAgentOfficeLabel": "שם המשרד",
     "externalAgentPhoneLabel": "טלפון",
-    "referralPercentLabel": "אחוז מהעמלה"
+    "referralPercentLabel": "אחוז מהעמלה",
+    "ownerSectionTitle": "פרטי בעל הנכס",
+    "ownerNameLabel": "שם בעל הנכס",
+    "ownerPhoneLabel": "טלפון בעל הנכס",
+    "ownerEmailLabel": "אימייל בעל הנכס"
   },
   "PropertyCommissionStep": {
     "prompt": "מהי העמלה שסוכמה עבור עסקה זו?",
@@ -799,13 +811,15 @@
     "titleHeLabel": "כותרת בעברית",
     "titleEnLabel": "כותרת באנגלית",
     "descriptionHeLabel": "תיאור בעברית",
-    "separateYad2Label": "תיאור נפרד ליד2",
+    "separateYad2Label": "אני רוצה לכתוב שני תיאורים שונים בעברית (יד2 ומדלן חותכים ב-400 תווים)",
     "descriptionYad2Label": "תיאור ליד2",
     "descriptionEnLabel": "תיאור באנגלית",
     "yad2PackageLabel": "שדרוג יד2",
     "yad2PackageNone": "ללא שדרוג",
     "yad2PackagePremium": "פרימיום",
-    "yad2PackageUltra": "אולטרה"
+    "yad2PackageUltra": "אולטרה",
+    "yes": "כן",
+    "no": "לא"
   },
   "PropertyTechnicalStep": {
     "prompt": "פרטים טכניים על הנכס",
@@ -836,15 +850,20 @@
     "parkingLabel": "חניה",
     "storageLabel": "מחסן",
     "additionalFeaturesLabel": "מאפיינים נוספים",
-    "additionalFeaturesPlaceholder": "מופרד בפסיקים"
+    "additionalFeaturesPlaceholder": "מופרד בפסיקים",
+    "masterSuiteLabel": "יחידת הורים",
+    "balconySizeLabel": "שטח המרפסת (מ״ר, לא חובה)",
+    "gardenSizeLabel": "שטח הגינה (מ״ר, לא חובה)",
+    "parkingCountLabel": "מספר חניות (לא חובה)",
+    "storageSizeLabel": "גודל המחסן (מ״ר, לא חובה)"
   },
   "PropertyRatingsStep": {
     "prompt": "הערכה פנימית — לעיני המשרד בלבד, לא יפורסם",
     "selectPlaceholder": "בחרו...",
-    "sellabilityLabel": "דירוג סחירות (0-9)",
-    "sellerMotivationLabel": "מוטיבציית המוכר (0-9)",
-    "priceToCmaMatchLabel": "התאמת מחיר לשוק (0-9)",
-    "ownerPressureLabel": "לחץ מצד הבעלים למכור (0-9)",
+    "sellabilityLabel": "דירוג הנכס (0-10)",
+    "sellerMotivationLabel": "מוטיבציה של המוכר (0-10)",
+    "priceToCmaMatchLabel": "התאמת מחיר הנכס להערכת שווי (0-10)",
+    "ownerPressureLabel": "הבעלים נלחצים למכור (0-10)",
     "trueCmaValueLabel": "שווי שוק אמיתי",
     "estimatedMonthsLabel": "זמן משוער למכירה (חודשים)",
     "letterGradeLabel": "ציון כללי"
@@ -1142,5 +1161,64 @@
     "referralOfficeNameLabel": "שם המשרד המפנה",
     "referralPhoneLabel": "טלפון הסוכן המפנה",
     "referralCommissionLabel": "עמלת הפניה"
+  },
+  "PropertyMissing": {
+    "prefix": "נא למלא: ",
+    "reviewTitle": "עדיין חסרות תשובות לשאלות חובה:",
+    "dealType": "סוג עסקה",
+    "contractType": "סוג חוזה",
+    "city": "עיר",
+    "neighbourhood": "שכונה",
+    "street": "רחוב",
+    "buildingNumber": "מספר בית",
+    "apartmentNumber": "מספר דירה",
+    "commissionPercent": "דמי תיווך מוסכמים באחוזים",
+    "commissionVatMode": "מע\"מ",
+    "propertyType": "סוג נכס",
+    "referralSource": "האם הלקוח הגיע מהפניה",
+    "referralSourceOther": "מקור הגעת הלקוח",
+    "ownerName": "שם בעל הנכס",
+    "ownerPhone": "טלפון בעל הנכס",
+    "ownerEmail": "אימייל בעל הנכס",
+    "mainPhotos": "תמונה ראשית",
+    "additionalPhotos": "תמונות נוספות",
+    "forms": "טפסים (בלעדיות / הסכמה)",
+    "copyrightConfirmed": "זכויות יוצרים",
+    "renderingsConfirmed": "הדמיות",
+    "titleHe": "כותרת בעברית",
+    "useSeparateYad2Description": "שני תיאורים שונים בעברית",
+    "descriptionHe": "תיאור הנכס בעברית",
+    "descriptionYad2": "תיאור של יד2",
+    "rooms": "כמה חדרים",
+    "bedrooms": "כמה חדרי שינה",
+    "toilets": "כמה שירותים",
+    "masterSuite": "יחידת הורים",
+    "floor": "באיזה קומה",
+    "floorsTotal": "מתוך כמה קומות",
+    "sizeSqm": "שטח הנכס",
+    "askingPrice": "מחיר מבוקש",
+    "condition": "מצב הנכס",
+    "elevator": "מעלית",
+    "balcony": "מרפסת",
+    "ac": "מזגן",
+    "parking": "חניה",
+    "storage": "מחסן",
+    "safeRoom": "ממ\"ד",
+    "sellabilityRating": "דירוג הנכס",
+    "sellerMotivation": "מוטיבציה של המוכר",
+    "priceToCmaMatch": "התאמת מחיר להערכת שווי",
+    "ownerPressureToSell": "הבעלים נלחצים למכור",
+    "trueCmaValue": "שווי הנכס האמיתי",
+    "estimatedMonthsToSell": "זמן משוער למכירה בחודשים",
+    "letterGrade": "דרגו את הנכס"
+  },
+  "MondaySync": {
+    "title": "סנכרון Monday",
+    "retry": "נסה שוב",
+    "retryAll": "נסה שוב הכל ({n})",
+    "allGood": "כל הנכסים הגיעו ל-Monday.",
+    "neverPushed": "עדיין לא נדחף ל-Monday.",
+    "partial": "סונכרן חלקית (שדות בסיס בלבד)",
+    "emailNotConfigured": "התראות במייל לא מוגדרות (MAKE_NOTIFICATION_WEBHOOK_URL). כשל יופיע כאן וכתג בתפריט בלבד."
   }
 }

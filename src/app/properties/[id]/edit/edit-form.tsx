@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import type { PropertyRecord } from "@/lib/types";
+import { CONDITIONS, PROPERTY_TYPES, REFERRAL_SOURCES } from "@/lib/property-wizard/options";
 import { submitPropertyEdit } from "./actions";
 
 const PROPERTY_STATUSES = ["active", "sold", "rented", "off_market", "withdrawn"] as const;
@@ -22,18 +23,10 @@ export function EditPropertyForm({ property }: { property: PropertyRecord }) {
     () => PROPERTY_STATUSES.map((v) => ({ value: v, label: tStatus(v) })),
     [tStatus],
   );
-  const propertyTypeOptions = useMemo(() => {
-    const raw = tDetails.raw("propertyType") as Record<string, string>;
-    return Object.entries(raw).map(([value, label]) => ({ value, label }));
-  }, [tDetails]);
-  const referralSourceOptions = useMemo(() => {
-    const raw = tDetails.raw("referralSource") as Record<string, string>;
-    return Object.entries(raw).map(([value, label]) => ({ value, label }));
-  }, [tDetails]);
-  const conditionOptions = useMemo(() => {
-    const raw = tTechnical.raw("condition") as Record<string, string>;
-    return Object.entries(raw).map(([value, label]) => ({ value, label }));
-  }, [tTechnical]);
+  // The board's own option labels (src/lib/property-wizard/options.ts).
+  const propertyTypeOptions = useMemo(() => PROPERTY_TYPES.map((v) => ({ value: v, label: v })), []);
+  const referralSourceOptions = useMemo(() => REFERRAL_SOURCES.map((v) => ({ value: v, label: v })), []);
+  const conditionOptions = useMemo(() => CONDITIONS.map((v) => ({ value: v, label: v })), []);
 
   return (
     <form action={submitPropertyEdit} className="flex flex-col gap-5">
@@ -163,13 +156,14 @@ export function EditPropertyForm({ property }: { property: PropertyRecord }) {
             defaultValue={property.askingPrice?.toString()}
             dir="ltr"
           />
-          <Field
-            id="startingPrice"
-            label={t("startingPriceLabel")}
-            type="number"
-            defaultValue={property.startingPrice?.toString()}
-            dir="ltr"
-          />
+          {/* The starting price is a record, not an input: set once from the first
+              asking price and never changed by later price updates. */}
+          <div className="flex flex-col gap-1.5">
+            <Label>{t("startingPriceLabel")}</Label>
+            <p className="flex h-11 items-center rounded-md border border-dashed px-3 text-sm text-muted-foreground" dir="ltr">
+              {property.startingPrice != null ? property.startingPrice.toLocaleString() : "—"}
+            </p>
+          </div>
         </div>
         <SearchableSelect
           rtl

@@ -6,9 +6,20 @@ import { PropertyWizardChrome } from "@/components/property-wizard-chrome";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { SearchableSelect } from "@/components/ui/searchable-select";
+import {
+  ADDITIONAL_FEATURES,
+  AIR_CONDITIONING,
+  BALCONY,
+  CONDITIONS,
+  ELEVATOR,
+  PARKING,
+  YES_NO,
+} from "@/lib/property-wizard/options";
 import { PROPERTY_WIZARD_FORM_ID } from "@/lib/property-wizard/steps";
 import { submitPropertyTechnical } from "./actions";
+
+const SELECT_CLASS =
+  "h-11 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 export default async function PropertyTechnicalPage() {
   const session = await requireSession();
@@ -16,22 +27,32 @@ export default async function PropertyTechnicalPage() {
   if (!draft.street) redirect("/properties/new/address");
   const t = await getTranslations("PropertyTechnicalStep");
   const common = await getTranslations("Common");
+  const selected = new Set(draft.additionalFeatures ?? []);
 
   return (
     <PropertyWizardChrome step="technical" furthestStep={draft.furthestStep} returnToSummaryBehavior="link">
       <form id={PROPERTY_WIZARD_FORM_ID} action={submitPropertyTechnical} className="flex flex-col gap-4">
         <p className="text-sm text-muted-foreground">{t("prompt")}</p>
 
-        <div className="grid grid-cols-4 gap-2">
-          <NumField id="rooms" label={t("roomsLabel")} defaultValue={draft.rooms} />
-          <NumField id="bedrooms" label={t("bedroomsLabel")} defaultValue={draft.bedrooms} />
-          <NumField id="toilets" label={t("toiletsLabel")} defaultValue={draft.toilets} />
+        <div className="grid grid-cols-2 gap-2">
+          <NumField id="rooms" label={t("roomsLabel")} required defaultValue={draft.rooms} />
+          <NumField id="bedrooms" label={t("bedroomsLabel")} required defaultValue={draft.bedrooms} />
+          <NumField id="toilets" label={t("toiletsLabel")} required defaultValue={draft.toilets} />
           <NumField id="bathrooms" label={t("bathroomsLabel")} defaultValue={draft.bathrooms} />
         </div>
 
+        <SelectField
+          id="masterSuite"
+          label={t("masterSuiteLabel")}
+          required
+          options={YES_NO}
+          value={draft.masterSuite}
+          placeholder={t("selectPlaceholder")}
+        />
+
         <div className="grid grid-cols-3 gap-2">
-          <NumField id="floor" label={t("floorLabel")} defaultValue={draft.floor} />
-          <NumField id="floorsTotal" label={t("floorsTotalLabel")} defaultValue={draft.floorsTotal} />
+          <NumField id="floor" label={t("floorLabel")} required defaultValue={draft.floor} />
+          <NumField id="floorsTotal" label={t("floorsTotalLabel")} required defaultValue={draft.floorsTotal} />
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="levels">{t("levelsLabel")}</Label>
             <Input id="levels" name="levels" defaultValue={draft.levels ?? ""} dir="ltr" />
@@ -39,50 +60,60 @@ export default async function PropertyTechnicalPage() {
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <NumField id="sizeSqm" label={t("sizeSqmLabel")} defaultValue={draft.sizeSqm} />
+          <NumField id="sizeSqm" label={t("sizeSqmLabel")} required defaultValue={draft.sizeSqm} />
           <NumField id="plotSizeSqm" label={t("plotSizeSqmLabel")} defaultValue={draft.plotSizeSqm} />
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <NumField id="askingPrice" label={t("askingPriceLabel")} defaultValue={draft.askingPrice} />
-          <NumField id="startingPrice" label={t("startingPriceLabel")} defaultValue={draft.startingPrice} />
-        </div>
 
-        <SearchableSelect
-          rtl
+        {/* Agents are asked only the asking price. The starting price is set from it
+            once, when the property is created, and never changes after that. */}
+        <NumField id="askingPrice" label={t("askingPriceLabel")} required defaultValue={draft.askingPrice} />
+
+        <SelectField
           id="condition"
-          name="condition"
           label={t("conditionLabel")}
-          options={Object.entries(t.raw("condition") as Record<string, string>).map(
-            ([value, label]) => ({ value, label }),
-          )}
-          defaultValue={draft.condition}
+          required
+          options={CONDITIONS}
+          value={draft.condition}
           placeholder={t("selectPlaceholder")}
-          emptyLabel={t("selectPlaceholder")}
         />
 
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-md border p-3">
-          <BoolField id="elevator" label={t("elevatorLabel")} checked={draft.elevator} />
-          <BoolField id="ac" label={t("acLabel")} checked={draft.ac} />
-          <BoolField id="safeRoom" label={t("safeRoomLabel")} checked={draft.safeRoom} />
+        <div className="grid grid-cols-2 gap-2">
+          <SelectField id="elevator" label={t("elevatorLabel")} required options={ELEVATOR} value={draft.elevator} placeholder={t("selectPlaceholder")} />
+          <SelectField id="ac" label={t("acLabel")} required options={AIR_CONDITIONING} value={draft.ac} placeholder={t("selectPlaceholder")} />
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <BoolWithSize idBool="balcony" idSize="balconySizeSqm" label={t("balconyLabel")} checked={draft.balcony} size={draft.balconySizeSqm} />
-          <BoolWithSize idBool="garden" idSize="gardenSizeSqm" label={t("gardenLabel")} checked={draft.garden} size={draft.gardenSizeSqm} />
-          <BoolWithSize idBool="parking" idSize="parkingCount" label={t("parkingLabel")} checked={draft.parking} size={draft.parkingCount} />
-          <BoolWithSize idBool="storage" idSize="storageSizeSqm" label={t("storageLabel")} checked={draft.storage} size={draft.storageSizeSqm} />
+          <div className="flex flex-col gap-2">
+            <SelectField id="balcony" label={t("balconyLabel")} required options={BALCONY} value={draft.balcony} placeholder={t("selectPlaceholder")} />
+            <NumField id="balconySizeSqm" label={t("balconySizeLabel")} defaultValue={draft.balconySizeSqm} />
+          </div>
+          <div className="flex flex-col gap-2">
+            <SelectField id="garden" label={t("gardenLabel")} options={YES_NO} value={draft.garden} placeholder={t("selectPlaceholder")} />
+            <NumField id="gardenSizeSqm" label={t("gardenSizeLabel")} defaultValue={draft.gardenSizeSqm} />
+          </div>
+          <div className="flex flex-col gap-2">
+            <SelectField id="parking" label={t("parkingLabel")} required options={PARKING} value={draft.parking} placeholder={t("selectPlaceholder")} />
+            <NumField id="parkingCount" label={t("parkingCountLabel")} defaultValue={draft.parkingCount} />
+          </div>
+          <div className="flex flex-col gap-2">
+            <SelectField id="storage" label={t("storageLabel")} required options={YES_NO} value={draft.storage} placeholder={t("selectPlaceholder")} />
+            <NumField id="storageSizeSqm" label={t("storageSizeLabel")} defaultValue={draft.storageSizeSqm} />
+          </div>
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="additionalFeatures">{t("additionalFeaturesLabel")}</Label>
-          <Input
-            id="additionalFeatures"
-            name="additionalFeatures"
-            dir="rtl"
-            placeholder={t("additionalFeaturesPlaceholder")}
-            defaultValue={draft.additionalFeatures?.join(", ") ?? ""}
-          />
-        </div>
+        <SelectField id="safeRoom" label={t("safeRoomLabel")} required options={YES_NO} value={draft.safeRoom} placeholder={t("selectPlaceholder")} />
+
+        <fieldset className="flex flex-col gap-2 rounded-md border p-3">
+          <legend className="px-1 text-sm font-medium">{t("additionalFeaturesLabel")}</legend>
+          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+            {ADDITIONAL_FEATURES.map((f) => (
+              <label key={f} className="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="additionalFeatures" value={f} defaultChecked={selected.has(f)} className="h-4 w-4" />
+                {f}
+              </label>
+            ))}
+          </div>
+        </fieldset>
 
         <Button type="submit" size="lg">
           {common("continue")}
@@ -92,51 +123,65 @@ export default async function PropertyTechnicalPage() {
   );
 }
 
-function NumField({ id, label, defaultValue }: { id: string; label: string; defaultValue?: number }) {
+function NumField({
+  id,
+  label,
+  required,
+  defaultValue,
+}: {
+  id: string;
+  label: string;
+  required?: boolean;
+  defaultValue?: number;
+}) {
   return (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
-      <Input id={id} name={id} type="number" inputMode="decimal" dir="ltr" defaultValue={defaultValue?.toString() ?? ""} />
+      <Label htmlFor={id}>
+        {label}
+        {required && <span className="text-primary"> *</span>}
+      </Label>
+      <Input
+        id={id}
+        name={id}
+        required={required}
+        type="number"
+        inputMode="decimal"
+        dir="ltr"
+        defaultValue={defaultValue?.toString() ?? ""}
+      />
     </div>
   );
 }
 
-function BoolField({ id, label, checked }: { id: string; label: string; checked?: boolean }) {
-  return (
-    <label className="flex items-center gap-2 text-sm">
-      <input type="checkbox" name={id} defaultChecked={checked} className="h-4 w-4" />
-      {label}
-    </label>
-  );
-}
-
-function BoolWithSize({
-  idBool,
-  idSize,
+function SelectField({
+  id,
   label,
-  checked,
-  size,
+  required,
+  options,
+  value,
+  placeholder,
 }: {
-  idBool: string;
-  idSize: string;
+  id: string;
   label: string;
-  checked?: boolean;
-  size?: number;
+  required?: boolean;
+  options: readonly string[];
+  value?: string;
+  placeholder: string;
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <label className="flex flex-1 items-center gap-2 text-sm">
-        <input type="checkbox" name={idBool} defaultChecked={checked} className="h-4 w-4" />
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor={id}>
         {label}
-      </label>
-      <Input
-        name={idSize}
-        type="number"
-        inputMode="decimal"
-        className="w-20"
-        dir="ltr"
-        defaultValue={size?.toString() ?? ""}
-      />
+        {required && <span className="text-primary"> *</span>}
+      </Label>
+      <select id={id} name={id} required={required} defaultValue={value ?? ""} dir="rtl" className={SELECT_CLASS}>
+        <option value="">{placeholder}</option>
+        {options.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

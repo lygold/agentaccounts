@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { logout } from "@/app/logout/actions";
 import { getSession, isManager, isAdmin } from "@/lib/auth/session-cookie";
+import { mondaySyncAlertCount } from "@/lib/services/admin-alerts";
 
 export async function Nav() {
   const [session, t, tRole] = await Promise.all([
@@ -11,6 +12,8 @@ export async function Nav() {
   ]);
   const showDashboard = session ? isManager(session) : false;
   const showAdmin = session ? isAdmin(session) : false;
+  // Admin-only: how many properties failed to reach Monday (agents never see Monday).
+  const mondayIssues = showAdmin ? await mondaySyncAlertCount() : 0;
   // pr-24: keep the trailing item (sign out in LTR, the links in RTL) clear of
   // the language switcher that's fixed to the top-right corner (LocaleToggle).
   return (
@@ -31,6 +34,16 @@ export async function Nav() {
         <Link href="/referrals">{t("referrals")}</Link>
         {showDashboard && <Link href="/admin/notifications">{t("notifications")}</Link>}
         {showAdmin && <Link href="/admin/agents">{t("agents")}</Link>}
+        {showAdmin && (
+          <Link href="/admin/monday-sync" className="flex items-center gap-1.5">
+            {t("mondaySync")}
+            {mondayIssues > 0 && (
+              <span className="rounded-full bg-destructive px-1.5 text-[11px] font-semibold leading-5 text-destructive-foreground">
+                {mondayIssues}
+              </span>
+            )}
+          </Link>
+        )}
       </div>
       <div className="flex items-center gap-4">
         {session && (

@@ -22,15 +22,21 @@ export function CommissionStepForm({
 }) {
   const t = useTranslations("PropertyCommissionStep");
   const common = useTranslations("Common");
-  const [vatMode, setVatMode] = useState<VatMode>(initialVatMode ?? "plus");
+  // No default: the original questionnaire makes the VAT answer mandatory, so
+  // the agent has to choose.
+  const [vatMode, setVatMode] = useState<VatMode | "">(initialVatMode ?? "");
 
   return (
     <form id={PROPERTY_WIZARD_FORM_ID} action={submitPropertyCommission} className="flex flex-col gap-5">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="commissionPercent">{t("percentLabel")}</Label>
+        <Label htmlFor="commissionPercent">
+          {t("percentLabel")}
+          <span className="text-primary"> *</span>
+        </Label>
         <Input
           id="commissionPercent"
           name="commissionPercent"
+          required
           type="number"
           inputMode="decimal"
           step="0.01"
@@ -42,7 +48,10 @@ export function CommissionStepForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label>{t("vatModeLabel")}</Label>
+        <Label>
+          {t("vatModeLabel")}
+          <span className="text-primary"> *</span>
+        </Label>
         <div className="flex gap-2">
           {(["plus", "included"] as const).map((v) => (
             <button

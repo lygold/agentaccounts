@@ -16,6 +16,7 @@ import { getAgentById } from "@/lib/store/agents";
 import { isRtlLocale, type Locale } from "@/i18n/locales";
 import { Button } from "@/components/ui/button";
 import { WizardStepError } from "./wizard-step-error";
+import { MissingFieldsBanner } from "./missing-fields-banner";
 
 interface PropertyWizardChromeProps {
   step: PropertyWizardStep;
@@ -83,6 +84,7 @@ export async function PropertyWizardChrome({
 
       <Suspense>
         <WizardStepError />
+        <MissingFieldsBanner />
       </Suspense>
 
       <main className="flex flex-1 flex-col gap-4">

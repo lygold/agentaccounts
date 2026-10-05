@@ -5,6 +5,7 @@ import { loadPropertyDraft } from "@/lib/property-wizard/draft";
 import { PropertyWizardChrome } from "@/components/property-wizard-chrome";
 import { Button } from "@/components/ui/button";
 import { propertyStepHref, PROPERTY_WIZARD_FORM_ID } from "@/lib/property-wizard/steps";
+import { missingAll } from "@/lib/property-wizard/required";
 import Link from "next/link";
 import { submitPropertyReview } from "./actions";
 
@@ -17,10 +18,26 @@ export default async function PropertyReviewPage() {
   if (!draft.street) redirect("/properties/new/address");
   const t = await getTranslations("PropertyReviewStep");
   const common = await getTranslations("Common");
+  const tMissing = await getTranslations("PropertyMissing");
+  const missing = missingAll(draft);
 
   return (
     <PropertyWizardChrome step="review" furthestStep={draft.furthestStep}>
       <div className="flex flex-col gap-4">
+        {missing.length > 0 && (
+          <div className="flex flex-col gap-2 rounded-md border border-destructive/50 bg-destructive/5 p-3" role="alert">
+            <p className="text-sm font-medium">{tMissing("reviewTitle")}</p>
+            <ul className="flex flex-col gap-1 text-sm">
+              {missing.map((m) => (
+                <li key={m.key}>
+                  <Link href={propertyStepHref(m.step)} className="text-secondary underline-offset-4 hover:underline">
+                    {tMissing.has(m.key) ? tMissing(m.key) : m.key}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <Section title={t("dealTypeTitle")} editHref={propertyStepHref("deal-type")}>
           {draft.dealType === "rental" ? t("rental") : t("sale")}
           {draft.contractType &&
@@ -30,7 +47,7 @@ export default async function PropertyReviewPage() {
           {draft.formattedAddress || `${draft.street} ${draft.buildingNumber}`}
         </Section>
         {draft.ownerName && (
-          <Section title={t("ownerTitle")} editHref={propertyStepHref("contract-pick")}>
+          <Section title={t("ownerTitle")} editHref={propertyStepHref("details")}>
             {draft.ownerName}
             {draft.ownerPhone ? ` · ${draft.ownerPhone}` : ""}
           </Section>
@@ -64,7 +81,7 @@ export default async function PropertyReviewPage() {
         )}
 
         <form id={PROPERTY_WIZARD_FORM_ID} action={submitPropertyReview}>
-          <Button type="submit" size="lg" className="w-full">
+          <Button type="submit" size="lg" className="w-full" disabled={missing.length > 0}>
             {t("submit")}
           </Button>
         </form>

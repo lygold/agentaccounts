@@ -3,13 +3,13 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireSession } from "@/lib/auth/session-cookie";
-import { advancePropertyDraft } from "@/lib/property-wizard/draft";
-import { nextPropertyStep, propertyStepHref } from "@/lib/property-wizard/steps";
+import { saveStepOrReportMissing } from "@/lib/property-wizard/gate";
+import { propertyStepHref } from "@/lib/property-wizard/steps";
 import { isNextJsRedirect } from "@/lib/wizard/action-utils";
 
 const Schema = z.object({
   commissionPercent: z.coerce.number().min(0).max(100).optional().or(z.literal("")),
-  vatMode: z.enum(["plus", "included"]),
+  vatMode: z.enum(["plus", "included", ""]).optional(),
   exclusivityStartDate: z.string().trim().optional(),
   exclusivityEndDate: z.string().trim().optional(),
 });
@@ -17,18 +17,16 @@ const Schema = z.object({
 export async function submitPropertyCommission(formData: FormData) {
   try {
     const session = await requireSession();
-    const raw = Object.fromEntries(formData.entries());
-    const parsed = Schema.safeParse(raw);
-    if (!parsed.success) return;
+    const parsed = Schema.safeParse(Object.fromEntries(formData.entries()));
+    if (!parsed.success) redirect(propertyStepHref("commission") + "?error=save");
+    const d = parsed.data;
 
-    await advancePropertyDraft(session.agentId, "commission", {
-      commissionPercent:
-        parsed.data.commissionPercent === "" ? undefined : parsed.data.commissionPercent,
-      commissionVatMode: parsed.data.vatMode,
-      exclusivityStartDate: parsed.data.exclusivityStartDate || undefined,
-      exclusivityEndDate: parsed.data.exclusivityEndDate || undefined,
+    await saveStepOrReportMissing(session.agentId, "commission", {
+      commissionPercent: d.commissionPercent === "" ? undefined : d.commissionPercent,
+      commissionVatMode: d.vatMode || undefined,
+      exclusivityStartDate: d.exclusivityStartDate || undefined,
+      exclusivityEndDate: d.exclusivityEndDate || undefined,
     });
-    redirect(propertyStepHref(nextPropertyStep("commission")!));
   } catch (e) {
     if (isNextJsRedirect(e)) throw e;
     console.error("submitPropertyCommission failed:", e);

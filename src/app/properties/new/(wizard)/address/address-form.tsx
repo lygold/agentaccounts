@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import { PUBLISH_NOTES } from "@/lib/property-wizard/options";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
 import type { PlaceAddressDetails } from "@/lib/places";
 import { PROPERTY_WIZARD_FORM_ID } from "@/lib/property-wizard/steps";
@@ -13,6 +15,8 @@ import { submitPropertyAddress } from "./actions";
 interface Initial {
   formattedAddress?: string;
   city?: string;
+  neighbourhood?: string;
+  publishNotes?: string;
   street?: string;
   buildingNumber?: string;
   entrance?: string;
@@ -32,6 +36,7 @@ export function AddressStepForm({ initial }: { initial: Initial }) {
   const common = useTranslations("Common");
   const [resolved, setResolved] = useState({
     city: initial.city ?? "",
+    neighbourhood: initial.neighbourhood ?? "",
     street: initial.street ?? "",
     buildingNumber: initial.buildingNumber ?? "",
     placeId: initial.placeId ?? "",
@@ -44,6 +49,7 @@ export function AddressStepForm({ initial }: { initial: Initial }) {
   function handleResolved(details: PlaceAddressDetails) {
     setResolved({
       city: details.city ?? resolved.city,
+      neighbourhood: details.neighbourhood ?? resolved.neighbourhood,
       street: details.street ?? resolved.street,
       buildingNumber: details.buildingNumber ?? resolved.buildingNumber,
       placeId: details.placeId,
@@ -75,6 +81,13 @@ export function AddressStepForm({ initial }: { initial: Initial }) {
           onChange={(v) => setResolved((s) => ({ ...s, city: v }))}
         />
         <Field
+          id="neighbourhood"
+          label={t("neighbourhoodLabel")}
+          required
+          value={resolved.neighbourhood}
+          onChange={(v) => setResolved((s) => ({ ...s, neighbourhood: v }))}
+        />
+        <Field
           id="street"
           label={t("streetLabel")}
           required
@@ -100,6 +113,17 @@ export function AddressStepForm({ initial }: { initial: Initial }) {
           onChange={setApartmentNumber}
         />
       </div>
+
+      <SearchableSelect
+        rtl
+        id="publishNotes"
+        name="publishNotes"
+        label={t("publishNotesLabel")}
+        options={PUBLISH_NOTES.map((v) => ({ value: v, label: v }))}
+        defaultValue={initial.publishNotes}
+        placeholder={t("selectPlaceholder")}
+        emptyLabel={t("selectPlaceholder")}
+      />
 
       <Button type="submit" size="lg">
         {common("continue")}
