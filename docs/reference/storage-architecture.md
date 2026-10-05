@@ -1,6 +1,6 @@
 # Storage architecture — media & document files
 
-> **Status: agreed direction (2026-10-04); slices 1–4 built (storage module, CDN, property wizard + detail page, Drive backfill); Drive backup export not yet.** Replaces the Phase 9a
+> **Status: agreed direction (2026-10-04); slices 1–5(office) built (storage module, CDN, wizard + detail page, Drive backfill, office Drive mirror); per-client OAuth backup not yet.** Replaces the Phase 9a
 > "Drive is the source of truth" approach for *new* work. ROADMAP.md still wins
 > if it disagrees; this doc should be linked from there when the work is
 > scheduled. Origin: the exploration brief in
@@ -259,6 +259,51 @@ arrive until then.
   copied in 3 batches, second sync copied 0, unknown address → no match, other
   office rejected, photos render from CloudFront in the browser. First batch is
   slow (~20 s) because it builds the folder index.
+
+### Built (slice 5, office flavour) — the Drive mirror
+
+Why delegation, not the bare service account: a service account has **no Drive
+storage quota** (`about.storageQuota.limit = 0`), so even as Editor on the real
+folder it cannot create files there. Domain-wide delegation fixes that: the
+service account (client ID `100947844359019047841`, scope
+`https://www.googleapis.com/auth/drive`, authorised in the Workspace Admin
+console) acts as `GOOGLE_DRIVE_IMPERSONATE_EMAIL` (= levi@remaxjerusalem.com),
+so new files are owned by that user and use their pooled quota (~6.6 TB).
+Verified 2026-10-05.
+
+- `syncPropertyFromDrive` is now two-way: after pulling, it pushes the
+  property's app-uploaded files (`source: "upload"`, no `driveBackupFileId`) into
+  its Drive folder. No folder yet -> it creates `{root}/{createdAt year}/
+  {street} {building}-{apt or 0}` in the real structure (year folder created if
+  missing). Name clashes get ` (2)`. Resumable uploads.
+- Every pushed file is tagged `appProperties.agentledgerKey = <media id>` (Drive
+  caps key+value at **124 bytes** — the full storage key is too long); the pull
+  side ignores tagged files, so nothing is re-imported.
+- Triggers: `/properties/new/done` (right after an agent creates a property) and
+  `/properties/[id]` on open / "Refresh from Drive".
+- Tested live: new property -> folder created in the real 2026 folder, file
+  uploaded owned by Levi, second sync made no duplicates, untagged files still
+  pulled. The test folder was trashed afterwards.
+- **Owned by one person's account:** if that Workspace user is suspended or
+  deleted, files they own can go with them. Switch by changing
+  `GOOGLE_DRIVE_IMPERSONATE_EMAIL` (e.g. to a dedicated agentledger@ account,
+  after sharing the real folder with it as Editor).
+- Not yet: the `done` page was type-checked but not clicked through in a
+  browser (the identical `<DriveSync>` is browser-tested on the property page);
+  files uploaded but never opened/synced are only mirrored when someone opens
+  the property — a scheduled catch-up job would close that gap.
+
+### Pre-deploy checklist (to lift the HOLD)
+
+1. Amplify console env vars: `CLOUDFRONT_MEDIA_DOMAIN`, `CLOUDFRONT_KEY_PAIR_ID`,
+   `CLOUDFRONT_PRIVATE_KEY`, `GOOGLE_DRIVE_LEGACY_ROOT_FOLDER_ID`
+   (`1YWCp9bnT-rf5v_rcQlEbIsi1X3q2bwZX`), `GOOGLE_DRIVE_IMPERSONATE_EMAIL`
+   (check it isn't already set to something else), plus the existing Google/S3 vars.
+2. The Amplify compute role needs S3 read/write on `media/*` of the bucket
+   (same as the existing attachments access) and nothing else new.
+3. Add the production origin to the bucket CORS (already
+   `https://main.d2aqfzo6esnq4n.amplifyapp.com`; add any custom domain).
+4. Click through `/properties/new` end to end once on the deployed branch.
 
 ## Cheap wins (independent of the migration)
 

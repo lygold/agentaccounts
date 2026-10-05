@@ -482,6 +482,8 @@ export interface MediaFileRef {
   driveModifiedTime?: string;
   /** The file was removed from Drive after we copied it; our copy is kept. */
   driveMissing?: boolean;
+  /** Drive file id of the backup copy we wrote into the property's Drive folder. */
+  driveBackupFileId?: string;
 }
 
 /** A property's files in our bucket, grouped by the wizard's four uploads. */

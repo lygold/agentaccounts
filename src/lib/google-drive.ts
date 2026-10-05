@@ -86,7 +86,10 @@ export async function getAccessToken(): Promise<string> {
     // Bare service-account auth, not delegation — see the file-level doc
     // comment on why (Shared Drive membership, not impersonation, is what
     // lets this write real files right now).
-    .setSubject(getServiceAccountEmail())
+    // GOOGLE_DRIVE_IMPERSONATE_EMAIL switches on domain-wide delegation: act as
+    // that real Workspace user (their quota, their access to the office's real
+    // folder). Unset = the bare service account, as before.
+    .setSubject(process.env.GOOGLE_DRIVE_IMPERSONATE_EMAIL || getServiceAccountEmail())
     .setAudience(TOKEN_URL)
     .setIssuedAt(now)
     .setExpirationTime(now + 3600)

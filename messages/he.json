@@ -157,7 +157,7 @@
     "notifiedEmail": "נשלח אימייל למזכירה",
     "notifiedWhatsapp": "נשלח וואטסאפ למזכירה",
     "downloadOriginal": "מקור",
-    "driveSyncing": "מסנכרן מהדרייב… {copied} מתוך {total}",
+    "driveSyncing": "מסנכרן עם הדרייב… {copied} מתוך {total}",
     "driveSynced": "מסונכרן עם הדרייב",
     "driveNoMatch": "לא נמצאה תיקייה מתאימה בדרייב",
     "driveRefresh": "רענן מהדרייב",

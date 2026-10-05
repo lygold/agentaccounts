@@ -861,7 +861,7 @@ agent selling outside their own patch). Decided so far:
 
 #### 9e — Storage re-architecture (S3 + CloudFront, Drive as backup) — 🚧 in progress
 
-> **⏸ HELD (2026-10-05, Levi):** slices 1–3 live on local branch `feature-storage`,
+> **⏸ HELD (2026-10-05, Levi) — mirror now built; lift after the pre-deploy checklist in the doc:** slices 1–3 live on local branch `feature-storage`,
 > **not merged to `main`/not deployed** until the office's Drive mirror (slice 5,
 > office flavour) exists — the new wizard no longer writes to Drive, so the
 > secretary's Drive folders would miss new properties.
@@ -888,7 +888,11 @@ before agentLedger is offered to a second office.
   path (browser→S3 upload, thumbnails in the wizard, photo grid + "Original"
   links on `/properties/[id]`; legacy Drive-ref properties still render counts;
   tested in a real browser); (4) ✅ Drive → S3 lazy backfill/sync (`src/lib/storage/drive-sync.ts` +
-  `<DriveSync>` on `/properties/[id]`; tested live against the real folder); (5) Drive backup connector.
+  `<DriveSync>` on `/properties/[id]`; tested live against the real folder); (5) Drive backup: **office flavour ✅** (two-way sync in
+  `drive-sync.ts`: app uploads are pushed into the property's folder in the real
+  Drive structure as `GOOGLE_DRIVE_IMPERSONATE_EMAIL` via domain-wide delegation;
+  runs on `/properties/new/done` and the property page); per-client OAuth
+  connector for other offices still to build.
 - **Open:** real Drive folder shared with the service account as Viewer
   (untested); deleted-in-Drive behaviour; Shared Drive backup coverage.
 

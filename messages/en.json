@@ -157,7 +157,7 @@
     "notifiedEmail": "Secretary emailed",
     "notifiedWhatsapp": "Secretary WhatsApp’d",
     "downloadOriginal": "Original",
-    "driveSyncing": "Syncing from Drive… {copied} of {total}",
+    "driveSyncing": "Syncing with Drive… {copied} of {total}",
     "driveSynced": "Synced with Drive",
     "driveNoMatch": "No matching folder found in Drive",
     "driveRefresh": "Refresh from Drive",

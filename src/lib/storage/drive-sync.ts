@@ -4,7 +4,7 @@ import { getAccessToken } from "../google-drive";
 import { getRedis } from "../redis";
 import { getProperty, updateProperty } from "../store/properties";
 import type { MediaFileRef, PropertyMedia, PropertyRecord } from "../types";
-import { buildOriginalKey } from "./keys";
+import { buildOriginalKey, parseMediaKey } from "./keys";
 import { MAX_UPLOAD_BYTES, completeUpload, getStorage } from "./media";
 
 /**
@@ -14,6 +14,12 @@ import { MAX_UPLOAD_BYTES, completeUpload, getStorage } from "./media";
  * photos there, so each sync copies only files that are new or changed (by
  * Drive `md5Checksum`) and never modifies or deletes anything in Drive.
  * A file removed from Drive keeps our copy, flagged `driveMissing`.
+ *
+ * The same pass also PUSHES files uploaded in the app (source "upload") into
+ * the property's Drive folder - the office mirror - tagged with the Drive
+ * appProperties key `agentledgerKey` so the pull side never re-imports them.
+ * Writes act as GOOGLE_DRIVE_IMPERSONATE_EMAIL (domain-wide delegation): a
+ * bare service account has no Drive quota, so it cannot create files.
  */
 
 const DRIVE_API = "https://www.googleapis.com/drive/v3";
@@ -146,10 +152,90 @@ export async function findDriveFolder(
   return null;
 }
 
+// ---------- Drive writes (office mirror) ----------
+
+async function driveJson<T>(res: Response, what: string): Promise<T> {
+  if (!res.ok) throw new Error(`${what} failed (${res.status}): ${(await res.text()).slice(0, 200)}`);
+  return (await res.json()) as T;
+}
+
+async function createDriveFolder(parentId: string, name: string): Promise<string> {
+  const token = await getAccessToken();
+  const res = await fetch(`${DRIVE_API}/files?fields=id&supportsAllDrives=true`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ name, mimeType: FOLDER_MIME, parents: [parentId] }),
+    cache: "no-store",
+  });
+  return (await driveJson<{ id: string }>(res, "Drive folder create")).id;
+}
+
+/** Finds `{root}/{year}`, creating it if the new year has no folder yet. */
+async function ensureYearFolder(year: number): Promise<string> {
+  const root = process.env.GOOGLE_DRIVE_LEGACY_ROOT_FOLDER_ID;
+  if (!root) throw new Error("GOOGLE_DRIVE_LEGACY_ROOT_FOLDER_ID is not set");
+  const kids = await driveListAll(`'${root}' in parents and trashed = false and mimeType = '${FOLDER_MIME}'`, "id,name");
+  return kids.find((f) => f.name === String(year))?.id ?? (await createDriveFolder(root, String(year)));
+}
+
+/** Resumable upload (reliable for multi-MB files) of `body` into `folderId`. */
+async function uploadDriveFile(
+  folderId: string,
+  name: string,
+  mimeType: string,
+  body: Buffer,
+  appProperties: Record<string, string>,
+): Promise<string> {
+  const token = await getAccessToken();
+  const init = await fetch(
+    "https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id&supportsAllDrives=true",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json; charset=UTF-8",
+        "X-Upload-Content-Type": mimeType,
+        "X-Upload-Content-Length": String(body.length),
+      },
+      body: JSON.stringify({ name, parents: [folderId], appProperties }),
+      cache: "no-store",
+    },
+  );
+  if (!init.ok) throw new Error(`Drive upload init failed (${init.status}): ${(await init.text()).slice(0, 200)}`);
+  const location = init.headers.get("location");
+  if (!location) throw new Error("Drive upload init returned no session URL");
+  const put = await fetch(location, {
+    method: "PUT",
+    headers: { "Content-Type": mimeType },
+    body: body as unknown as BodyInit,
+    cache: "no-store",
+  });
+  return (await driveJson<{ id: string }>(put, "Drive upload")).id;
+}
+
+/** "name.jpg" taken -> "name (2).jpg" so a backup never overwrites or hides
+ *  a file the secretary already has. */
+function uniqueName(name: string, taken: Set<string>): string {
+  if (!taken.has(name)) return name;
+  const dot = name.lastIndexOf(".");
+  const base = dot > 0 ? name.slice(0, dot) : name;
+  const ext = dot > 0 ? name.slice(dot) : "";
+  for (let n = 2; ; n++) {
+    const candidate = `${base} (${n})${ext}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+}
+
+/** The office's folder-name convention for a new property folder. */
+function newFolderLabel(p: Pick<PropertyRecord, "street" | "buildingNumber" | "apartmentNumber">): string {
+  return `${p.street} ${p.buildingNumber}-${p.apartmentNumber || 0}`;
+}
+
 // ---------- sync ----------
 
 export interface SyncResult {
   status: "no_match" | "in_progress" | "locked" | "up_to_date";
+  /** Files moved this call (pulled from Drive + pushed to Drive). */
   copied: number;
   remaining: number;
   total: number;
@@ -180,9 +266,10 @@ async function downloadDriveFile(id: string): Promise<Buffer> {
   return Buffer.from(await res.arrayBuffer());
 }
 
-/** Copies up to SYNC_BATCH_SIZE new/changed Drive files for one property into
- *  storage. Call repeatedly until `remaining` is 0. Throws nothing for
- *  per-file failures (they're logged and retried on the next sync). */
+/** One bounded batch of two-way sync for a property: pull new/changed Drive
+ *  files into storage, then push app uploads into its Drive folder (creating
+ *  the folder in the real structure if there isn't one). Call repeatedly until
+ *  `remaining` is 0. Per-file failures are logged and retried next sync. */
 export async function syncPropertyFromDrive(
   propertyId: string,
   officeId: string,
@@ -197,15 +284,29 @@ export async function syncPropertyFromDrive(
     const property = await getProperty(propertyId);
     if (!property || property.officeId !== officeId) throw new Error("Property not found");
 
+    const media = emptyMedia(property.media);
+    const pendingPush = () => allRefs(media).filter((r) => r.source === "upload" && !r.driveBackupFileId);
+
     if (
       !opts.force &&
       property.driveSyncedAt &&
+      pendingPush().length === 0 &&
       Date.now() - Date.parse(property.driveSyncedAt) < SYNC_TTL_MS
     ) {
       return { status: "up_to_date", copied: 0, remaining: 0, total: 0 };
     }
 
-    const folder = await findDriveFolder(property);
+    // The folder: the one we matched/created before, else match by address,
+    // else (only if there is something to back up) create it.
+    let folder: { id: string; name: string } | null = property.driveFolderId
+      ? { id: property.driveFolderId, name: newFolderLabel(property) }
+      : await findDriveFolder(property);
+    if (!folder && pendingPush().length > 0) {
+      const yearId = await ensureYearFolder(new Date(property.createdAt).getFullYear());
+      const name = newFolderLabel(property);
+      folder = { id: await createDriveFolder(yearId, name), name };
+      indexCache = null; // next lookup sees the new folder
+    }
     if (!folder) {
       await updateProperty(propertyId, { driveMatch: "not_found", driveSyncedAt: new Date().toISOString() }, officeId);
       return { status: "no_match", copied: 0, remaining: 0, total: 0 };
@@ -216,26 +317,22 @@ export async function syncPropertyFromDrive(
         `'${folder.id}' in parents and trashed = false and mimeType != '${FOLDER_MIME}'`,
         "id,name,mimeType,size,md5Checksum,modifiedTime,appProperties",
       )
-    ).filter(
-      (f) =>
-        !f.mimeType.startsWith("application/vnd.google-apps.") && // Docs/Sheets: no bytes to copy
-        !f.appProperties?.[BACKUP_MARKER_PROPERTY], // our own backup copies
-    );
+    ).filter((f) => !f.mimeType.startsWith("application/vnd.google-apps."));
+    // Skip files we wrote ourselves (the backup copies).
+    const importable = listing.filter((f) => !f.appProperties?.[BACKUP_MARKER_PROPERTY]);
 
-    const media = emptyMedia(property.media);
-    const existing = allRefs(media);
-    const byDriveId = new Map(existing.filter((r) => r.driveFileId).map((r) => [r.driveFileId!, r]));
-
-    const todo = listing.filter((f) => {
+    const byDriveId = new Map(allRefs(media).filter((r) => r.driveFileId).map((r) => [r.driveFileId!, r]));
+    const toPull = importable.filter((f) => {
       const have = byDriveId.get(f.id);
       return !have || (f.md5Checksum && have.driveMd5 !== f.md5Checksum);
     });
-    const batch = todo.slice(0, SYNC_BATCH_SIZE);
+    const pullBatch = toPull.slice(0, SYNC_BATCH_SIZE);
     const storage = getStorage();
     const mediaFolderId = property.mediaFolderId ?? property.id;
     let copied = 0;
 
-    for (const f of batch) {
+    // ---- pull: Drive -> storage ----
+    for (const f of pullBatch) {
       try {
         if (Number(f.size ?? 0) > MAX_UPLOAD_BYTES) {
           console.warn(`[drive-sync] skipping ${f.name}: larger than ${MAX_UPLOAD_BYTES} bytes`);
@@ -257,7 +354,26 @@ export async function syncPropertyFromDrive(
         media[categoryFor(f.mimeType)].push(ref);
         copied++;
       } catch (e) {
-        console.error(`[drive-sync] ${f.name} failed:`, e);
+        console.error(`[drive-sync] pull ${f.name} failed:`, e);
+      }
+    }
+
+    // ---- push: storage -> Drive (office mirror), with whatever budget is left ----
+    const taken = new Set(listing.map((f) => f.name));
+    const pushBatch = pendingPush().slice(0, Math.max(0, SYNC_BATCH_SIZE - pullBatch.length));
+    for (const ref of pushBatch) {
+      try {
+        const { body } = await storage.getObject(ref.s3Key);
+        const name = uniqueName(ref.name, taken);
+        ref.driveBackupFileId = await uploadDriveFile(folder.id, name, ref.contentType, body, {
+          // Drive caps appProperties at 124 bytes key+value, so tag with the
+          // media id (a uuid), not the whole storage key.
+          [BACKUP_MARKER_PROPERTY]: parseMediaKey(ref.s3Key)?.id ?? "x",
+        });
+        taken.add(name);
+        copied++;
+      } catch (e) {
+        console.error(`[drive-sync] push ${ref.name} failed:`, e);
       }
     }
 
@@ -269,7 +385,7 @@ export async function syncPropertyFromDrive(
       );
     }
 
-    const remaining = Math.max(0, todo.length - batch.length);
+    const remaining = Math.max(0, toPull.length - pullBatch.length) + pendingPush().length;
     const patch: Partial<PropertyRecord> = {
       media,
       mediaFolderId,
@@ -283,7 +399,7 @@ export async function syncPropertyFromDrive(
       status: remaining > 0 ? "in_progress" : "up_to_date",
       copied,
       remaining,
-      total: listing.length,
+      total: importable.length + allRefs(media).filter((r) => r.driveBackupFileId).length,
       folderName: folder.name,
     };
   } finally {
