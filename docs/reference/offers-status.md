@@ -51,10 +51,13 @@ string of real bugs, all fixed the same two-day window:
 
 ## Known gaps
 
-- **Logo still missing on the pre-fill buyer form page itself** —
-  `src/app/offer/[token]/page.tsx` only renders the logo in the
-  `offer.submittedAt` (thank-you) branch; the earlier branch, where the
-  buyer actually fills in and signs the offer, has none.
+- ~~Logo missing on the pre-fill buyer form page itself~~ — **fixed**: now
+  renders in both branches of `src/app/offer/[token]/page.tsx`.
+- **Logo isn't centered** on the buyer form page — currently sits
+  left-aligned-by-default in the block, reading as top-right of the page
+  in the RTL Hebrew layout (see screenshot from Levi, 2026-10-04). Cosmetic
+  only, not worth a one-off fix — deferred to the broader design pass over
+  the app (per Levi).
 
 ## Dormant infrastructure (present, not called anywhere)
 
