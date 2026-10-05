@@ -859,6 +859,43 @@ agent selling outside their own patch). Decided so far:
   agent/team/area view toggle; agent personal: own numbers + team
   numbers with the org/area split visible, for team leaders).
 
+#### 9e — Storage re-architecture (S3 + CloudFront, Drive as backup) — 🚧 in progress
+
+> **⏸ HELD (2026-10-05, Levi) — mirror now built; lift after the pre-deploy checklist in the doc:** slices 1–3 live on local branch `feature-storage`,
+> **not merged to `main`/not deployed** until the office's Drive mirror (slice 5,
+> office flavour) exists — the new wizard no longer writes to Drive, so the
+> secretary's Drive folders would miss new properties.
+
+Decided 2026-10-04/05; full reasoning, cost model and design in
+[`docs/reference/storage-architecture.md`](docs/reference/storage-architecture.md).
+Supersedes 9a's "Drive is the source of truth" for new work. Must be solved
+before agentLedger is offered to a second office.
+- **Why:** storage is cents; the cost is *access* (egress) and Drive can't do
+  in-app viewing or multi-tenancy. Pay-as-you-go CloudFront (Europe/Israel
+  pricing): first 1 TB/month + 10M requests free.
+- **Shape:** S3 `media/{officeId}/{propertyId}/…`, CloudFront signed URLs,
+  photos resized at upload (thumb ~30 KB / gallery ~200 KB, originals kept),
+  browser → S3 presigned PUT uploads, a `StorageProvider` interface.
+- **Old properties:** lazy per-property backfill — on open, find the folder in
+  Drive, copy files into S3, re-sync new/changed files on each open (the
+  secretary still adds photos to Drive). No bulk import; Drive never modified.
+- **Drive** becomes an optional per-client OAuth (`drive.file`) one-way backup.
+- **Slices:** (1) ✅ `StorageProvider` + S3 media module + presigned upload +
+  resize (`src/lib/storage/`, live-tested against the bucket; not wired to any
+  page yet); (2) ✅ CloudFront + signed read URLs (distribution, OAC, key group,
+  bucket policy for `media/*` only, CORS, multipart lifecycle — ids in the doc;
+  **Amplify console needs the 3 `CLOUDFRONT_*` env vars**); (3) ✅ wizard media step on the new
+  path (browser→S3 upload, thumbnails in the wizard, photo grid + "Original"
+  links on `/properties/[id]`; legacy Drive-ref properties still render counts;
+  tested in a real browser); (4) ✅ Drive → S3 lazy backfill/sync (`src/lib/storage/drive-sync.ts` +
+  `<DriveSync>` on `/properties/[id]`; tested live against the real folder); (5) Drive backup: **office flavour ✅** (two-way sync in
+  `drive-sync.ts`: app uploads are pushed into the property's folder in the real
+  Drive structure as `GOOGLE_DRIVE_IMPERSONATE_EMAIL` via domain-wide delegation;
+  runs on `/properties/new/done` and the property page); per-client OAuth
+  connector for other offices still to build.
+- **Open:** real Drive folder shared with the service account as Viewer
+  (untested); deleted-in-Drive behaviour; Shared Drive backup coverage.
+
 ### Phase 10 — Monday.com full decommission
 
 - Stop `mirrorOut` / `mirrorIn`. Archive Deals_Raw_Data, Red File, Properties
@@ -908,6 +945,13 @@ agent selling outside their own patch). Decided so far:
   Drive service account, and `google-drive.ts` exchanging that instead of
   signing a JWT from a stored private key. Do this once the wizard is
   live and stable, not as part of the initial build.
+- **App-driven publishing to listing sites.** The secretary publishes each
+  property by hand to our own website and several third-party sites, none with
+  APIs. Automating = browser automation (headless worker outside Amplify,
+  per-site scripts, stored credentials, failure queue); fragile and possibly
+  against site terms. Own website: publish directly via a feed/API we control.
+  First step: list the sites and check each for a bulk-import/feed/partner
+  option. Do after Phase 9e. See `docs/reference/storage-architecture.md`.
 - **Search on every list page** — deals, agents, per-agent ledger, and each
   pipeline-entity list get a search/filter box. Not yet built; fold into the
   design pass (Phase 11) or do per-page as the lists grow. (Agents list already
@@ -986,6 +1030,7 @@ agent selling outside their own patch). Decided so far:
 | — | Ariyel | Broker-owner. Uses the hub mainly for reports; does Levi's job when Levi's away → `admin` role. |
 | — | Commission | Full commission charged; agent expenses billed via credit card in Green Invoice. |
 | — | Doc storage | ~~S3 source of truth + auto-copy into the accounting Google Drive folder.~~ **Reversed, Phase 9**: Drive is primary for property media/documents — agentLedger stores only a `{driveFileId, webViewLink}` pointer, never the bytes. Cost-driven (Levi: tables/queries are cheap regardless of volume on `PAY_PER_REQUEST`; file storage is the real cost lever, and the business already uses Drive). The existing S3-based agent-invoice/receipt attachments (Phase "agent payout") are low-volume and NOT migrated — out of scope. |
+| — | Media storage (2026-10-05) | **Supersedes the Doc storage row above for new work:** S3 + CloudFront (signed URLs) + resize at upload; Drive becomes an optional per-client backup export. Old Drive media lazy-backfilled per property on open, with re-sync. See `docs/reference/storage-architecture.md`, Phase 9e. |
 | — | Backfill | 2026-forward for now; full historical backfill is a later phase. |
 | — | PDF fidelity | "Pretty similar" is fine — a clean rebuild, not byte-identical. |
 | — | Design | One dedicated pass near the end (Phase 11); the public open page not designed until it's greenlit. |
@@ -1043,7 +1088,7 @@ Runs across Phases 4 (Daf Kesher) and 10 (everything else).
   to run it) for a session/dev with no prior context. Points here for detail.
 - **`ROADMAP.md`** (this file) — canonical plan.
 - **`docs/reference/`** — narrow, accurate notes: running locally, role scoping,
-  commission auto-calc, the Weiser import, the deals-identity gap, the daily
+  commission auto-calc, storage architecture, the Weiser import, the deals-identity gap, the daily
   report spec, external file paths, who Levi is.
 - **`docs/archive/`** — superseded planning: the original architecture plan, the
   "Agent Hub" plan (`.md` / `.html`), the 2026-09-07 status snapshot, the

@@ -155,7 +155,13 @@
     "updatesTitle": "Update history",
     "noUpdates": "No updates yet",
     "notifiedEmail": "Secretary emailed",
-    "notifiedWhatsapp": "Secretary WhatsApp’d"
+    "notifiedWhatsapp": "Secretary WhatsApp’d",
+    "downloadOriginal": "Original",
+    "driveSyncing": "Syncing with Drive… {copied} of {total}",
+    "driveSynced": "Synced with Drive",
+    "driveNoMatch": "No matching folder found in Drive",
+    "driveRefresh": "Refresh from Drive",
+    "driveFailed": "Drive sync failed"
   },
   "PropertyEdit": {
     "title": "Edit property",
@@ -421,7 +427,10 @@
     "giSendClient": "Send to client",
     "giSend": "Send",
     "giSentTo": "Sent to {who} · {date}",
-    "giRecipient": { "agent": "agent", "client": "client" },
+    "giRecipient": {
+      "agent": "agent",
+      "client": "client"
+    },
     "incomeTitle": "Income received",
     "fromGreenInvoice": "from Green Invoice",
     "receiptCreated": "Receipt created (ref {ref})",
@@ -734,7 +743,12 @@
     "youtubeUrlLabel": "YouTube link",
     "youtubeDisplayTextLabel": "Display text",
     "uploadAndContinue": "Upload and continue",
-    "alreadyUploaded": "{count} already uploaded"
+    "alreadyUploaded": "{count} already uploaded",
+    "uploadingProgress": "Uploading {done}/{total}…",
+    "uploadFailed": "{name}: upload failed ({reason})",
+    "alreadyUploadedTemplate": "{count} uploaded",
+    "waitForUploads": "Please wait for the uploads to finish.",
+    "continue": "Continue"
   },
   "PropertyDetailsStep": {
     "prompt": "A few more details about the property and deal",

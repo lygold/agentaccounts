@@ -2,7 +2,10 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireSession } from "@/lib/auth/session-cookie";
 import { loadPropertyDraft, patchPropertyDraft, type PropertyDraft } from "@/lib/property-wizard/draft";
-import { ensurePropertyFolder, uploadFileToDrive } from "@/lib/google-drive";
+import { randomUUID } from "node:crypto";
+import { storeServerFile, getMediaUrl } from "@/lib/storage/media";
+import { MediaUploader, type UploadedItem } from "@/components/media-uploader";
+import type { MediaFileRef, PropertyMedia, PropertyMediaCategory } from "@/lib/types";
 import { getSignedContractFile } from "@/lib/wizard/monday";
 import { PropertyWizardChrome } from "@/components/property-wizard-chrome";
 import { Input } from "@/components/ui/input";
@@ -21,56 +24,78 @@ import { submitPropertyMedia } from "./actions";
  *  contract), safe to call on every render. */
 async function ensureContractFormAutoAttached(
   agentId: string,
+  officeId: string,
   draft: PropertyDraft,
 ): Promise<PropertyDraft> {
-  if (draft.forms?.length || !draft.sourceContractMondayId || !draft.street || !draft.buildingNumber) {
+  if (draft.media?.forms?.length || !draft.sourceContractMondayId || !draft.street || !draft.buildingNumber) {
     return draft;
   }
   try {
     const file = await getSignedContractFile(draft.sourceContractMondayId);
     if (!file) return draft;
 
-    let folderId = draft.driveFolderId;
-    if (!folderId) {
-      const label = `${draft.street} ${draft.buildingNumber}${draft.apartmentNumber ? `-${draft.apartmentNumber}` : ""}`;
-      folderId = await ensurePropertyFolder(String(new Date().getFullYear()), label);
-    }
-    const webFile = new File([new Uint8Array(file.buffer)], file.name, { type: file.mimeType });
-    const ref = await uploadFileToDrive(folderId, webFile);
-    return patchPropertyDraft(agentId, { driveFolderId: folderId, forms: [ref] });
+    const folderId = draft.mediaFolderId ?? randomUUID();
+    const ref = await storeServerFile(officeId, folderId, {
+      name: file.name,
+      type: file.mimeType,
+      buffer: Buffer.from(file.buffer),
+    });
+    const media: PropertyMedia = { mainPhotos: [], additionalPhotos: [], forms: [], documents: [], ...draft.media };
+    media.forms = [ref];
+    return patchPropertyDraft(agentId, { mediaFolderId: folderId, media });
   } catch (e) {
     console.error("[property-wizard] auto-attach contract form failed:", e);
     return draft;
   }
 }
 
+async function toItems(refs: MediaFileRef[] | undefined): Promise<UploadedItem[]> {
+  return Promise.all(
+    (refs ?? []).map(async (r) => ({
+      name: r.name,
+      thumbUrl: r.thumbKey ? await getMediaUrl(r, "thumb") : null,
+    })),
+  );
+}
+
 export default async function PropertyMediaPage() {
   const session = await requireSession();
   let draft = await loadPropertyDraft(session.agentId);
   if (!draft.street) redirect("/properties/new/address");
-  draft = await ensureContractFormAutoAttached(session.agentId, draft);
+  draft = await ensureContractFormAutoAttached(session.agentId, session.officeId, draft);
   const t = await getTranslations("PropertyMediaStep");
+  const strings = {
+    uploading: t.raw("uploadingProgress") as string,
+    failed: t.raw("uploadFailed") as string,
+    alreadyUploaded: t.raw("alreadyUploadedTemplate") as string,
+    waitForUploads: t("waitForUploads"),
+  };
+  const [mainItems, additionalItems, formItems, documentItems] = await Promise.all(
+    (["mainPhotos", "additionalPhotos", "forms", "documents"] as PropertyMediaCategory[]).map((c) =>
+      toItems(draft.media?.[c]),
+    ),
+  );
 
   return (
     <PropertyWizardChrome step="media" furthestStep={draft.furthestStep} returnToSummaryBehavior="link">
       <form id={PROPERTY_WIZARD_FORM_ID} action={submitPropertyMedia} className="flex flex-col gap-5">
         <p className="text-sm text-muted-foreground">{t("prompt")}</p>
 
-        <FileField
+        <MediaUploader
+          category="mainPhotos"
           id="mainPhotos"
           label={t("mainPhotosLabel")}
-          multiple
           accept="image/*"
-          count={draft.mainPhotos?.length}
-          countLabel={(n) => t("alreadyUploaded", { count: n })}
+          initial={mainItems}
+          strings={strings}
         />
-        <FileField
+        <MediaUploader
+          category="additionalPhotos"
           id="additionalPhotos"
           label={t("additionalPhotosLabel")}
-          multiple
           accept="image/*"
-          count={draft.additionalPhotos?.length}
-          countLabel={(n) => t("alreadyUploaded", { count: n })}
+          initial={additionalItems}
+          strings={strings}
         />
 
         <div className="flex flex-col gap-2 rounded-md border p-3">
@@ -84,21 +109,21 @@ export default async function PropertyMediaPage() {
           </label>
         </div>
 
-        <FileField
+        <MediaUploader
+          category="forms"
           id="forms"
           label={t("formsLabel")}
-          multiple
           accept="application/pdf,image/*"
-          count={draft.forms?.length}
-          countLabel={(n) => t("alreadyUploaded", { count: n })}
+          initial={formItems}
+          strings={strings}
         />
-        <FileField
+        <MediaUploader
+          category="documents"
           id="documents"
           label={t("documentsLabel")}
-          multiple
           accept="application/pdf,image/*"
-          count={draft.documents?.length}
-          countLabel={(n) => t("alreadyUploaded", { count: n })}
+          initial={documentItems}
+          strings={strings}
         />
 
         <div className="flex flex-col gap-1.5">
@@ -117,40 +142,9 @@ export default async function PropertyMediaPage() {
         </div>
 
         <Button type="submit" size="lg">
-          {t("uploadAndContinue")}
+          {t("continue")}
         </Button>
       </form>
     </PropertyWizardChrome>
-  );
-}
-
-function FileField({
-  id,
-  label,
-  multiple,
-  accept,
-  count,
-  countLabel,
-}: {
-  id: string;
-  label: string;
-  multiple?: boolean;
-  accept?: string;
-  count?: number;
-  countLabel: (n: number) => string;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
-      <input
-        id={id}
-        name={id}
-        type="file"
-        multiple={multiple}
-        accept={accept}
-        className="text-sm file:me-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm"
-      />
-      {!!count && <p className="text-xs text-muted-foreground">{countLabel(count)}</p>}
-    </div>
   );
 }

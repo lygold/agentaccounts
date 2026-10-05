@@ -458,6 +458,44 @@ export interface DriveFileRef {
   uploadedAt: string;
 }
 
+/**
+ * Storage re-architecture (docs/reference/storage-architecture.md) — a file
+ * stored in our own bucket under `media/{officeId}/{propertyId}/…`. Replaces
+ * DriveFileRef for new uploads; `source: "drive"` rows are the lazy
+ * Drive -> S3 backfill, which keeps the Drive ids so re-syncs copy only new or
+ * changed files. Keys are stored, never signed URLs.
+ */
+export interface MediaFileRef {
+  /** Original file's key (always present). */
+  s3Key: string;
+  name: string;
+  contentType: string;
+  size: number;
+  /** Resized WebP derivatives — images only. */
+  galleryKey?: string;
+  thumbKey?: string;
+  uploadedAt: string;
+  source: "upload" | "drive";
+  driveFileId?: string;
+  /** Drive's md5Checksum / modifiedTime at copy time, for change detection. */
+  driveMd5?: string;
+  driveModifiedTime?: string;
+  /** The file was removed from Drive after we copied it; our copy is kept. */
+  driveMissing?: boolean;
+  /** Drive file id of the backup copy we wrote into the property's Drive folder. */
+  driveBackupFileId?: string;
+}
+
+/** A property's files in our bucket, grouped by the wizard's four uploads. */
+export interface PropertyMedia {
+  mainPhotos: MediaFileRef[];
+  additionalPhotos: MediaFileRef[];
+  forms: MediaFileRef[];
+  documents: MediaFileRef[];
+}
+
+export type PropertyMediaCategory = keyof PropertyMedia;
+
 /** One entry in a property's change log — see
  *  src/lib/services/property-notify.ts. `channelsSent` records what
  *  actually dispatched (a channel disabled via env, or WhatsApp before a
@@ -512,7 +550,17 @@ export interface PropertyRecord {
   sourceContractMondayId?: string;
   sourceContractRole?: Extract<DealSide, "seller" | "landlord">;
 
-  // --- Media (Google Drive refs, never raw bytes — see DriveFileRef) ---
+  // --- Media (our own bucket — see MediaFileRef / PropertyMedia) ---
+  /** Folder segment in `media/{officeId}/{mediaFolderId}/…`. Allocated when
+   *  the wizard's first upload happens; backfilled old properties use their
+   *  own id. */
+  mediaFolderId?: string;
+  media?: PropertyMedia;
+  driveSyncedAt?: string;
+  driveMatch?: "found" | "not_found";
+
+  // --- Legacy media (Google Drive refs, never raw bytes — see DriveFileRef).
+  //     Old properties only; new uploads go to `media` above. ---
   /** The Drive folder holding every file for this listing (created lazily
    *  on first upload — see src/lib/google-drive.ts). */
   driveFolderId?: string;
