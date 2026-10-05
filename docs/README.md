@@ -16,6 +16,7 @@
 | [`deals-identity-gap.md`](reference/deals-identity-gap.md) | Deals store a typed name, not an agent ID — the gap Phase 4 closes |
 | [`daily-report-goal.md`](reference/daily-report-goal.md) | The daily PDF's 3 sections + the cash-flow Excel — what Phase 7 (the north star) has to reproduce |
 | [`storage-architecture.md`](reference/storage-architecture.md) | Agreed (not built) media storage direction — S3 + CloudFront + upload-time resize, Drive as optional backup; cost model and migration |
+| [`property-questionnaire.md`](reference/property-questionnaire.md) | The property wizard vs the original form + Monday board: required/conditional questions, option lists, the price model, the 67-column Monday push, admin-only alerts |
 | [`reference-paths.md`](reference/reference-paths.md) | External file / resource locations (daily reports, cash-flow Excel, Monday board IDs) |
 | [`user-levi.md`](reference/user-levi.md) | Who Levi is, the brand entity, break-glass admin |
 

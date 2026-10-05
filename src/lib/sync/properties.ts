@@ -7,6 +7,7 @@ import { DEFAULT_OFFICE_ID } from "../office";
 import { getRedis, RedisKeys } from "../redis";
 import type { PropertyRecord } from "../types";
 import { buildCoreColumns, buildPropertyColumns, propertyItemName } from "./property-columns";
+import { normalizeLegacyProperty } from "../property-wizard/legacy";
 import {
   clearMondaySyncAlert,
   mondaySyncAlertCount,
@@ -341,7 +342,9 @@ export async function mirrorPropertyToMonday(property: PropertyRecord): Promise<
     console.error("[sync] could not look up the agent's Monday id:", e);
   }
 
-  const { values, skipped } = buildPropertyColumns(property, agentMondayItemId);
+  // Properties from the first wizard version carry old option keys / booleans.
+  const forMonday = normalizeLegacyProperty(property);
+  const { values, skipped } = buildPropertyColumns(forMonday, agentMondayItemId);
   if (skipped.length > 0) console.warn(`[sync] ${property.id}: ${skipped.join("; ")}`);
 
   // 1) the full set
@@ -356,7 +359,7 @@ export async function mirrorPropertyToMonday(property: PropertyRecord): Promise<
   let partial = false;
   if (fullError && !mondayItemId) {
     try {
-      mondayItemId = await createPropertyItem(name, buildCoreColumns(property, agentMondayItemId));
+      mondayItemId = await createPropertyItem(name, buildCoreColumns(forMonday, agentMondayItemId));
       partial = true;
     } catch (e) {
       fullError = `${fullError} | core fallback also failed: ${e instanceof Error ? e.message : String(e)}`;

@@ -896,6 +896,19 @@ before agentLedger is offered to a second office.
 - **Open:** real Drive folder shared with the service account as Viewer
   (untested); deleted-in-Drive behaviour; Shared Drive backup coverage.
 
+#### 9f — Property questionnaire parity + full Monday push — built, **not deployed**
+
+2026-10-05. The wizard now matches the original Superform (required markers,
+conditional questions, the board's exact option labels), the Monday push writes
+67 columns correctly (the old push failed on the VAT dropdown, so no
+wizard-created property ever reached Monday), agents are asked only the asking
+price (starting price is recorded once and never changes), and Monday failures
+are admin-only (nav badge + `/admin/monday-sync`; email once
+`MAKE_NOTIFICATION_WEBHOOK_URL` exists). Details, rules and known gaps:
+[`docs/reference/property-questionnaire.md`](docs/reference/property-questionnaire.md).
+Two real properties that had never reached Monday (דרך חברון 54, לבונטין 19) were
+pushed by hand after the fix.
+
 ### Phase 10 — Monday.com full decommission
 
 - Stop `mirrorOut` / `mirrorIn`. Archive Deals_Raw_Data, Red File, Properties
