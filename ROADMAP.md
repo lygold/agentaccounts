@@ -861,6 +861,11 @@ agent selling outside their own patch). Decided so far:
 
 #### 9e — Storage re-architecture (S3 + CloudFront, Drive as backup) — 🚧 in progress
 
+> **⏸ HELD (2026-10-05, Levi):** slices 1–3 live on local branch `feature-storage`,
+> **not merged to `main`/not deployed** until the office's Drive mirror (slice 5,
+> office flavour) exists — the new wizard no longer writes to Drive, so the
+> secretary's Drive folders would miss new properties.
+
 Decided 2026-10-04/05; full reasoning, cost model and design in
 [`docs/reference/storage-architecture.md`](docs/reference/storage-architecture.md).
 Supersedes 9a's "Drive is the source of truth" for new work. Must be solved
