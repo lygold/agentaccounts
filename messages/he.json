@@ -874,7 +874,9 @@
   "PropertyDoneStep": {
     "title": "הנכס נשמר בהצלחה",
     "body": "פרטי הנכס נשמרו במערכת.",
-    "addAnother": "הוספת נכס נוסף"
+    "addAnother": "הוספת נכס נוסף",
+    "viewProperty": "צפייה בנכס",
+    "backHome": "חזרה ל-AgentLedger"
   },
   "StepTitles": {
     "language": "שפת מסמך",

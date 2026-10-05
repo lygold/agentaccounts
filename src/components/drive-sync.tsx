@@ -31,10 +31,14 @@ export function DriveSync({
   propertyId,
   autoRun,
   strings,
+  visible = true,
 }: {
   propertyId: string;
   autoRun: boolean;
   strings: Strings;
+  /** Admins see the status and the refresh button; for everyone else the
+   *  sync still runs (it keeps the office Drive folder current) but silently. */
+  visible?: boolean;
 }) {
   const router = useRouter();
   const [state, setState] = useState<State>({ kind: "idle" });
@@ -77,6 +81,8 @@ export function DriveSync({
   useEffect(() => {
     if (autoRun) void run(false);
   }, [autoRun, run]);
+
+  if (!visible) return null;
 
   return (
     <div className="flex items-center gap-3 text-xs text-muted-foreground">

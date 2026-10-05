@@ -874,7 +874,9 @@
   "PropertyDoneStep": {
     "title": "Property saved",
     "body": "The listing's details have been saved.",
-    "addAnother": "Add another property"
+    "addAnother": "Add another property",
+    "viewProperty": "View the property",
+    "backHome": "Back to AgentLedger"
   },
   "StepTitles": {
     "language": "Document Language",

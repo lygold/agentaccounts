@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { requireSession, isManager } from "@/lib/auth/session-cookie";
+import { requireSession, isManager, isAdmin } from "@/lib/auth/session-cookie";
 import { allowedAgentIds, isIdAllowed } from "@/lib/auth/scope";
 import { getProperty } from "@/lib/store/properties";
 import { getMediaUrl } from "@/lib/storage/media";
@@ -106,7 +106,12 @@ export default async function PropertyDetailPage({
 
         <Section title={t("mediaTitle")}>
           <div className="col-span-2">
-            <DriveSync propertyId={property.id} autoRun={driveAutoRun} strings={driveStrings} />
+            <DriveSync
+              propertyId={property.id}
+              autoRun={driveAutoRun}
+              strings={driveStrings}
+              visible={isAdmin(session)}
+            />
           </div>
           <PhotoGrid label={t("mainPhotosLabel")} items={mainPhotos} originalLabel={t("downloadOriginal")} />
           <PhotoGrid label={t("additionalPhotosLabel")} items={additionalPhotos} originalLabel={t("downloadOriginal")} />
