@@ -155,7 +155,8 @@
     "updatesTitle": "היסטוריית עדכונים",
     "noUpdates": "אין עדכונים עדיין",
     "notifiedEmail": "נשלח אימייל למזכירה",
-    "notifiedWhatsapp": "נשלח וואטסאפ למזכירה"
+    "notifiedWhatsapp": "נשלח וואטסאפ למזכירה",
+    "downloadOriginal": "מקור"
   },
   "PropertyEdit": {
     "title": "עריכת נכס",
@@ -421,7 +422,10 @@
     "giSendClient": "שלח ללקוח",
     "giSend": "שלח",
     "giSentTo": "נשלח ל{who} · {date}",
-    "giRecipient": { "agent": "סוכן", "client": "לקוח" },
+    "giRecipient": {
+      "agent": "סוכן",
+      "client": "לקוח"
+    },
     "incomeTitle": "תקבולים",
     "fromGreenInvoice": "מ‑Green Invoice",
     "receiptCreated": "קבלה נוצרה (מס' אסמכתא {ref})",
@@ -734,7 +738,12 @@
     "youtubeUrlLabel": "קישור YouTube",
     "youtubeDisplayTextLabel": "טקסט לתצוגה",
     "uploadAndContinue": "העלאה והמשך",
-    "alreadyUploaded": "{count} כבר הועלו"
+    "alreadyUploaded": "{count} כבר הועלו",
+    "uploadingProgress": "מעלה {done}/{total}…",
+    "uploadFailed": "{name}: ההעלאה נכשלה ({reason})",
+    "alreadyUploadedTemplate": "{count} הועלו",
+    "waitForUploads": "נא להמתין לסיום ההעלאות.",
+    "continue": "המשך"
   },
   "PropertyDetailsStep": {
     "prompt": "עוד כמה פרטים על הנכס והעסקה",

@@ -4,6 +4,8 @@ import { getTranslations } from "next-intl/server";
 import { requireSession, isManager } from "@/lib/auth/session-cookie";
 import { allowedAgentIds, isIdAllowed } from "@/lib/auth/scope";
 import { getProperty } from "@/lib/store/properties";
+import { getMediaUrl } from "@/lib/storage/media";
+import type { MediaFileRef } from "@/lib/types";
 import { Nav } from "@/components/nav";
 import { Button } from "@/components/ui/button";
 
@@ -21,6 +23,22 @@ export default async function PropertyDetailPage({
   if (!isIdAllowed(allowed, property.agentId)) notFound();
 
   const t = await getTranslations("PropertyDetail");
+  const media = property.media;
+  const withUrls = async (refs: MediaFileRef[] | undefined) =>
+    Promise.all(
+      (refs ?? []).map(async (r) => ({
+        ref: r,
+        thumb: r.thumbKey ? await getMediaUrl(r, "thumb") : null,
+        gallery: await getMediaUrl(r, "gallery"),
+        original: await getMediaUrl(r, "original"),
+      })),
+    );
+  const [mainPhotos, additionalPhotos, mediaForms, mediaDocuments] = await Promise.all([
+    withUrls(media?.mainPhotos),
+    withUrls(media?.additionalPhotos),
+    withUrls(media?.forms),
+    withUrls(media?.documents),
+  ]);
   const tDealType = await getTranslations("Enums.dealType");
   const tStatus = await getTranslations("Enums.propertyStatus");
   const canSeeRatings = isManager(session);
@@ -76,6 +94,20 @@ export default async function PropertyDetailPage({
         </Section>
 
         <Section title={t("mediaTitle")}>
+          <PhotoGrid label={t("mainPhotosLabel")} items={mainPhotos} originalLabel={t("downloadOriginal")} />
+          <PhotoGrid label={t("additionalPhotosLabel")} items={additionalPhotos} originalLabel={t("downloadOriginal")} />
+          {[...mediaForms, ...mediaDocuments].map((f) => (
+            <a
+              key={f.ref.s3Key}
+              href={f.original}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-sm text-secondary underline-offset-4 hover:underline"
+            >
+              {f.ref.name}
+            </a>
+          ))}
+          {/* Legacy: properties created before the storage move keep Drive refs. */}
           <Field
             label={t("mainPhotosLabel")}
             value={property.mainPhotos?.length ? String(property.mainPhotos.length) : undefined}
@@ -159,5 +191,47 @@ function Field({ label, value }: { label: string; value?: string | number | null
       <span className="text-muted-foreground">{label}</span>
       <span>{value}</span>
     </>
+  );
+}
+
+function PhotoGrid({
+  label,
+  items,
+  originalLabel,
+}: {
+  label: string;
+  items: { ref: MediaFileRef; thumb: string | null; gallery: string; original: string }[];
+  originalLabel: string;
+}) {
+  if (!items.length) return null;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-xs text-muted-foreground">
+        {label} ({items.length})
+      </span>
+      <ul className="flex flex-wrap gap-2">
+        {items.map((it) => (
+          <li key={it.ref.s3Key} className="w-28 text-center text-[11px]">
+            <a href={it.gallery} target="_blank" rel="noopener noreferrer">
+              {/* eslint-disable-next-line @next/next/no-img-element -- served from the CDN; next/image would proxy bytes through Amplify */}
+              <img
+                src={it.thumb ?? it.gallery}
+                alt={it.ref.name}
+                loading="lazy"
+                className="h-20 w-28 rounded-md object-cover"
+              />
+            </a>
+            <a
+              href={it.original}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-secondary underline-offset-4 hover:underline"
+            >
+              {originalLabel}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

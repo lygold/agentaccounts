@@ -47,8 +47,8 @@ export default async function PropertyReviewPage() {
         )}
         <Section title={t("mediaTitle")} editHref={propertyStepHref("media")}>
           {t("mediaCount", {
-            main: draft.mainPhotos?.length ?? 0,
-            additional: draft.additionalPhotos?.length ?? 0,
+            main: draft.media?.mainPhotos?.length ?? 0,
+            additional: draft.media?.additionalPhotos?.length ?? 0,
           })}
         </Section>
         {(draft.sizeSqm || draft.rooms || draft.askingPrice) && (
