@@ -733,7 +733,17 @@
     "apartmentNumberHint": "If not relevant (e.g. a private house), enter 0",
     "neighbourhoodLabel": "Neighbourhood",
     "publishNotesLabel": "What to publish of the address",
-    "selectPlaceholder": "Select..."
+    "selectPlaceholder": "Select...",
+    "verifiedNote": "Verified with Google: {address}",
+    "googleFound": "Google found this address:",
+    "useGoogle": "Use Google's version",
+    "notThisOne": "Not this one",
+    "numberNotListed": "Google doesn't list building {n} on this street - your number is kept.",
+    "notVerified": "This address has not been confirmed with Google yet.",
+    "couldNotVerify": "We couldn't confirm this address with Google. Search above, check the spelling, or keep it exactly as typed.",
+    "checkWithGoogle": "Check with Google",
+    "checking": "Checking...",
+    "keepAsTyped": "Keep this address exactly as I typed it"
   },
   "PropertyMediaStep": {
     "prompt": "Upload photos and documents for the listing",
@@ -1210,7 +1220,8 @@
     "ownerPressureToSell": "Owner pressure to sell",
     "trueCmaValue": "True market value",
     "estimatedMonthsToSell": "Estimated months to sell",
-    "letterGrade": "Overall grade"
+    "letterGrade": "Overall grade",
+    "addressVerified": "Confirm the address with Google (or keep it as typed)"
   },
   "MondaySync": {
     "title": "Monday sync",

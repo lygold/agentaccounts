@@ -15,6 +15,7 @@ const Schema = z.object({
   entrance: z.string().trim().optional(),
   apartmentNumber: z.string().trim().optional(),
   publishNotes: z.string().trim().optional(),
+  addressManualOverride: z.string().optional(),
   placeId: z.string().trim().optional(),
   formattedAddress: z.string().trim().optional(),
   lat: z.coerce.number().optional(),
@@ -36,6 +37,8 @@ export async function submitPropertyAddress(formData: FormData) {
       entrance: d.entrance || undefined,
       apartmentNumber: d.apartmentNumber || undefined,
       publishNotes: d.publishNotes || undefined,
+      // "Keep exactly as typed" only counts when Google did not confirm the address.
+      addressManualOverride: !d.placeId && d.addressManualOverride === "on" ? true : undefined,
       placeId: d.placeId || undefined,
       formattedAddress: d.formattedAddress || undefined,
       lat: d.lat,

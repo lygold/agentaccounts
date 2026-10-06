@@ -733,7 +733,17 @@
     "apartmentNumberHint": "אם לא רלוונטי (למשל בית פרטי), כתבו 0",
     "neighbourhoodLabel": "שכונה",
     "publishNotesLabel": "מה לפרסם מהכתובת",
-    "selectPlaceholder": "בחר..."
+    "selectPlaceholder": "בחר...",
+    "verifiedNote": "אומת מול גוגל: {address}",
+    "googleFound": "גוגל מצא את הכתובת:",
+    "useGoogle": "השתמש בגרסת גוגל",
+    "notThisOne": "לא זו",
+    "numberNotListed": "גוגל לא מכיר בית מספר {n} ברחוב הזה - המספר שהוזן נשמר.",
+    "notVerified": "הכתובת עדיין לא אומתה מול גוגל.",
+    "couldNotVerify": "לא הצלחנו לאמת את הכתובת מול גוגל. חפשו למעלה, בדקו את האיות, או השאירו אותה בדיוק כפי שהוקלדה.",
+    "checkWithGoogle": "בדוק מול גוגל",
+    "checking": "בודק...",
+    "keepAsTyped": "השאר את הכתובת בדיוק כפי שהקלדתי"
   },
   "PropertyMediaStep": {
     "prompt": "העלאת תמונות ומסמכים לנכס",
@@ -1210,7 +1220,8 @@
     "ownerPressureToSell": "הבעלים נלחצים למכור",
     "trueCmaValue": "שווי הנכס האמיתי",
     "estimatedMonthsToSell": "זמן משוער למכירה בחודשים",
-    "letterGrade": "דרגו את הנכס"
+    "letterGrade": "דרגו את הנכס",
+    "addressVerified": "לאמת את הכתובת מול גוגל (או להשאיר כפי שהוקלדה)"
   },
   "MondaySync": {
     "title": "סנכרון Monday",

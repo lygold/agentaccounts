@@ -41,6 +41,7 @@ export async function submitPropertyReview() {
       entrance: draft.entrance,
       apartmentNumber: draft.apartmentNumber,
       placeId: draft.placeId,
+      addressManualOverride: draft.addressManualOverride,
       formattedAddress: draft.formattedAddress,
       lat: draft.lat,
       lng: draft.lng,

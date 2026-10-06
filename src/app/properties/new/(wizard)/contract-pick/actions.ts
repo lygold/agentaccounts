@@ -69,10 +69,9 @@ export async function submitContractPick(formData: FormData) {
     const commissionPercent = parsePercentText(commissionText) ?? undefined;
 
     // Split "דרך חברון 54" into street + buildingNumber for an immediate
-    // prefill — formattedAddress still carries the raw text into the
-    // address step's Places search box, so the agent can still normalize
-    // the street spelling from there; picking a suggestion overwrites
-    // these same fields with Places' own values.
+    // prefill. This is the CONTRACT's own text and is not trusted: the address
+    // step checks it against Google (spelling, city, neighbourhood, place id) and
+    // the agent has to confirm Google's version before continuing.
     const { street, buildingNumber } = picked.propertyAddress
       ? parseStreetAndBuilding(picked.propertyAddress)
       : {};

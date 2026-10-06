@@ -20,6 +20,7 @@ export type RequiredKey =
   | "street"
   | "buildingNumber"
   | "apartmentNumber"
+  | "addressVerified"
   | "commissionPercent"
   | "commissionVatMode"
   | "propertyType"
@@ -63,7 +64,7 @@ export type RequiredKey =
 export const REQUIRED_BY_STEP: Record<PropertyWizardStep, RequiredKey[]> = {
   "deal-type": ["dealType"],
   "contract-pick": ["contractType"],
-  address: ["city", "neighbourhood", "street", "buildingNumber", "apartmentNumber"],
+  address: ["city", "neighbourhood", "street", "buildingNumber", "apartmentNumber", "addressVerified"],
   commission: ["commissionPercent", "commissionVatMode"],
   details: [
     "propertyType",
@@ -109,6 +110,9 @@ const filled = (v: unknown): boolean =>
 
 function isMissing(key: RequiredKey, d: Partial<PropertyDraft>): boolean {
   switch (key) {
+    case "addressVerified":
+      // Confirmed against Google (a place id), or explicitly kept as typed.
+      return !filled(d.placeId) && d.addressManualOverride !== true;
     case "referralSourceOther":
       return d.referralSource === REFERRAL_NONE && !filled(d.referralSourceOther);
     case "descriptionYad2":

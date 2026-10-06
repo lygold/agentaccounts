@@ -42,6 +42,37 @@ optional extras that map to Monday's size columns).
 form shows it read-only and only moves `askingPrice`. Older properties get it on
 their first price change (their previous asking price).
 
+## Address: always checked against Google
+
+The street address is confirmed against Google Places (server-side; the API key
+never reaches the browser) whether it was searched, typed, or auto-filled from a
+signed contract. `verifyAddressText` (`src/lib/places.ts`) does one autocomplete +
+one details call and returns Google's canonical spelling, city, neighbourhood
+(when Google has one) and place id.
+
+- **Contract pick:** the contract's text (`"דרך חברון 54"`) is *not* trusted. The
+  address step checks it and shows "Google found this address: …" with **Use
+  Google's version / Not this one**. Accepting replaces the street spelling,
+  fills the city, and records the place id + lat/lng.
+- **City is never guessed silently.** Street names repeat across Israel (`דרך חברון
+  54` exists in Be'er Sheva and Jerusalem). With no city given, the lookup runs in
+  Jerusalem first, then nationwide, and the result is always a *suggestion* for the
+  agent to confirm. A hit in a different city than the agent stated is discarded.
+- **Spelling vs different street:** a result whose street isn't similar to the one
+  given (edit distance) is discarded, since Google fuzzy-matches nonsense. If
+  Google knows the street but not that building number, the agent's number is kept
+  (and says so).
+- **Editing city/street/number after confirmation drops the confirmation** (place
+  id cleared), so an address can't be changed to something Google never saw.
+  "Check with Google" re-verifies what was typed.
+- **Required:** the address step won't advance without a place id **or** the
+  explicit "Keep this address exactly as I typed it" box (for addresses Google
+  doesn't know, e.g. brand-new buildings). The override is stored as
+  `addressManualOverride`.
+- The neighbourhood is only prefilled when Google returns one (it often doesn't);
+  it stays a required, editable field.
+- Not covered: the property **edit** form still takes free-text city/street.
+
 ## Monday push (`src/lib/sync/property-columns.ts`, `properties.ts`)
 
 67 columns written, each in its column type's format (status `{label}`,

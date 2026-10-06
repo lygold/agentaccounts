@@ -584,6 +584,8 @@ export interface PropertyRecord {
   apartmentNumber?: string;
   /** Places' own place_id — kept for re-lookup/dedup, not shown to agents. */
   placeId?: string;
+  /** The agent chose to keep an address Google could not confirm exactly as typed. */
+  addressManualOverride?: boolean;
   formattedAddress?: string;
   lat?: number;
   lng?: number;

@@ -4,7 +4,9 @@ import { requireSession } from "@/lib/auth/session-cookie";
 import {
   autocompleteAddress,
   getPlaceAddressDetails,
+  verifyAddressText,
   type AddressSuggestion,
+  type AddressVerification,
   type PlaceAddressDetails,
 } from "./places";
 
@@ -42,4 +44,15 @@ export async function resolveAddress(
     console.error("resolveAddress failed", err);
     return null;
   }
+}
+
+/** "Check with Google": verify the street/building/city the agent typed. */
+export async function verifyTypedAddress(fields: {
+  city?: string;
+  street?: string;
+  buildingNumber?: string;
+}): Promise<AddressVerification> {
+  await requireSession();
+  const text = [fields.street, fields.buildingNumber, fields.city].filter(Boolean).join(" ");
+  return verifyAddressText(text, { street: fields.street, buildingNumber: fields.buildingNumber });
 }
